@@ -1,4 +1,4 @@
-# Навчальна бухгалтерія (Netlify + Neon)
+# SV Бухгалтерія 
 
 1. Neon: створіть проєкт, у SQL Editor виконайте `schema.sql` (можна повторно), скопіюйте connection string.
 2. Завантажте папку в GitHub і підключіть репозиторій до Netlify (або `npx netlify deploy --prod`).
