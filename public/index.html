@@ -19,12 +19,19 @@ input,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:7px
 th,td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}th{color:var(--mut);font-weight:600;font-size:13px}
 tfoot td{font-weight:700}.err{color:#d33}.mut{color:var(--mut)}
+@media print{header,.noprint,.card:first-child h3+div{display:none}body{background:#fff;color:#000}}
+.lay{display:grid;grid-template-columns:240px minmax(0,1fr);gap:12px;max-width:1400px;margin:12px auto;padding:0 12px}
+aside{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px;align-self:start;position:sticky;top:8px;max-height:calc(100vh - 80px);overflow:auto}
+aside:empty{display:none}.lay:has(aside:empty){grid-template-columns:1fr}
+aside a{display:block;padding:6px 10px;border-radius:6px;cursor:pointer}aside a:hover{background:var(--bg)}aside a.on{background:var(--ac);color:#fff}
+.ms{font-size:11px;text-transform:uppercase;color:var(--mut);margin:10px 8px 3px}.lay main{max-width:none;margin:0;padding:0}
+@media(max-width:800px){.lay{grid-template-columns:1fr}aside{position:static;max-height:none}}
 </style></head><body>
-<header><b>📒 Навчальна бухгалтерія</b>
-<nav id="nav"></nav><span id="co" class="mut"></span></header>
-<main id="app"></main>
+<header><b>📒 Навчальна бухгалтерія</b><span id="co" class="mut" style="flex:1"></span><button class="btn" onclick="logout()">Вийти</button></header>
+<div class="lay"><aside id="nav"></aside><main id="app"></main></div>
 <script src="templates.js"></script>
 <script src="groups.js"></script>
+<script src="forms.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const fmt=n=>Number(n).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -39,7 +46,7 @@ async function api(path,opt){
   if(r.status===401&&token){logout();throw new Error('Увійдіть знову')}
   if(!r.ok)throw new Error(d.error||'Помилка');return d;
 }
-const tabs={company:'Підприємство',entries:'Журнал операцій',add:'Нова операція',tpl:'Типові операції',osv:'Оборотно-сальдова відомість',rep:'Баланс і ФР',tasks:'Завдання',plan:'План рахунків'};
+const tabs={company:'Підприємство',entries:'Журнал операцій',add:'Нова операція',tpl:'Типові операції',osv:'Оборотно-сальдова відомість',rep:'Форми №1, №2',tasks:'Завдання',plan:'План рахунків'};
 function nav(){
   if(!me)return;
   const hid=me.role==='teacher'?['add','tpl']:[];
@@ -180,24 +187,11 @@ async function subs(id){
 }
 async function reports(){
   const f=$('#f').value,t=$('#t').value;
-  const [o,p]=await Promise.all([api(`osv?company_id=${company.id}&from=1900-01-01&to=${t}`),api(`pnl?company_id=${company.id}&from=${f}&to=${t}`)]);
-  const S=(pf,sg=1)=>sg*o.filter(x=>pf.some(q=>x.code.startsWith(q))).reduce((s,x)=>s+x.closing,0);
-  const tx=o.filter(x=>x.code==='641'||x.code==='642');
-  const TP=tx.reduce((s,x)=>s+Math.max(x.closing,0),0),TN=tx.reduce((s,x)=>s-Math.min(x.closing,0),0);
-  const R=-o.filter(x=>/^[789]/.test(x.code)&&!x.code.startsWith('79')).reduce((s,x)=>s+x.closing,0);
-  const A=[['Нематеріальні активи',S(['12','133'])],['Основні засоби (залишкова вартість)',S(['10','11','131','132','135'])],['Інвестиції та капітальні вкладення',S(['14','15','134'])],['Інші необоротні активи',S(['16','17','18','19'])],['Запаси',S(['2'])],['Дебіторська заборгованість',S(['36','37','38','644'])],['Розрахунки з бюджетом (дебетове сальдо)',TP],['Гроші та їх еквіваленти',S(['30','31','33','34','35'])],['Витрати майбутніх періодів',S(['39'])]];
-  const P=[['Власний капітал',S(['40','41','42','43','44','45','46','79'],-1)],['Результат періоду (рахунки 7–9 не закрито)',R],['Забезпечення та цільове фінансування',S(['47','48'],-1)],['Довгострокові зобов’язання',S(['5'],-1)],['Короткострокові позики',S(['60','61','62'],-1)],['Кредиторська заборгованість за товари, роботи, послуги',S(['63'],-1)],['Розрахунки з бюджетом і зі страхування',S(['643','65'],-1)+TN],['Розрахунки з оплати праці',S(['66'],-1)],['Інші поточні зобов’язання',S(['67','68'],-1)],['Доходи майбутніх періодів',S(['69'],-1)]];
-  const tot=a=>a.reduce((s,x)=>s+x[1],0),ta=tot(A),tp=tot(P);
-  const cr=(...q)=>p.filter(x=>q.some(z=>x.code.startsWith(z))).reduce((s,x)=>s+x.c-x.d,0),dr=(...q)=>-cr(...q);
-  const rev=cr('70'),cogs=dr('90'),gp=rev-cogs,adm=dr('92'),sell=dr('93');
-  const op=gp+cr('71')-adm-sell-dr('94'),pbt=op+cr('72','73')+cr('74')-dr('95')-dr('96')-dr('97'),tax=dr('98');
-  const F=[['Чистий дохід від реалізації',rev],['Собівартість реалізації',-cogs],['Валовий прибуток (збиток)',gp],['Інший операційний дохід',cr('71')],['Адміністративні витрати',-adm],['Витрати на збут',-sell],['Інші операційні витрати',-dr('94')],['Фінансовий результат від операційної діяльності',op],['Фінансові та інші доходи',cr('72','73','74')],['Фінансові та інші витрати',-(dr('95')+dr('96')+dr('97'))],['Фінансовий результат до оподаткування',pbt],['Податок на прибуток',-tax],['Чистий прибуток (збиток)',pbt-tax]];
-  const bold=n=>/^(Валовий|Фінансовий результат|Чистий прибуток)/.test(n);
-  const tr=(n,v,b)=>`<tr${b||bold(n)?' style="font-weight:700"':''}><td>${n}</td><td class="n">${fmt(v)}</td></tr>`;
-  $('#res').innerHTML=`<div class="card sc"><h3>Баланс (скорочений) на ${t}</h3><table><thead><tr><th>Актив</th><th class="n">Сума</th></tr></thead><tbody>${A.map(([n,v])=>tr(n,v)).join('')}${tr('Баланс (актив)',ta,1)}</tbody>
-  <thead><tr><th>Пасив</th><th class="n"></th></tr></thead><tbody>${P.map(([n,v])=>tr(n,v)).join('')}${tr('Баланс (пасив)',tp,1)}</tbody></table>
-  <p class="${Math.abs(ta-tp)<0.005?'mut':'err'}">${Math.abs(ta-tp)<0.005?'✓ Актив дорівнює пасиву':'Різниця актив – пасив: '+fmt(ta-tp)}</p></div>
-  <div class="card sc"><h3>Звіт про фінансові результати за ${f} — ${t}</h3><table><tbody>${F.map(([n,v])=>tr(n,v)).join('')}</tbody></table></div>`;
+  const sh=(d,days,yrs)=>{const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+days);x.setUTCFullYear(x.getUTCFullYear()+yrs);return x.toISOString().slice(0,10)};
+  const O=to=>api(`osv?company_id=${company.id}&from=1900-01-01&to=${to}`),P=(a,b)=>api(`pnl?company_id=${company.id}&from=${a}&to=${b}`);
+  const [o0,o1,pc,pp]=await Promise.all([O(sh(f,-1,0)),O(t),P(f,t),P(sh(f,0,-1),sh(t,0,-1))]);
+  $('#res').innerHTML=renderForms(f,t,o0,o1,pc,pp);
 }
-boot();
-</script></body></html>
+</script>
+<script src="app2.js"></script>
+<script src="app3.js"></script></body></html>
