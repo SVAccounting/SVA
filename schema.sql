@@ -204,3 +204,29 @@ CREATE TABLE IF NOT EXISTS submissions (
   id SERIAL PRIMARY KEY, task_id INT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   answer JSONB NOT NULL, correct BOOLEAN NOT NULL, created_at TIMESTAMPTZ DEFAULT now());
+
+-- Налаштування підприємства, довідники, сторно, допоміжний рахунок 000 (можна виконувати повторно)
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS storno_of INT;
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS partner TEXT;
+ALTER TABLE entries DROP CONSTRAINT IF EXISTS entries_amount_check;
+ALTER TABLE entries DROP CONSTRAINT IF EXISTS entries_amount_nonzero;
+ALTER TABLE entries ADD CONSTRAINT entries_amount_nonzero CHECK (amount <> 0);
+CREATE TABLE IF NOT EXISTS refs (
+  id SERIAL PRIMARY KEY, company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL, name TEXT NOT NULL, data JSONB NOT NULL DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+CREATE INDEX IF NOT EXISTS refs_idx ON refs(company_id, kind);
+INSERT INTO accounts(code,name,kind) VALUES ('000','Допоміжний рахунок для введення залишків','O') ON CONFLICT DO NOTHING;
+
+-- Документи, кількісний складський облік (можна виконувати повторно)
+CREATE TABLE IF NOT EXISTS docs (
+  id SERIAL PRIMARY KEY, company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  type TEXT NOT NULL, number TEXT NOT NULL, date DATE NOT NULL, partner TEXT,
+  data JSONB NOT NULL DEFAULT '{}', storno BOOLEAN NOT NULL DEFAULT false, created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE IF NOT EXISTS stock_moves (
+  id SERIAL PRIMARY KEY, company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  doc_id INT REFERENCES docs(id) ON DELETE CASCADE, date DATE NOT NULL,
+  wh_id INT NOT NULL REFERENCES refs(id) ON DELETE RESTRICT, item_id INT NOT NULL REFERENCES refs(id) ON DELETE RESTRICT,
+  qty NUMERIC(15,3) NOT NULL, amount NUMERIC(15,2) NOT NULL);
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS doc_id INT;
+CREATE INDEX IF NOT EXISTS stock_idx ON stock_moves(company_id, item_id, wh_id, date);
