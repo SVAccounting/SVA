@@ -11,7 +11,7 @@ const effOf=x=>R2(Number(x.amount)+EL.filter(y=>y.storno_of===x.id||y.add_of===x
 const ln=(d,k,a,c)=>`<div class="${c||''}">Дт ${d} ${esc(nameOf(d))} — Кт ${k} ${esc(nameOf(k))}: <b>${fmt(a)}</b></div>`;
 // меню і розділи
 const ti=MENU.findIndex(m=>m[0]==='Навчання');if(ti>=0)MENU.splice(ti,1);delete views.tasks;
-MENU.splice(MENU.findIndex(m=>m[0]==='Звіти'),0,['Виправлення',[['corr','Журнал коригувань'],['period','Облікові періоди'],['audit','Журнал аудиту'],['trainer','Навчальний режим']]]);
+MENU.splice(MENU.findIndex(m=>m[0]==='Звіти'),0,['Виправлення',[['corr','Журнал коригувань'],['period','Облікові періоди'],['audit','Журнал аудиту'],['trainer','Тренажер (без проведень)']]]);
 // контекстне меню «Дії»
 const actionsMenu=(x)=>{
   const T=!canDo('corrections','create'),it=[`<a onclick="viewEntry(${x.id})">Переглянути</a>`];
@@ -79,7 +79,7 @@ views.corr=async()=>{
 };
 async function corrList(){
   const L=await api('corrections?'+new URLSearchParams({company_id:company.id,from:$('#kf').value,to:$('#kt').value,method:$('#km').value,user:$('#ku').value,q:$('#kq').value}));
-  $('#res').innerHTML=`<div class="card sc"><table><thead><tr><th>Дата</th><th>№ коригування</th><th>Початковий документ</th><th>Метод</th><th class="n">Початкова сума</th><th class="n">Коригування</th><th class="n">Результат</th><th>Причина</th><th>Користувач</th><th>Статус</th><th></th></tr></thead><tbody>${L.map(k=>`<tr><td>${k.cdate}</td><td>${esc(k.number)}</td><td>${esc(k.source)}</td><td>${mtag(k.method)}</td><td class="n">${fmt(k.orig_amount)}</td><td class="n ${Number(k.delta)<0?'t-red':'t-grn'}">${Number(k.delta)>0?'+':''}${fmt(k.delta)}</td><td class="n">${fmt(k.result_amount)}</td><td>${esc(k.reason)}</td><td>${esc(k.user_name)}</td><td>${esc(k.status)}</td><td><button class="btn" onclick="history_('${k.source_doc_id?'doc':'entry'}',${k.source_doc_id||k.source_entry_id})">Історія</button></td></tr>`).join('')||'<tr><td colspan="11" class="mut">Коригувань немає</td></tr>'}</tbody></table></div>`;
+  $('#res').innerHTML=`<div class="card sc"><table><thead><tr><th>Дата</th><th>№ коригування</th><th>Початковий документ</th><th>Метод</th><th class="n">Початкова сума</th><th class="n">Коригування</th><th class="n">Результат</th><th>Причина</th><th>Користувач</th><th>Статус</th><th></th></tr></thead><tbody>${L.map(k=>`<tr><td>${k.cdate}</td><td>${esc(k.number)}</td><td>${esc(k.source)}</td><td>${mtag(k.method)}</td><td class="n">${fmt(k.orig_amount)}</td><td class="n ${Number(k.delta)<0?'t-red':'t-grn'}">${Number(k.delta)>0?'+':''}${fmt(k.delta)}</td><td class="n">${fmt(k.result_amount)}</td><td>${esc(k.reason)}</td><td>${esc(k.user_name)}</td><td>${esc(k.status)}</td><td><button class="btn" onclick="history_('${k.source_doc_id?'doc':'entry'}',${k.source_doc_id||k.source_entry_id})">Історія</button> <button class="btn" onclick="printCorrectionMemo(${k.id})">Бух. довідка</button></td></tr>`).join('')||'<tr><td colspan="11" class="mut">Коригувань немає</td></tr>'}</tbody></table></div>`;
 }
 views.period=async()=>{
   const c=(await api('companies')).find(x=>x.id===company.id),T=!canDo('settings','update');
@@ -98,11 +98,46 @@ const CASES=[
 {t:'Витрати на рекламу 5 000 грн проведено, але послугу не надавали: Дт 93 Кт 631 — 5 000.',o:['93','631',5000],m:'storno',a:[['93','631',-5000]],w:'Операції не було — повне червоне сторно.'},
 {t:'ЄСВ 2 200 грн адміністрації віднесено на загальновиробничі: Дт 91 Кт 651 — 2 200.',o:['91','651',2200],m:'storno',a:[['91','651',-2200],['92','651',2200]],w:'Хибний рахунок витрат: сторно помилкової проводки і нова проводка на Дт 92.'}];
 views.trainer=async()=>{
-  $('#app').innerHTML=`<div class="card"><h3>Навчальний режим: виправлення помилок</h3><p class="mut">Тренування на тестових даних — записи в облік не вносяться.</p><label>Ситуація</label><select id="tc" onchange="trShow()">${CASES.map((c,i)=>`<option value="${i}">Ситуація ${i+1}</option>`).join('')}</select><div id="tt"></div><label>Метод виправлення</label><select id="tm"><option value="storno">Червоне сторно</option><option value="add">Додатковий запис</option><option value="fix">Виправлення документа</option></select><label>Ваші коригувальні проводки (суми сторно — від’ємні)</label><div id="ln">${lineRows(3)}</div><p><button class="btn pri" onclick="trCheck()">Перевірити</button></p><div id="tr"></div></div>`;trShow();
+  $('#app').innerHTML=`<div class="card"><h3>Тренажер: виправлення помилок</h3><p class="mut">Це навчальна симуляція з п’ятьма прикладами. Вона не змінює операції, документи, залишки або дані Neon. Для реального виправлення відкрийте Журнал операцій → Дії.</p><label>Ситуація</label><select id="tc" onchange="trShow()">${CASES.map((c,i)=>`<option value="${i}">Ситуація ${i+1}</option>`).join('')}</select><div id="tt"></div><label>Метод виправлення</label><select id="tm"><option value="storno">Червоне сторно</option><option value="add">Додатковий запис</option><option value="fix">Виправлення документа</option></select><label>Ваші коригувальні проводки (суми сторно — від’ємні)</label><div id="ln">${lineRows(3)}</div><p><button class="btn pri" onclick="trCheck()">Перевірити</button></p><div id="tr"></div></div>`;trShow();
 };
 const trShow=()=>{const c=CASES[$('#tc').value];$('#tt').innerHTML=`<p><b>${esc(c.t)}</b></p>`;$('#tr').innerHTML=''};
 function trCheck(){
   const c=CASES[$('#tc').value],got=readLines($('#ln')).map(l=>`${l.debit_acc}|${l.credit_acc}|${Number(l.amount).toFixed(2)}`).sort(),exp=c.a.map(l=>`${l[0]}|${l[1]}|${l[2].toFixed(2)}`).sort(),ok=JSON.stringify(got)===JSON.stringify(exp),mok=$('#tm').value===c.m;
   const T={};[c.o,...readLines($('#ln')).map(l=>[l.debit_acc,l.credit_acc,Number(l.amount)])].forEach(([d,k,a])=>{(T[d]??=[0,0])[0]+=a;(T[k]??=[0,0])[1]+=a});
   $('#tr').innerHTML=`<p class="${ok&&mok?'t-grn':'err'}"><b>${ok&&mok?'✅ Правильно.':'❌ Є помилки.'}</b> ${mok?'':'Метод обрано невірно. '}${ok?'':'Проводки не збігаються з очікуваними. '}</p><p>${esc(c.w)}</p><p class="mut">Правильна відповідь: ${c.a.map(l=>`Дт ${l[0]} Кт ${l[1]} ${fmt(l[2])}`).join('; ')}</p><h4>Вплив на рахунки (з урахуванням початкової проводки)</h4><table><thead><tr><th>Рахунок</th><th class="n">Оборот Дт</th><th class="n">Оборот Кт</th></tr></thead><tbody>${Object.entries(T).map(([k,v])=>`<tr><td>${k} ${esc(nameOf(k))}</td><td class="n">${fmt(v[0])}</td><td class="n">${fmt(v[1])}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// Бухгалтерська довідка на підставі фактично проведеного коригування.
+async function printCorrectionMemo(id){
+  try {
+    const result=await api(`corrections/${id}/memo?company_id=${company.id}`);
+    const k=result.correction;
+    if(!k)throw new Error('Коригування не знайдено. Оновіть журнал.');
+    const escM=v=>esc(String(v??''));
+    const method=MN[k.method]||'Коригування';
+    const src=escM(k.source_doc_id ? 'документа №'+k.source_doc_id : 'проводки №'+k.source_entry_id), companyName=escM(result.company_name), reason=escM(k.reason);
+    const lines=(result.entries||[]).map((e,i)=>`<tr><td>${i+1}</td><td>${escM(e.description)}</td><td>${escM(e.debit_acc)}</td><td>${escM(e.credit_acc)}</td><td>${fmt(e.amount)}</td></tr>`).join('');
+    const html=`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Бухгалтерська довідка ${escM(k.number)}</title><style>
+      @page{size:A4;margin:16mm 15mm}*{box-sizing:border-box}body{font:12pt/1.45 Arial,sans-serif;color:#181818;margin:0}
+      h1{text-align:center;font-size:16pt;margin:14mm 0 3mm}h2{text-align:center;font-size:11pt;font-weight:normal;margin:0 0 9mm}
+      p{margin:3mm 0}table{border-collapse:collapse;width:100%;table-layout:fixed;margin:8mm 0}th,td{border:1px solid #333;padding:3mm 2mm;overflow-wrap:anywhere}th{background:#f1f1f1;text-align:left}
+      .sign{display:flex;justify-content:space-between;gap:12mm;margin-top:18mm}.sign>div{flex:1;border-top:1px solid #222;text-align:center;padding-top:2mm;font-size:10pt}
+      .muted{color:#555;font-size:10pt}@media screen{body{max-width:190mm;margin:18px auto;padding:12px}}
+    </style></head><body><p><strong>${companyName}</strong></p><h1>БУХГАЛТЕРСЬКА ДОВІДКА</h1>
+      <h2>№ ${escM(k.number)} від ${escM(k.cdate)}</h2>
+      <p><b>Підстава:</b> виправлення запису / документа ${src}.</p>
+      <p><b>Спосіб виправлення:</b> ${escM(method)}.</p>
+      <p><b>Причина:</b> ${reason}</p>
+      <table><thead><tr><th>Показник</th><th>Сума, грн</th></tr></thead><tbody>
+      <tr><td>Сума до виправлення</td><td>${fmt(k.orig_amount)}</td></tr>
+      <tr><td>Коригувальна сума (з урахуванням знака)</td><td>${fmt(k.delta)}</td></tr>
+      <tr><td>Результат після виправлення</td><td>${fmt(k.result_amount)}</td></tr></tbody></table>
+      <h3>Коригувальні бухгалтерські записи</h3>
+      <table><thead><tr><th style="width:8%">№</th><th>Зміст</th><th style="width:12%">Дебет</th><th style="width:12%">Кредит</th><th style="width:20%">Сума, грн</th></tr></thead><tbody>${lines||'<tr><td colspan="5">Виправлення документа здійснено перепроведенням. Деталі перевірте за журналом операцій та історією документа.</td></tr>'}</tbody></table>
+      <p class="muted">Підстава — первинний документ та історія зміни. Сформовано: ${escM(k.user_name)}. Довідка підлягає перевірці та підписанню відповідальними особами.</p>
+      <div class="sign"><div>Виконавець / підпис / ПІБ</div><div>Головний бухгалтер / підпис / ПІБ</div></div>
+      </body></html>`;
+    const w=window.open('','_blank');if(!w)throw new Error('Дозвольте спливаючі вікна для друку довідки');
+    w.document.open();w.document.write(html);w.document.close();w.focus();w.print();
+  }catch(e){alert(e.message)}
 }

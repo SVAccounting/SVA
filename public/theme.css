@@ -179,3 +179,19 @@ html,body{max-width:100%;overflow-x:clip}
 .pay-check input{width:17px;height:17px;flex:0 0 auto}
 .pay-extra-row{grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto}
 @media(max-width:680px){.official-financial .financial-table{font-size:9px!important}.ref-toolbar{align-items:stretch}.ref-toolbar label{width:100%}}
+
+/* Кадри: таблиці з горизонтальною прокруткою без зрізання даних */
+.pay-statement{min-width:980px;width:100%;font-size:13px;border-collapse:collapse}.pay-statement th{white-space:normal!important;font-weight:600}.pay-statement td{white-space:nowrap}.pay-statement td:first-child{white-space:normal;min-width:175px}.pay-statement .n{font-variant-numeric:tabular-nums;text-align:right}.sc{max-width:100%;overflow-x:auto}
+
+/* Штрихкод номенклатури: камера біля поля коду */
+.barcode-input-row{display:flex;gap:6px;align-items:stretch;min-width:0}
+.barcode-input-row>input{flex:1;min-width:0;width:100%}
+.barcode-camera-btn{display:flex;justify-content:center;align-items:center;min-width:44px;font-size:21px;white-space:nowrap;flex-shrink:0}
+.inventory-barcode-overlay{position:fixed;inset:0;z-index:9999;background:rgba(20,26,28,.72);display:flex;align-items:center;justify-content:center;padding:14px}
+.inventory-barcode-dialog{background:var(--card,#fafaf6);color:var(--tx,#222);padding:18px;border-radius:16px;width:min(100%,520px);max-height:95vh;overflow:auto;box-shadow:0 16px 60px #0005}
+.inventory-barcode-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+#inventory_barcode_reader{max-width:100%;min-height:70px;overflow:hidden}
+#inventory_barcode_reader video{max-width:100%;border-radius:10px}
+#inventory_scan_status{font-size:14px;line-height:1.4}
+.inventory-barcode-fallback{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.inventory-barcode-fallback input{max-width:100%;box-sizing:border-box}

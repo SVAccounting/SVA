@@ -1,5 +1,5 @@
 // ProOblik: брендинг, згортне меню, повідомлення, експорт (друк / Excel / PDF)
-const LS=localStorage,BR=n=>({'Головне':'🏠','Довідники':'📚','Каса':'💵','Банк':'🏦','Склад':'📦','Документи':'🧾','Операції':'✍️','Виправлення':'↩️','Звіти':'📊'}[n]||'•');
+const LS=localStorage,BR=n=>({'Головне':'🏠','Довідники':'📚','Каса':'💵','Банк':'🏦','Склад':'📦','Документи':'🧾','Операції':'✍️','Кадри':'👥','Виправлення':'↩️','Звіти':'📊'}[n]||'•');
 // ---- повідомлення ----
 function toast(msg,type){
   let box=$('#toasts');if(!box){document.body.insertAdjacentHTML('beforeend','<div id="toasts"></div>');box=$('#toasts')}
@@ -48,7 +48,7 @@ window.login=function login(){
   <p><button class="btn pri" onclick="auth('login')">Увійти</button> <button class="btn" onclick="auth('register')">Зареєструватись</button></p><p id="msg" class="err"></p></div>`;
 };
 // ---- перехід між розділами + панель експорту ----
-const EXP=['entries','docs','osv','chess','card','cashbook','bank','stock','scard','rep','corr','audit','plan','r_staff','r_customer','r_supplier','r_bank','r_wh','r_item','payroll','taxnorm'],LAND=['entries','docs','osv','chess','card','cashbook','bank','corr','audit','stock','scard'];
+const EXP=['entries','docs','osv','chess','card','cashbook','bank','stock','scard','rep','corr','audit','plan','r_staff','r_customer','r_supplier','r_bank','r_wh','r_item','payroll','paystatement','taxnorm'],LAND=['entries','docs','osv','chess','card','cashbook','bank','corr','audit','stock','scard'];
 async function go(t){
   if(!NOCO.includes(t)&&!company){toast('Спочатку оберіть або створіть підприємство','err');t='company'}
   if(t==='members'&&!currentRights.manager&&me?.role!=='superadmin'){toast('Недостатньо прав','err');return}
@@ -120,7 +120,7 @@ async function stornoDoc(id){
 // Company-level permissions are loaded after each company selection.
 let currentRights={manager:false,permissions:{}};
 const canDo=(module,action='read')=>me?.role==='superadmin'||currentRights.permissions?.[module]?.[action]===true;
-const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',payroll:'entries',taxnorm:'refs'};
+const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',payroll:'entries',paystatement:'entries',taxnorm:'refs'};
 const visibleTab=k=>k==='home'||k==='company'||k==='plan'||k==='tasks'||canDo(k.startsWith('r_')?'refs':TAB_MODULE[k]||'reports','read');
 window.pick=async function(id){const selected=(await api('companies')).find(c=>c.id===id);if(!selected)throw new Error('Підприємство недоступне');saveCo(selected);await loadRights();nav();await go('home')};
 async function loadRights(){

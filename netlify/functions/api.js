@@ -22,7 +22,14 @@ function readToken(req) {
 }
 const hash = (pw, salt) => scryptSync(pw, salt, 32).toString('hex');
 const norm = (ls) => ls.map((l) => `${l.debit_acc}|${l.credit_acc}|${Number(l.amount).toFixed(2)}`).sort();
-const validLines = (ls) => Array.isArray(ls) && ls.length > 0 && ls.every((l) => l.debit_acc && l.credit_acc && Number(l.amount) > 0 && l.debit_acc !== l.credit_acc);
+const validLines = (ls) => Array.isArray(ls) && ls.length > 0 && ls.length <= 100 && ls.every((l) => {
+  const amount = Number(l.amount);
+  return typeof l.debit_acc === 'string' && typeof l.credit_acc === 'string'
+    && l.debit_acc.trim() && l.credit_acc.trim() && l.debit_acc !== l.credit_acc
+    && Number.isFinite(amount) && amount > 0 && Math.abs(Math.round(amount * 100) - amount * 100) < 1e-7
+    && amount <= 9999999999999.99;
+});
+const validISODate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d)) && new Date(d + 'T00:00:00Z').toISOString().slice(0,10) === d;
 
 const r2 = (n) => Math.round(n * 100) / 100;
 const bad = (m) => Object.assign(new Error(m), { status: 400 });
@@ -49,7 +56,7 @@ const effAmount = (e, linked) => r2(Number(e.amount) + linked.reduce((s, x) => s
 // чиста функція перевірки й розрахунку коригування (сторно / додатковий запис)
 function planCorr(method, e, linked, p) {
   if (!p.preview && String(p.reason || '').trim().length < 3) throw bad('Вкажіть причину виправлення');
-  if (!p.date) throw bad('Вкажіть дату коригування');
+  if (!validISODate(p.date)) throw bad('Вкажіть коректну дату коригування');
   if (!e.active || Number(e.amount) <= 0 || e.storno_of || e.add_of) throw bad('Коригувати можна лише початкову проводку');
   const eff = effAmount(e, linked);
   if (String(e.date).slice(0, 4) < String(p.date).slice(0, 4) && !['material', 'immaterial'].includes(p.nature))
@@ -302,6 +309,75 @@ export default async (req) => {
         : await sql`SELECT DISTINCT c.id, c.name, c.settings, c.closed_until, c.owner_id FROM companies c LEFT JOIN company_members m ON m.company_id=c.id AND m.user_id=${me.id} WHERE c.owner_id=${me.id} OR m.user_id=${me.id} ORDER BY c.id DESC`);
     }
 
+    // Payroll state machine: one-time accrual and two-phase bank/cash instructions.
+    if(res==='payroll-post' && M==='POST'){
+      const cid=Number(body.company_id),pid=Number(body.id),date=String(body.date||'');
+      const c=await own(cid,true,'entries','create');if(!c)return fail('Немає права проводити зарплату',403);
+      if(!validISODate(date))return fail('Некоректна дата проведення');lockCheck(c,date);
+      const row=(await sql`SELECT * FROM payroll_calculations WHERE id=${pid} AND company_id=${cid}`)[0];
+      if(!row)return fail('Розрахунок не знайдено',404);
+      if(row.posted_at)return fail('Зарплату вже проведено',409);
+      const d=row.details || {},debit=String(d.payroll_debit||'92');
+      const lines=[{debit_acc:debit,credit_acc:'661',amount:Number(d.gross),description:'Нарахування зарплати'},
+        {debit_acc:'661',credit_acc:'641',amount:Number(d.pit),description:'Утримано ПДФО'},
+        {debit_acc:'661',credit_acc:'642',amount:Number(d.military),description:'Утримано військовий збір'},
+        {debit_acc:debit,credit_acc:'651',amount:Number(d.esv),description:'Нараховано ЄСВ роботодавця'},
+        ...(d.extras||[]).map(x=>({debit_acc:'661',credit_acc:'685',amount:Number(x.amount),description:'Інше утримання: '+String(x.name||'')}))].filter(x=>x.amount>0);
+      if(!validLines(lines))return fail('Проводки не пройшли перевірку');
+      const known=await sql`SELECT code FROM accounts WHERE code=ANY(${[...new Set(lines.flatMap(x=>[x.debit_acc,x.credit_acc]))]}::text[])`;
+      if(known.length!==new Set(lines.flatMap(x=>[x.debit_acc,x.credit_acc])).size)return fail('У плані рахунків відсутні необхідні рахунки');
+      const result=(await sql`WITH claim AS (UPDATE payroll_calculations SET posted_at=now() WHERE id=${pid} AND company_id=${cid} AND posted_at IS NULL RETURNING id),
+        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount)
+        SELECT ${cid},${date}::date,${'ЗП-'+row.year+'-'+String(row.month).padStart(2,'0')+'-'+pid},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount
+        FROM claim CROSS JOIN jsonb_to_recordset(${JSON.stringify(lines)}::jsonb) AS l(debit_acc text,credit_acc text,amount numeric,description text) RETURNING id)
+        SELECT (SELECT count(*) FROM claim)::int AS updated,(SELECT count(*) FROM inserted)::int AS entries`)[0];
+      if(!result?.updated)return fail('Розрахунок уже проведено. Повторна проводка заблокована',409);
+      await aud(c,'payroll-post','payroll',pid,null,{date,lines},'Проведення зарплати');return json({ok:true,...result});
+    }
+    if(res==='payroll-payment' && M==='POST'){
+      const cid=Number(body.company_id),pid=Number(body.id),kind=String(body.kind||''),date=String(body.date||'');
+      if(!['wage','pit','military','esv'].includes(kind))return fail('Невідомий вид платежу');
+      const c=await own(cid,true,'entries','create');if(!c)return fail('Немає права оформляти платежі',403);
+      if(!validISODate(date))return fail('Некоректна дата платежу');lockCheck(c,date);
+      const row=(await sql`SELECT * FROM payroll_calculations WHERE company_id=${cid} AND id=${pid}`)[0];
+      if(!row||!row.posted_at)return fail('Спочатку проведіть нарахування зарплати',409);
+      const d=row.details||{},paymentLines={
+        wage:[{debit_acc:'661',credit_acc:'311',amount:Number(d.net),description:'Виплата зарплати'}],
+        pit:[{debit_acc:'641',credit_acc:'311',amount:Number(d.pit),description:'Сплата ПДФО'}],
+        military:[{debit_acc:'642',credit_acc:'311',amount:Number(d.military),description:'Сплата військового збору'}],
+        esv:[{debit_acc:'651',credit_acc:'311',amount:Number(d.esv),description:'Сплата ЄСВ'}]
+      },lines=paymentLines[kind];
+      const positive=lines.filter(x=>x.amount>0),total=r2(positive.reduce((a,x)=>a+x.amount,0));
+      if(!positive.every(x=>Number.isFinite(x.amount)&&x.amount<=1e9))return fail('Некоректна сума платежу');
+      const act=String(body.action||'prepare');
+      if(!total)return fail('Нульова сума платежу — інструкція не потрібна');
+      if(act==='prepare'){
+        const saved=(await sql`INSERT INTO payroll_payment_instructions(company_id,payroll_id,kind,date,amount,lines,created_by)
+          VALUES (${cid},${pid},${kind},${date},${total},${JSON.stringify(positive)}::jsonb,${me.id})
+          ON CONFLICT(payroll_id,kind) DO UPDATE SET date=EXCLUDED.date,amount=EXCLUDED.amount,lines=EXCLUDED.lines
+          WHERE payroll_payment_instructions.status='prepared' RETURNING id,status`)[0];
+        if(!saved)return fail('Платіж уже підтверджено; повторне створення заборонено',409);
+        return json({ok:true,document_id:saved.id,status:'prepared',total});
+      }
+      if(act!=='confirm'||body.bank_confirmed!==true)return fail('Потрібно підтвердити факт виконання платежу за випискою банку');
+      const payment=(await sql`SELECT * FROM payroll_payment_instructions WHERE company_id=${cid} AND payroll_id=${pid} AND kind=${kind}`)[0];
+      if(!payment)return fail('Спочатку сформуйте платіжну інструкцію',409);
+      if(payment.status==='confirmed')return fail('Цей платіж уже відображено в обліку',409);
+      const posted=(await sql`WITH claim AS (UPDATE payroll_payment_instructions SET status='confirmed',confirmed_at=now(),date=${date}::date WHERE id=${payment.id} AND status='prepared' RETURNING id,lines),
+        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount)
+          SELECT ${cid},${date}::date,${'ПІ-'+payment.id},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount
+          FROM claim CROSS JOIN LATERAL jsonb_to_recordset(claim.lines) AS l(debit_acc text,credit_acc text,amount numeric,description text) RETURNING id)
+          SELECT (SELECT count(*) FROM claim)::int AS confirmed,(SELECT count(*) FROM inserted)::int AS entries`)[0];
+      if(!posted?.confirmed)return fail('Платіж уже проведено',409);
+      await aud(c,'payroll-payment','payroll',pid,null,{kind,date,payment_id:payment.id},'Підтверджено виконання за банківською випискою');
+      return json({ok:true,...posted});
+    }
+    if(res==='payroll-instructions' && M==='GET'){
+      const cid=Number(q.get('company_id'));const c=await own(cid,false,'entries','read');if(!c)return fail('Немає прав',403);
+      return json(await sql`SELECT p.id,p.payroll_id,p.kind,to_char(p.date,'YYYY-MM-DD') AS date,p.amount,p.lines,p.status,p.confirmed_at,r.name AS staff_name
+      FROM payroll_payment_instructions p JOIN payroll_calculations c ON c.id=p.payroll_id
+      LEFT JOIN refs r ON r.id=c.staff_id WHERE p.company_id=${cid} ORDER BY p.id DESC`);
+    }
     // Monthly payroll calculations. No accounting postings are generated implicitly.
     if (res === 'payroll') {
       const cid=Number(M==='POST'?body.company_id:q.get('company_id'));
@@ -322,22 +398,29 @@ export default async (req) => {
       if(![100,150,200].includes(pct))return fail('Вкажіть правильний відсоток ПСП (100, 150 або 200) у довіднику персоналу');
       const threshold=Math.round(living*1.4/10)*10;
       const psp=entitled&&gross<=threshold?r2(living*0.5*pct/100):0;
-      const pit=r2(Math.max(0,gross-psp)*0.18);
-      const military=r2(gross*0.05);
+      const pitRate=Number(norm.pit_rate ?? 18), militaryRate=Number(norm.military_rate ?? 5), defaultEsvRate=Number(norm.esv_rate ?? 22);
+      if(![pitRate,militaryRate,defaultEsvRate].every(v=>Number.isFinite(v)&&v>=0&&v<=50))return fail('Некоректні ставки ПДФО, ВЗ або ЄСВ у нормативах');
+      const pit=r2(Math.max(0,gross-psp)*pitRate/100);
+      const military=r2(gross*militaryRate/100);
       const extra=Array.isArray(body.deductions)?body.deductions:[];
       if(extra.length>25||extra.some(d=>!d||String(d.name||'').length>100||!String(d.name||'').trim()||!Number.isFinite(Number(d.amount))||Number(d.amount)<0||Number(d.amount)>gross))return fail('Некоректні додаткові утримання');
       const extras=extra.map(d=>({name:String(d.name).trim(),amount:r2(Number(d.amount))}));
       const extraTotal=r2(extras.reduce((a,d)=>a+d.amount,0));
       const net=r2(gross-pit-military-extraTotal);
       if(net<0)return fail('Утримання перевищують суму до виплати');
-      const esvRate=Number(employee.data?.esv_rate||22);
+      const esvRate=Number(employee.data?.esv_rate || defaultEsvRate);
       if(!(esvRate>=0&&esvRate<=50))return fail('Некоректна ставка ЄСВ');
       // Minimum ESV basis only when user explicitly confirms full month/main employment.
       const fullMain=body.full_main_job===true;
       const esvBase=Math.min(Math.max(gross,fullMain?minWage:0),20*minWage);
       const esv=r2(esvBase*esvRate/100);
-      const details={gross:r2(gross),pit,military,psp,threshold,net,esv,esv_base:r2(esvBase),esv_rate:esvRate,extras,year,month,full_main_job:fullMain,staff_name:employee.name,psp_applied:psp>0};
-      const row=(await sql`INSERT INTO payroll_calculations(company_id,staff_id,year,month,gross,details,created_by) VALUES (${cid},${staffId},${year},${month},${gross},${JSON.stringify(details)}::jsonb,${me.id}) ON CONFLICT(company_id,staff_id,year,month) DO UPDATE SET gross=EXCLUDED.gross,details=EXCLUDED.details,created_by=EXCLUDED.created_by,updated_at=now() RETURNING id,details`)[0];
+      const firstHalf=Number(body.first_half || 0);
+      if(!Number.isFinite(firstHalf)||firstHalf<0||firstHalf>gross)return fail('Перша половина не може перевищувати місячне нарахування');
+      const debit=String(employee.data?.payroll_debit||'92');
+      if(!/^(23|91|92|93|94|15|20|26)$/.test(debit))return fail('Непідтримуваний рахунок витрат на оплату праці у персоналі');
+      const details={gross:r2(gross),first_half:r2(firstHalf),second_half:r2(gross-firstHalf),pit,military,pit_rate:pitRate,military_rate:militaryRate,psp,threshold,net,esv,esv_base:r2(esvBase),esv_rate:esvRate,payroll_debit:debit,extras,year,month,full_main_job:fullMain,staff_name:employee.name,psp_applied:psp>0};
+      const row=(await sql`INSERT INTO payroll_calculations(company_id,staff_id,year,month,gross,details,created_by) VALUES (${cid},${staffId},${year},${month},${gross},${JSON.stringify(details)}::jsonb,${me.id}) ON CONFLICT(company_id,staff_id,year,month) DO UPDATE SET gross=EXCLUDED.gross,details=EXCLUDED.details,created_by=EXCLUDED.created_by,updated_at=now() WHERE payroll_calculations.posted_at IS NULL RETURNING id,details`)[0];
+      if(!row)return fail('Проведений розрахунок не можна змінювати. Використайте механізм бухгалтерських коригувань.',409);
       await aud(c,'payroll-calculate','payroll',row.id,null,details,'Розрахунок без бухгалтерського проведення');
       return json(row);
     }
@@ -364,7 +447,13 @@ export default async (req) => {
         if (!c) return fail('Немає доступу', 403);
         lockCheck(c, body.date);
         const lines = body.lines || [{ debit_acc: body.debit_acc, credit_acc: body.credit_acc, amount: body.amount }];
-        if (!body.date || !validLines(lines)) return fail('Заповніть усі поля; Дт і Кт мають різнитися, сума > 0');
+        if (!validISODate(body.date) || !validLines(lines)) return fail('Перевірте дату (РРРР-ММ-ДД), Дт/Кт та суми: додатні числа з точністю до 2 знаків');
+        const codes=[...new Set(lines.flatMap(l=>[l.debit_acc,l.credit_acc]))];
+        const known=await sql`SELECT code,kind FROM accounts WHERE code = ANY(${codes}::text[])`;
+        if(known.length !== codes.length) return fail('У проводці використано рахунок, відсутній у плані рахунків');
+        const kindByCode=new Map(known.map(a=>[a.code,a.kind]));
+        if(lines.some(l=> (kindByCode.get(l.debit_acc)==='O') !== (kindByCode.get(l.credit_acc)==='O') && l.debit_acc!=='000' && l.credit_acc!=='000'))
+          return fail('Не можна змішувати позабалансовий і балансовий рахунки в одній проводці');
         // усі проводки операції — в одній транзакції: або всі, або жодної
         await sql.transaction(lines.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount)
           VALUES (${c.id},${body.date},${body.doc || ''},${body.description || ''},${body.partner || ''},${l.debit_acc},${l.credit_acc},${Number(l.amount)})`));
@@ -479,6 +568,16 @@ export default async (req) => {
       });
     }
     if (res === 'corrections') {
+      if (M === 'GET' && sub === 'memo') {
+        const c = await access(Number(q.get('company_id')), 'read');
+        if (!c) return fail('Немає доступу', 403);
+        const corrId=Number(id);
+        if (!Number.isSafeInteger(corrId) || corrId<=0) return fail('Некоректний номер виправлення');
+        const k=(await sql`SELECT id,number,method,to_char(cdate,'YYYY-MM-DD') AS cdate,orig_amount,delta,result_amount,reason,user_name,source_doc_id,source_entry_id FROM corrections WHERE id=${corrId} AND company_id=${c.id}`)[0];
+        if(!k) return fail('Виправлення не знайдено',404);
+        const entries=await sql`SELECT debit_acc,credit_acc,amount,description FROM entries WHERE corr_id=${corrId} AND company_id=${c.id} ORDER BY id`;
+        return json({correction:k,entries,company_name:c.name});
+      }
       if (M !== 'POST') {
         const c = await access(Number(q.get('company_id')), 'read');
         if (!c) return fail('Немає доступу', 403);
