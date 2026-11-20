@@ -163,11 +163,11 @@ function login(){
   $('#app').innerHTML=`<div class="card" style="max-width:380px;margin:30px auto"><h3>Вхід</h3>
   <label>Логін</label><input id="lg" autocomplete="username"><label>Пароль</label><input id="pw" type="password" autocomplete="current-password">
   <details><summary class="mut" style="margin-top:10px;cursor:pointer">Реєстрація нового користувача</summary>
-  <label>Прізвище та ім’я</label><input id="nm"><label>Код адміністратора (лише для адміністраторів)</label><input id="tc"></details>
+  <label>Прізвище та ім’я</label><input id="nm"></details>
   <p><button class="btn pri" onclick="auth('login')">Увійти</button> <button class="btn" onclick="auth('register')">Зареєструватись</button></p><p id="msg" class="err"></p></div>`;
 }
 async function auth(m){
-  try{const d=await api(m,{method:'POST',body:{login:$('#lg').value,password:$('#pw').value,name:$('#nm').value,teacher_code:$('#tc').value}});
+  try{const d=await api(m,{method:'POST',body:{login:$('#lg').value,password:$('#pw').value,name:$('#nm').value,teacher_code:''}});
   token=d.token;localStorage.setItem('token',token);boot()}catch(e){$('#msg').textContent=e.message}
 }
 async function boot(){

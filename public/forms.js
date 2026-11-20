@@ -178,7 +178,7 @@ function calc(rows,o,p){
 }
 function tbl(rows,vs,BR,first,h1,h2){
   const cell=(v,c)=>{const z=Math.abs(v[c]||0)<0.005,t=z?'–':fmt(v[c]);return BR.has(c)?`( ${t} )`:t};
-  return `<table><thead><tr><th>${first}</th><th>Код рядка</th><th class="n">${h1}</th><th class="n">${h2}</th></tr></thead><tbody>${rows.map(([c,n,s])=>{
+  return `<table class="financial-table"><colgroup><col style="width:49%"><col style="width:11%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr><th>${first}</th><th>Код рядка</th><th class="n">${h1}</th><th class="n">${h2}</th></tr></thead><tbody>${rows.map(([c,n,s])=>{
     if(s==='h')return `<tr><td colspan="4" style="font-weight:700;background:var(--bg)">${esc(n)}</td></tr>`;
     const b=/^(Усього|БАЛАНС|Валовий|Чистий фінансовий|Фінансовий результат)/.test(n.trim());
     return `<tr${b?' style="font-weight:700"':''}><td style="padding-left:${8+n.search(/\S/)*8}px">${esc(n.trim())}</td><td>${c}</td><td class="n">${cell(vs[0],c)}</td><td class="n">${cell(vs[1],c)}</td></tr>`}).join('')}</tbody></table>`;
@@ -187,11 +187,11 @@ function renderForms(f,t,o0,o1,pCur,pPrev){
   const a=[calc(F1A,o0,[]),calc(F1A,o1,[])],l=[calc(F1P,o0,[]),calc(F1P,o1,[])],r=[calc(F2,[],pCur),calc(F2,[],pPrev)];
   const ok=Math.abs(a[1][1300]-l[1][1900])<0.005&&Math.abs(a[0][1300]-l[0][1900])<0.005;
   const hd=(n,k,d)=>`<h3>${n}</h3><p class="mut">${k} · Код за ДКУД ${d} · Одиниця виміру: грн (у офіційній звітності — тис. грн)</p>`;
-  return `<div class="card sc">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
+  return `<div class="card sc financial-form">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
   ${tbl(F1A,a,BR1,'АКТИВ','На початок звітного періоду','На кінець звітного періоду')}<br>
   ${tbl(F1P,l,BR1,'ПАСИВ','На початок звітного періоду','На кінець звітного періоду')}
   <p class="${ok?'mut':'err'}">${ok?'✓ Актив дорівнює пасиву':'Актив ≠ пасив: перевірте проводки'}</p></div>
-  <div class="card sc">${hd('Звіт про фінансові результати (Звіт про сукупний дохід) за '+f+' — '+t,'Форма №2','1801003')}
+  <div class="card sc financial-form">${hd('Звіт про фінансові результати (Звіт про сукупний дохід) за '+f+' — '+t,'Форма №2','1801003')}
   ${tbl(F2,r,BR2,'Стаття','За звітний період','За аналогічний період попереднього року')}</div>
   <p class="noprint"><button class="btn" onclick="window.print()">Друк</button></p>`;
 }

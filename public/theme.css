@@ -44,3 +44,14 @@ tbody tr:nth-child(even){background:#fcfcf8}
 .permission-column-all{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;margin:0;font-weight:600;text-align:center}
 .permission-all-control{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--mut)}
 .permission-all-control input[type="checkbox"]{width:16px;height:16px;margin:0;accent-color:var(--ac);cursor:pointer}
+
+/* Financial statements: shared column grid, readable at narrow widths */
+.financial-form{min-width:0;overflow:visible}
+.financial-form .financial-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}
+.financial-form .financial-table th,.financial-form .financial-table td{white-space:normal;overflow-wrap:break-word;vertical-align:middle;padding:5px 6px;line-height:1.3}
+.financial-form .financial-table th:nth-child(2),.financial-form .financial-table td:nth-child(2){text-align:center;white-space:nowrap}
+.financial-form .financial-table th.n,.financial-form .financial-table td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.financial-form h3{font-size:16px;line-height:1.3}
+.financial-form .mut{font-size:12px}
+@media(max-width:650px){.financial-form{padding:9px!important}.financial-form .financial-table{font-size:10px}.financial-form .financial-table th,.financial-form .financial-table td{padding:4px 3px}.financial-form .financial-table td.n{font-size:10px}}
+@media print{ @page{size:A4 portrait;margin:10mm} .financial-form{width:100%!important;max-width:100%!important;overflow:visible!important;break-inside:auto;box-shadow:none!important;padding:0!important} .financial-form + .financial-form{break-before:page} .financial-form .financial-table{width:100%!important} .financial-form .financial-table tr{break-inside:avoid} }

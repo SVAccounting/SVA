@@ -40,8 +40,8 @@ views.company=async()=>{
   `<div class="card sc"><h3>Підприємства</h3><table><tbody>${L.map(c=>`<tr><td>${esc(c.name)}${c.owner?` <span class="mut">— ${esc(c.owner)}</span>`:''}</td><td class="mut">${(TAXES.find(x=>x[0]===(c.settings?.tax||'general'))||[])[1]||''}; ПДВ: ${c.settings?.vat===false?'ні':'так'}</td><td><button class="btn ${company?.id===c.id?'pri':''}" onclick="pick(${c.id})">${company?.id===c.id?'Обрано':'Обрати'}</button> ${T?`<button class="btn" onclick="assignAdmin(${c.id})">Призначити адміна</button>`:''} ${(T||currentRights.manager&&company?.id===c.id)?`<button class="btn" onclick="deleteCompany(${c.id},decodeURIComponent('${encodeURIComponent(c.name)}'))">Видалити</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
 };
 const saveCo=c=>{company=c;localStorage.setItem('company',JSON.stringify(c))};
-async function pick(id){saveCo((await api('companies')).find(c=>c.id===id));go('entries')}
-async function createCo(){try{saveCo(await api('companies',{method:'POST',body:{name:$('#s_name').value,settings:readSet()}}));go('open')}catch(e){$('#msg').textContent=e.message}}
+async function pick(id){const c=(await api('companies')).find(c=>c.id===id);if(!c)throw new Error('Підприємство недоступне');saveCo(c);await loadRights();nav();return go('entries')}
+async function createCo(){try{saveCo(await api('companies',{method:'POST',body:{name:$('#s_name').value,settings:readSet()}}));await loadRights();nav();go('open')}catch(e){$('#msg').textContent=e.message}}
 views.set=async()=>{
   const ro=!canDo('settings','update');
   $('#app').innerHTML=`<div class="card"><h3>Налаштування та облікова політика</h3>${setForm(S(),company.name)}${ro?'':'<p><button class="btn pri" onclick="saveSet()">Зберегти</button> <span id="msg"></span></p>'}</div>`;
