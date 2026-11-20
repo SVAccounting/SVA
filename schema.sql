@@ -197,12 +197,6 @@ DELETE FROM accounts a WHERE a.code IN ('85','13','10','12','15','20','63','65',
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY, login TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'student', salt TEXT NOT NULL, hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now());
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS public_id UUID;
-UPDATE users SET public_id = gen_random_uuid() WHERE public_id IS NULL;
-ALTER TABLE users ALTER COLUMN public_id SET DEFAULT gen_random_uuid();
-ALTER TABLE users ALTER COLUMN public_id SET NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS users_public_id_unique ON users(public_id);
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS owner_id INT REFERENCES users(id) ON DELETE CASCADE;
 CREATE TABLE IF NOT EXISTS tasks (
   id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT, lines JSONB NOT NULL, created_at TIMESTAMPTZ DEFAULT now());

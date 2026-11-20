@@ -171,9 +171,7 @@ export default async (req) => {
       if (!Number.isSafeInteger(Number(cid)) || Number(cid) <= 0) return null;
       const c = (await sql`SELECT * FROM companies WHERE id=${Number(cid)}`)[0];
       if (!c) return null;
-      if (T) return c;
-      // Legacy owners retain management only until membership migration is complete.
-      if (c.owner_id === me.id) return c;
+      if (T || c.owner_id === me.id) return c;
       const member = (await sql`SELECT permissions,company_role FROM company_members WHERE company_id=${c.id} AND user_id=${me.id}`)[0];
       if (!member) return null;
       if (member.company_role === 'admin') return c;
@@ -206,7 +204,7 @@ export default async (req) => {
       const manager = T || c.owner_id === me.id || (await sql`SELECT 1 FROM company_members WHERE company_id=${cid} AND user_id=${me.id} AND company_role='admin' LIMIT 1`).length > 0;
       if (M === 'GET') {
         if (!manager) return fail('Недостатньо прав', 403);
-        return json(await sql`SELECT u.id,u.public_id,u.login,u.name,m.permissions,m.can_create_company,m.company_role FROM company_members m JOIN users u ON u.id=m.user_id WHERE m.company_id=${cid} ORDER BY u.name`);
+        return json(await sql`SELECT u.id,u.login,u.name,m.permissions,m.can_create_company,m.company_role FROM company_members m JOIN users u ON u.id=m.user_id WHERE m.company_id=${cid} ORDER BY u.name`);
       }
       if (!manager) return fail('Тільки адміністратор підприємства', 403);
       if (M === 'POST') {
@@ -231,7 +229,6 @@ export default async (req) => {
         return json({ok:true});
       }
       if (M === 'DELETE') {
-        if (c.owner_id === Number(id)) return fail('Не можна відкликати доступ власника. Спочатку призначте іншого власника.',409);
         await sql`DELETE FROM company_members WHERE company_id=${cid} AND user_id=${Number(id)}`;
         return json({ok:true});
       }
