@@ -212,7 +212,7 @@ export default async (req) => {
         const pw = String(body.password || '');
         const permissions = body.permissions || {};
         if (typeof body.can_create_company !== 'boolean') return fail('Вкажіть дозвіл створення підприємства');
-        if (!/^[a-z0-9._-]{3,64}$/.test(login)) return fail('Логін: 3–64 латинські символи, цифри, крапка, дефіс або _');
+        if (!(login.length <= 254 && (/^[a-z0-9._-]{3,64}$/.test(login) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(login)))) return fail('Вкажіть коректний логін або email');
         if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions) || Object.keys(permissions).some(k => !MODULES.includes(k))) return fail('Невірні дозволи');
         for (const item of Object.values(permissions)) if (!item || typeof item !== 'object' || Object.keys(item).some(k=>!['read','create','update','delete'].includes(k)) || Object.values(item).some(v=>typeof v!=='boolean')) return fail('Невірні дозволи');
         let user = (await sql`SELECT id,role FROM users WHERE login=${login}`)[0];

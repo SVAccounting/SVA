@@ -126,10 +126,29 @@ views.members=async function(){
  if(!r.manager){$('#app').innerHTML='<div class="card err">Лише для адміністратора підприємства</div>';return}
  const members=await api('members?company_id='+company.id);
  const mods=[['refs','Довідники'],['entries','Операції'],['docs','Документи'],['reports','Звіти'],['stock','Склад'],['corrections','Виправлення'],['settings','Налаштування'],['audit','Журнал змін']];
- $('#app').innerHTML=`<div class="card"><h3>Користувачі підприємства: ${esc(company.name)}</h3><p class="mut">Створіть користувача або введіть логін існуючого. Пароль потрібен лише для нового облікового запису.</p><div class="row"><div><label>Логін</label><input id="ul" autocomplete="off"></div><div><label>Ім’я</label><input id="un"></div><div><label>Пароль нового користувача (від 10 символів)</label><input id="up" type="password" autocomplete="new-password"></div></div><h3>Дозволи</h3><p><label><input id="allow_company_create" type="checkbox"> Дозволити користувачу створювати нові підприємства</label></p><table><thead><tr><th>Розділ</th><th>Перегляд</th><th>Створення</th><th>Редагування</th><th>Видалення</th></tr></thead><tbody>${mods.map(([k,n])=>`<tr><td>${n}</td>${['read','create','update','delete'].map(a=>`<td><input type="checkbox" data-module="${k}" data-action="${a}"></td>`).join('')}</tr>`).join('')}</tbody></table><p><button class="btn pri" onclick="saveMember()">Зберегти доступ</button> <span id="msg"></span></p></div><div class="card"><h3>Користувачі з доступом</h3><table><tbody>${members.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.login)}</td><td><button class="btn" onclick="editMember(${u.id})">Права</button> <button class="btn" onclick="removeMember(${u.id})">Відкликати</button></td></tr>`).join('')||'<tr><td>Поки немає користувачів</td></tr>'}</tbody></table></div>`;
+ $('#app').innerHTML=`<div class="card"><h3>Користувачі підприємства: ${esc(company.name)}</h3><p class="mut">Створіть користувача або введіть логін чи email уже зареєстрованого користувача. Пароль потрібен лише для нового облікового запису.</p><div class="row"><div><label>Логін або email</label><input id="ul" autocomplete="off"></div><div><label>Ім’я</label><input id="un"></div><div><label>Пароль нового користувача (від 10 символів)</label><input id="up" type="password" autocomplete="new-password"></div></div><h3>Дозволи</h3><label class="company-create-option" for="allow_company_create"><input id="allow_company_create" type="checkbox"><span>Дозволити користувачу створювати нові підприємства</span></label><table><thead><tr><th>Розділ</th>${[['read','Перегляд'],['create','Створення'],['update','Редагування'],['delete','Видалення']].map(([a,n])=>`<th><label class="permission-column-all"><span>${n}</span><span class="permission-all-control"><input type="checkbox" data-select-all="${a}" aria-label="Усі права: ${n}"><span>Усі права</span></span></label></th>`).join('')}</tr></thead><tbody>${mods.map(([k,n])=>`<tr><td>${n}</td>${['read','create','update','delete'].map(a=>`<td><input type="checkbox" data-module="${k}" data-action="${a}"></td>`).join('')}</tr>`).join('')}</tbody></table><p><button class="btn pri" onclick="saveMember()">Зберегти доступ</button> <span id="msg"></span></p></div><div class="card"><h3>Користувачі з доступом</h3><table><tbody>${members.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.login)}</td><td><button class="btn" onclick="editMember(${u.id})">Права</button> <button class="btn" onclick="removeMember(${u.id})">Відкликати</button></td></tr>`).join('')||'<tr><td>Поки немає користувачів</td></tr>'}</tbody></table></div>`;
  window.memberCache=members;
+ // Column-level selection: checked / unchecked / mixed state.
+ const syncPermissionColumns=()=>{
+  document.querySelectorAll('[data-select-all]').forEach(all=>{
+   const cells=[...document.querySelectorAll('[data-module][data-action="'+all.dataset.selectAll+'"]')];
+   const count=cells.filter(el=>el.checked).length;
+   all.checked=cells.length>0&&count===cells.length;
+   all.indeterminate=count>0&&count<cells.length;
+  });
+ };
+ const permissionsTable=$('#app').querySelector('table');
+ permissionsTable.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.matches('[data-select-all]')){
+   permissionsTable.querySelectorAll('[data-module][data-action="'+el.dataset.selectAll+'"]').forEach(cell=>cell.checked=el.checked);
+  }
+  if(el.matches('[data-select-all], [data-module]'))syncPermissionColumns();
+ });
+ window.syncPermissionColumns=syncPermissionColumns;
+ syncPermissionColumns;
 };
-window.editMember=function(id){const u=window.memberCache.find(x=>x.id===id);if(!u)return;$('#ul').value=u.login;$('#ul').readOnly=true;$('#un').value=u.name;$('#up').value='';$('#allow_company_create').checked=u.can_create_company===true;document.querySelectorAll('[data-module]').forEach(el=>el.checked=u.permissions?.[el.dataset.module]?.[el.dataset.action]===true)};
+window.editMember=function(id){const u=window.memberCache.find(x=>x.id===id);if(!u)return;$('#ul').value=u.login;$('#ul').readOnly=true;$('#un').value=u.name;$('#up').value='';$('#allow_company_create').checked=u.can_create_company===true;document.querySelectorAll('[data-module]').forEach(el=>el.checked=u.permissions?.[el.dataset.module]?.[el.dataset.action]===true);window.syncPermissionColumns?.()};
 window.saveMember=async function(){
  const permissions={};document.querySelectorAll('[data-module]').forEach(el=>{const k=el.dataset.module;permissions[k]??={};permissions[k][el.dataset.action]=el.checked});
  try{await api('members',{method:'POST',body:{company_id:company.id,login:$('#ul').value,name:$('#un').value,password:$('#up').value,permissions,can_create_company:$('#allow_company_create').checked}});await views.members()}catch(e){$('#msg').textContent=e.message}

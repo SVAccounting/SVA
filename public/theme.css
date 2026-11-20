@@ -1,5 +1,4 @@
-:root{--bg:#f2f2e4;--card:#e9e9db;--tx:#1b1c12;--mut:#6a6b58;--ac:#1272c4;--bd:#d3d4c1;--r:18px}
-@media(prefers-color-scheme:dark){:root{--bg:#14160e;--card:#1f2217;--tx:#ecefe0;--mut:#9aa088;--ac:#5aa7f0;--bd:#33382a}}
+:root{--bg:#fefefc;--card:#fafaf6;--tx:#252720;--mut:#707267;--ac:#1272c4;--bd:#e7e7dd;--r:18px}
 body{font-family:Roboto,Inter,system-ui,sans-serif;font-size:15px}
 header{position:sticky;top:0;z-index:30;border:0;box-shadow:0 1px 0 var(--bd);padding:10px 16px;gap:10px}
 .logo{font-size:23px;font-weight:800;letter-spacing:-.5px;color:var(--tx)}.logo b{color:var(--ac);font-size:inherit}.logo.xl{font-size:44px}
@@ -9,7 +8,7 @@ body:not(.authed) #navtg{display:none}
 .btn,nav button{border:1px solid var(--bd);border-radius:12px;padding:8px 14px;font-weight:500;transition:.15s}.btn:hover{border-color:var(--ac);color:var(--ac)}
 .btn.pri{background:var(--ac);color:#fff;border-color:var(--ac)}.btn.pri:hover{filter:brightness(1.1);color:#fff}.btn:disabled{opacity:.5;cursor:wait}
 input,select{border-radius:10px;padding:9px 10px}input:focus,select:focus{outline:2px solid var(--ac);outline-offset:0}
-tbody tr:hover{background:#0000000b}th{font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+tbody tr:hover{background:#f3f3ec}th{font-size:12px;text-transform:uppercase;letter-spacing:.03em}
 aside{border:0;border-radius:var(--r);padding:8px}
 .nh{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:9px 11px;border-radius:11px;background:color-mix(in srgb,var(--ac) 12%,transparent);color:var(--ac);font-weight:700;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;user-select:none}
 .nh i{font-style:normal;transition:transform .2s}.ng:not(.open) .nh i{transform:rotate(-90deg)}
@@ -24,3 +23,24 @@ aside{border:0;border-radius:var(--r);padding:8px}
 @keyframes sp{to{transform:rotate(360deg)}}@keyframes ti{from{opacity:0;transform:translateY(10px)}}
 body.busy{cursor:progress}body.pdfmode{--bg:#fff;--card:#fff;--tx:#000;--mut:#444;--bd:#bbb}body.pdfmode .tb,body.pdfmode #app>.card:not(.sc){display:none}
 @media print{#app>.card:not(.sc){display:none}}
+
+/* Soft warm surfaces: no pure white or cool gray */
+body{background:var(--bg);color:var(--tx)}
+header{background:#fafaf6}
+aside{background:#fbfbf7}
+.card{background:var(--card)}
+.nh{background:#f0f1e9}
+nav button{background:#f4f5ed}
+input,select,textarea{background:#fdfdf9;color:var(--tx);border-color:var(--bd)}
+thead,th{background:#f6f6f0}
+tbody tr:nth-child(even){background:#fcfcf8}
+
+/* Company permission checkbox and label aligned in one row */
+.company-create-option{display:inline-flex;align-items:center;justify-content:flex-start;gap:10px;margin:8px 0 14px;padding:10px 14px;border:1px solid var(--bd);border-radius:10px;background:var(--card);font-size:14px;color:var(--tx);cursor:pointer;max-width:100%;box-sizing:border-box}
+.company-create-option input[type="checkbox"]{width:17px;height:17px;flex:0 0 17px;margin:0;accent-color:var(--ac)}
+.company-create-option span{line-height:1.4}
+
+/* Column-wide permission controls */
+.permission-column-all{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;margin:0;font-weight:600;text-align:center}
+.permission-all-control{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--mut)}
+.permission-all-control input[type="checkbox"]{width:16px;height:16px;margin:0;accent-color:var(--ac);cursor:pointer}
