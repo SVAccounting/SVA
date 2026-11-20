@@ -195,3 +195,8 @@ html,body{max-width:100%;overflow-x:clip}
 #inventory_scan_status{font-size:14px;line-height:1.4}
 .inventory-barcode-fallback{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .inventory-barcode-fallback input{max-width:100%;box-sizing:border-box}
+
+/* Сканер у полі пошуку номенклатури */
+.ref-search-field{display:flex;flex-direction:column;gap:5px;min-width:210px;flex:1 1 260px}
+.ref-search-field .barcode-input-row{width:100%}
+.ref-search-field .barcode-camera-btn{height:auto;min-height:40px}

@@ -1,5 +1,6 @@
 /* Сканування штрихкодів номенклатури. Камера запускається лише з натискання користувача. */
 let inventoryScanner = null;
+let inventoryScannerMode = 'edit';
 let inventoryScannerBusy = false;
 let inventoryScannerLastCode = '';
 let inventoryScannerScriptPromise = null;
@@ -35,6 +36,18 @@ async function inventoryBarcodeFound(decodedText){
   const code=String(decodedText||'').trim();
   if(!code||inventoryScannerLastCode===code)return;
   inventoryScannerLastCode=code;
+  if(inventoryScannerMode==='search'){
+    const input=document.getElementById('ref_search');
+    await closeInventoryScanner();
+    if(!input)return;
+    input.value=code;
+    inventoryBarcodeSearchExact=code;
+    const group=document.getElementById('ref_group_filter');
+    if(group)group.value='';
+    filterRefRows();
+    input.focus();
+    return;
+  }
   const input=document.getElementById('rf_barcode');
   if(!input){await closeInventoryScanner();return}
   input.value=code;
@@ -47,9 +60,10 @@ async function inventoryBarcodeFound(decodedText){
   }
   input.focus();
 }
-async function scanInventoryBarcode(){
+async function scanInventoryBarcode(mode='edit'){
   if(inventoryScannerBusy||document.getElementById('inventory_barcode_modal'))return;
-  if(!document.getElementById('rf_barcode'))return;
+  if(mode==='search'?!document.getElementById('ref_search'):!document.getElementById('rf_barcode'))return;
+  inventoryScannerMode=mode;
   inventoryScannerLastCode='';
   const overlay=document.createElement('div');overlay.id='inventory_barcode_modal';overlay.className='inventory-barcode-overlay';
   overlay.innerHTML=`<div class="inventory-barcode-dialog" role="dialog" aria-modal="true" aria-label="Сканування штрихкоду">
@@ -58,7 +72,7 @@ async function scanInventoryBarcode(){
     <p id="inventory_scan_status" role="status">Запуск камери…</p>
     <div class="inventory-barcode-fallback"><label for="inventory_barcode_photo">Або сфотографуйте штрихкод:</label>
       <input id="inventory_barcode_photo" type="file" accept="image/*" capture="environment" onchange="scanInventoryBarcodePhoto(this)"></div>
-    <p class="mut" style="margin:8px 0 0">Наведіть камеру на EAN-13, EAN-8, UPC, Code 128 або QR. Код підставиться у картку товару, але не збережеться автоматично.</p>
+    <p class="mut" style="margin:8px 0 0">${inventoryScannerMode==='search'?'Наведіть камеру на штрихкод. Після сканування список номенклатури відфільтрується за точним кодом.':'Наведіть камеру на EAN-13, EAN-8, UPC, Code 128 або QR. Код підставиться у картку товару, але не збережеться автоматично.'}</p>
   </div>`;
   overlay.addEventListener('click',ev=>{if(ev.target===overlay)closeInventoryScanner()});
   document.body.appendChild(overlay);
