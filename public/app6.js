@@ -1,7 +1,6 @@
 // Workspace and responsive navigation enhancement
 (()=>{
-const originalNav=nav, originalGo=go, originalVisibleTab=visibleTab;
-visibleTab=function(k){return k==='home'||originalVisibleTab(k)};
+const originalNav=nav, originalGo=go;
 const key=()=>`prooblik:desktop:v2:${me?.id||me?.login||'guest'}:${company?.id||'none'}`;
 const available=()=>MENU.flatMap(([,items])=>items).filter(([id])=>id!=='home'&&id!=='company'&&visibleTab(id));
 const defaults=['entries','add','tpl','docs','osv','rep','r_customer','r_item'];
