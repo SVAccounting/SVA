@@ -15,7 +15,7 @@
   if(!bar){bar=document.createElement('div');bar.id='recent-navigation';bar.className='recent-navigation noprint';document.querySelector('.lay')?.before(bar)}
   bar.hidden=!me;if(!me)return;
   const items=['home',...read()];
-  bar.innerHTML=`<div class="history-controls"><button class="btn" onclick="navHistoryBack()" aria-label="Назад" ${position<=0?'disabled':''}>←</button><button class="btn" onclick="navHistoryForward()" aria-label="Вперед" ${position<0||position>=history.length-1?'disabled':''}>→</button></div><div class="recent-tabs" role="tablist" aria-label="Відкриті вкладки">${items.map(id=>`<div class="recent-tab ${tab===id?'active':''} ${id==='home'?'home-tab':''}" role="presentation"><button class="recent-tab-open" role="tab" aria-selected="${tab===id}" title="${escape(title(id))}" onclick="go('${id}')"><span class="recent-tab-label">${escape(title(id))}</span></button>${id==='home'?'':`<button class="recent-tab-close" title="Закрити вкладку" aria-label="Закрити ${escape(title(id))}" onclick="closeRecentTab('${id}')">×</button>`}</div>`).join('')}</div>`;
+  bar.innerHTML=`<div class="history-controls"><button class="btn" onclick="navHistoryBack()" aria-label="Назад" ${position<=0?'disabled':''}>←</button><button class="btn" onclick="navHistoryForward()" aria-label="Вперед" ${position<0||position>=history.length-1?'disabled':''}>→</button></div><div class="recent-tabs" role="tablist" aria-label="Відкриті вкладки">${items.map(id=>`<div class="recent-tab ${tab===id?'active':''} ${id==='home'?'home-tab':''}" role="presentation"><button class="recent-tab-open" role="tab" aria-selected="${tab===id}" title="${escape(title(id))}" onclick="go('${id}')"><span class="recent-tab-label">${escape(title(id))}</span></button>${id==='home'?'':`<button class="recent-tab-close" title="Закрити вкладку" aria-label="Закрити ${escape(title(id))}" onclick="closeRecentTab('${id}')">×</button>`}</div>`).join('')}</div><div class="draft-nav-actions"><button class="btn" type="button" onclick="saveDraftNow(true)" title="Зберегти чернетку поточної форми">💾 Чернетка</button></div>`;
  }
  async function navigate(id,mode='normal'){
   if(!me){toolbar();return baseGo(id)}
@@ -29,7 +29,7 @@
    tab='home';nav();if(isMob())closeNav();
    await views.home();window.scrollTo(0,0);
   }else await baseGo(id);
-  if(seq===sequence)toolbar();
+  if(seq===sequence){ window.restoreDraft?.(id); toolbar(); }
  }
  go=id=>navigate(id);
  window.closeRecentTab=id=>{

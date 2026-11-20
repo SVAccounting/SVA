@@ -120,7 +120,7 @@ let currentRights={manager:false,permissions:{}};
 const canDo=(module,action='read')=>me?.role==='superadmin'||currentRights.permissions?.[module]?.[action]===true;
 const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports'};
 const visibleTab=k=>k==='home'||k==='company'||k==='plan'||k==='tasks'||canDo(k.startsWith('r_')?'refs':TAB_MODULE[k]||'reports','read');
-window.pick=async function(id){const selected=(await api('companies')).find(c=>c.id===id);if(!selected)throw new Error('Підприємство недоступне');saveCo(selected);await loadRights();nav();await go('entries')};
+window.pick=async function(id){const selected=(await api('companies')).find(c=>c.id===id);if(!selected)throw new Error('Підприємство недоступне');saveCo(selected);await loadRights();nav();await go('home')};
 async function loadRights(){
   currentRights={manager:false,permissions:{}};
   if(!company)return;
@@ -176,5 +176,4 @@ window.saveMember=async function(){
 };
 window.removeMember=async function(id){if(!confirm('Відкликати доступ до підприємства?'))return;try{await api(`members/${id}?company_id=${company.id}`,{method:'DELETE'});await views.members()}catch(e){alert(e.message)}};
 
-// Запуск застосунку: після підміни boot(), щоб права підприємства завантажились до побудови меню
-boot();
+// Запуск перенесено у index.html після завантаження всіх модулів.

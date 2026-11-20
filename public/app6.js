@@ -8,9 +8,12 @@ const read=()=>{try{const a=JSON.parse(localStorage.getItem(key())||'null');if(A
 const write=a=>localStorage.setItem(key(),JSON.stringify(a));
 const label=id=>available().find(x=>x[0]===id)?.[1]||id;
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tileIcons={entries:'📖',add:'✚',tpl:'☷',docs:'▤',osv:'▥',rep:'▣',r_customer:'♙',r_item:'▦',company:'▱',plan:'≡',r_staff:'♙',r_supplier:'▣',r_bank:'▤',r_wh:'▦',pko:'↓',vko:'↑',bin:'↙',bout:'↗',stock:'▧',audit:'◷',corr:'↶',chess:'▦',card:'▤'};
+const title=id=>label(id).replace(/^[^\p{L}\p{N}]+/u,'').trim();
 function desk(){
  const tiles=read().filter(x=>available().some(([id])=>id===x.id));
- $('#app').innerHTML=`<section class="desk"><div class="desk-head"><div><h2>Робочий стіл</h2><p class="mut">Швидкий доступ до ваших розділів</p></div><button class="btn" onclick="deskSettings()" aria-label="Налаштувати робочий стіл" title="Налаштувати робочий стіл">⚙</button></div><div class="tiles">${tiles.map((x,i)=>`<button class="tile ${x.size==='wide'?'wide':''}" onclick="go('${x.id}')"><span class="tile-icon">${safe(label(x.id).split(' ')[0])}</span><span>${safe(label(x.id))}</span></button>`).join('')}</div>${tiles.length?'':'<div class="card">Немає плиток. Натисніть ⚙, щоб додати потрібні розділи.</div>'}</section>`;
+ $('#app').innerHTML=`<section class="desk"><div class="desk-head"><div><h2>Робочий стіл</h2><p class="mut">Швидкий доступ до ваших розділів</p></div><div class="desk-tools"><button class="btn" id="draft-toggle" onclick="toggleDraftAutosave()" title="Автозбереження чернеток раз на 3 хвилини">Автозбереження</button><button class="btn" onclick="saveDraftNow(true)" title="Зберегти поточну чернетку">💾</button><button class="btn" onclick="deskSettings()" aria-label="Налаштувати робочий стіл" title="Налаштувати робочий стіл">⚙</button></div></div><div class="tiles">${tiles.map(x=>`<button class="tile ${x.size==='wide'?'wide':''}" onclick="go('${x.id}')" title="${safe(title(x.id))}"><span class="tile-icon" aria-hidden="true">${tileIcons[x.id]||'▣'}</span><span class="tile-title">${safe(title(x.id))}</span></button>`).join('')}</div>${tiles.length?'':'<div class="card">Немає плиток. Натисніть ⚙, щоб додати потрібні розділи.</div>'}</section>`;
+ window.updateDraftToggle?.();
 }
 window.deskSettings=()=>{
  const chosen=read(),ids=new Set(chosen.map(x=>x.id));
@@ -25,8 +28,5 @@ nav=function(){originalNav();if(!me)return;const n=$('#nav');const top=n.querySe
 if(!MENU[0][1].some(x=>x[0]==='home'))MENU[0][1].unshift(['home','🏠 Робочий стіл']);
 views.home=async()=>desk();
 go=async function(t){if(t==='home'){tab='home';nav();if(isMob())closeNav();await views.home();window.scrollTo(0,0);return}return originalGo(t)};
-const prevPick=window.pick;window.pick=async id=>{await prevPick(id);await go('home')};
-const prevBoot=window.boot;window.boot=async()=>{await prevBoot();if(me&&company)await go('home')};
-if(me&&company)queueMicrotask(()=>go('home'));
-// Existing initial boot can already be running when this script loads.
+// Boot is invoked once after all modules load, in index.html.
 })();

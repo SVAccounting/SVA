@@ -333,6 +333,11 @@ export default async (req) => {
       const c = await access(Number(q.get('company_id')), M === 'DELETE' ? 'delete' : 'read');
       if (!c) return fail('Немає доступу', 403);
       if (M === 'DELETE') return fail('Фізичне видалення проводок заборонено: використайте сторно або виправлення', 405);
+      // Explicit page/limit is opt-in. Legacy reports continue to receive all rows.
+      const pageSize = Math.min(1000,Math.max(1,Number(q.get('limit'))||1000));
+      const offset = Math.max(0,Number(q.get('offset'))||0);
+      if (q.has('limit') || q.has('offset')) return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount
+        FROM entries_a WHERE company_id=${c.id} ORDER BY date DESC, id DESC LIMIT ${pageSize} OFFSET ${offset}`);
       return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount
         FROM entries_a WHERE company_id=${c.id} ORDER BY date DESC, id DESC`);
     }
@@ -399,6 +404,10 @@ export default async (req) => {
       }
       const c = await access(Number(q.get('company_id')), 'read');
       if (!c) return fail('Немає доступу', 403);
+      const pageSize = Math.min(1000,Math.max(1,Number(q.get('limit'))||1000));
+      const offset = Math.max(0,Number(q.get('offset'))||0);
+      if (q.has('limit') || q.has('offset')) return json(await sql`SELECT id, type, number, to_char(date,'YYYY-MM-DD') AS date, partner, storno, (data->>'total')::numeric AS total
+        FROM docs WHERE company_id=${c.id} ORDER BY date DESC, id DESC LIMIT ${pageSize} OFFSET ${offset}`);
       return json(await sql`SELECT id, type, number, to_char(date,'YYYY-MM-DD') AS date, partner, storno, (data->>'total')::numeric AS total
         FROM docs WHERE company_id=${c.id} ORDER BY date DESC, id DESC`);
     }

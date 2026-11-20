@@ -29,7 +29,7 @@ aside a{display:block;padding:6px 10px;border-radius:6px;cursor:pointer}aside a:
 </style><meta name="theme-color" content="#1272c4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=20261120">
+<link rel="stylesheet" href="theme.css?v=20261120fix1">
 </head><body>
 <header><button class="btn" id="navtg" onclick="toggleNav()" title="Меню">☰</button><span class="logo">Pro<b>Oblik</b></span><span id="co" class="mut" style="flex:1"></span><button class="btn" onclick="logout()">Вийти</button></header>
 <div class="lay"><aside id="nav"></aside><main id="app"></main></div>
@@ -173,7 +173,7 @@ async function auth(m){
 async function boot(){
   if(!token)return login();
   try{me=await api('me');accounts=await api('accounts')}catch(e){return login()}
-  go(company?'entries':'company');
+  await go(company?'home':'company');
 }
 const lineRows=n=>Array.from({length:n},()=>`<div class="row" style="grid-template-columns:1fr 1fr 140px;margin-bottom:6px"><select class="ld"><option value="">Дт…</option>${accOpts()}</select><select class="lk"><option value="">Кт…</option>${accOpts()}</select><input class="la2" type="number" step="0.01" min="0" placeholder="Сума"></div>`).join('');
 const readLines=el=>[...el.querySelectorAll('.row')].map(r=>({debit_acc:r.querySelector('.ld').value,credit_acc:r.querySelector('.lk').value,amount:r.querySelector('.la2').value})).filter(l=>l.debit_acc&&l.credit_acc&&l.amount);
@@ -201,5 +201,7 @@ async function reports(){
 <script src="app3.js?v=20261120"></script>
 <script src="app4.js?v=20261120"></script>
 <script src="app5.js?v=20261120"></script>
-<script src="app6.js?v=20261120b"></script>
-<script src="app7.js?v=20261120"></script></body></html>
+<script src="app6.js?v=20261120fix1"></script>
+<script src="app7.js?v=20261120fix1"></script>
+<script src="app8.js?v=20261120fix1"></script>
+<script>boot();</script></body></html>
