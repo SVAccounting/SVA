@@ -203,7 +203,7 @@ export default async (req) => {
       const manager = T || c.owner_id === me.id;
       if (M === 'GET') {
         if (!manager) return fail('Недостатньо прав', 403);
-        return json(await sql`SELECT u.id,u.login,u.name,m.permissions FROM company_members m JOIN users u ON u.id=m.user_id WHERE m.company_id=${cid} ORDER BY u.name`);
+        return json(await sql`SELECT u.id,u.login,u.name,m.permissions,m.can_create_company FROM company_members m JOIN users u ON u.id=m.user_id WHERE m.company_id=${cid} ORDER BY u.name`);
       }
       if (!manager) return fail('Тільки адміністратор підприємства', 403);
       if (M === 'POST') {
@@ -211,6 +211,7 @@ export default async (req) => {
         const name = String(body.name || '').trim();
         const pw = String(body.password || '');
         const permissions = body.permissions || {};
+        if (typeof body.can_create_company !== 'boolean') return fail('Вкажіть дозвіл створення підприємства');
         if (!/^[a-z0-9._-]{3,64}$/.test(login)) return fail('Логін: 3–64 латинські символи, цифри, крапка, дефіс або _');
         if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions) || Object.keys(permissions).some(k => !MODULES.includes(k))) return fail('Невірні дозволи');
         for (const item of Object.values(permissions)) if (!item || typeof item !== 'object' || Object.keys(item).some(k=>!['read','create','update','delete'].includes(k)) || Object.values(item).some(v=>typeof v!=='boolean')) return fail('Невірні дозволи');
@@ -221,7 +222,7 @@ export default async (req) => {
           user = (await sql`INSERT INTO users(login,name,role,salt,hash) VALUES (${login},${name},'user',${salt},${hash(pw,salt)}) RETURNING id,role`)[0];
         }
         if (user.role !== 'user' && user.role !== 'student') return fail('Не можна змінювати доступ адміністратора',403);
-        await sql`INSERT INTO company_members(company_id,user_id,permissions) VALUES (${cid},${user.id},${JSON.stringify(permissions)}::jsonb) ON CONFLICT(company_id,user_id) DO UPDATE SET permissions=EXCLUDED.permissions`;
+        await sql`INSERT INTO company_members(company_id,user_id,permissions,can_create_company) VALUES (${cid},${user.id},${JSON.stringify(permissions)}::jsonb,${body.can_create_company}) ON CONFLICT(company_id,user_id) DO UPDATE SET permissions=EXCLUDED.permissions,can_create_company=EXCLUDED.can_create_company`;
         return json({ok:true});
       }
       if (M === 'DELETE') {
@@ -256,7 +257,23 @@ export default async (req) => {
       return json(await sql`SELECT code, name, kind FROM accounts ORDER BY code`);
     }
 
+    if (res === 'company-create-permission' && M === 'GET') {
+      if (T || me.role === 'admin') return json({allowed:true});
+      const allowed=(await sql`SELECT 1 FROM company_members WHERE user_id=${me.id} AND can_create_company=true LIMIT 1`).length>0;
+      return json({allowed});
+    }
     if (res === 'companies') {
+      if (M === 'DELETE') {
+        const cid = Number(id);
+        if (!Number.isSafeInteger(cid) || cid <= 0) return fail('Невірне підприємство');
+        const c = (await sql`SELECT id,name,owner_id FROM companies WHERE id=${cid}`)[0];
+        if (!c) return fail('Підприємство не знайдено',404);
+        if (!T && c.owner_id !== me.id) return fail('Видаляти підприємство може лише його адміністратор або суперадміністратор',403);
+        // Keep immutable audit_log entries as an audit trail. Company-dependent records
+        // with foreign keys are removed by ON DELETE CASCADE.
+        await sql`DELETE FROM companies WHERE id=${cid}`;
+        return json({ok:true});
+      }
       if (M === 'POST') {
         const name = String(body.name || '').trim(), st = JSON.stringify(body.settings || {});
         if (!name) return fail('Вкажіть назву');
@@ -265,12 +282,16 @@ export default async (req) => {
           if (!c) return fail('Немає доступу', 403);
           return json((await sql`UPDATE companies SET name=${name}, settings=${st}::jsonb WHERE id=${c.id} RETURNING id, name, settings`)[0]);
         }
-        if (!T && me.role !== 'admin') return fail('Лише адміністратор може створювати підприємства', 403);
+        if (!T) {
+          const owned = (await sql`SELECT 1 FROM companies WHERE owner_id=${me.id} LIMIT 1`).length > 0;
+          const granted = (await sql`SELECT 1 FROM company_members WHERE user_id=${me.id} AND can_create_company=true LIMIT 1`).length > 0;
+          if (!owned && !granted && me.role !== 'admin') return fail('Створення підприємств заборонено адміністратором',403);
+        }
         return json((await sql`INSERT INTO companies(name, owner_id, settings) VALUES (${name}, ${me.id}, ${st}::jsonb) RETURNING id, name, settings`)[0], 201);
       }
       return json(T
-        ? await sql`SELECT c.id, c.name, c.settings, c.closed_until, u.name AS owner FROM companies c LEFT JOIN users u ON u.id=c.owner_id ORDER BY u.name NULLS LAST, c.id DESC`
-        : await sql`SELECT DISTINCT c.id, c.name, c.settings, c.closed_until FROM companies c LEFT JOIN company_members m ON m.company_id=c.id AND m.user_id=${me.id} WHERE c.owner_id=${me.id} OR m.user_id=${me.id} ORDER BY c.id DESC`);
+        ? await sql`SELECT c.id, c.name, c.settings, c.closed_until, c.owner_id, u.name AS owner FROM companies c LEFT JOIN users u ON u.id=c.owner_id ORDER BY u.name NULLS LAST, c.id DESC`
+        : await sql`SELECT DISTINCT c.id, c.name, c.settings, c.closed_until, c.owner_id FROM companies c LEFT JOIN company_members m ON m.company_id=c.id AND m.user_id=${me.id} WHERE c.owner_id=${me.id} OR m.user_id=${me.id} ORDER BY c.id DESC`);
     }
 
     if (res === 'refs') {

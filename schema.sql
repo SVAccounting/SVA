@@ -253,3 +253,6 @@ BEGIN RAISE EXCEPTION 'Журнал аудиту не можна змінюва�
 DROP TRIGGER IF EXISTS audit_no_change ON audit_log;
 CREATE TRIGGER audit_no_change BEFORE UPDATE OR DELETE ON audit_log FOR EACH ROW EXECUTE FUNCTION audit_immutable();
 CREATE OR REPLACE VIEW entries_a AS SELECT * FROM entries WHERE active;
+
+-- Permissions for company creation (run permissions_migration.sql on existing DB).
+ALTER TABLE company_members ADD COLUMN IF NOT EXISTS can_create_company BOOLEAN NOT NULL DEFAULT false;

@@ -35,8 +35,9 @@ const setForm=(s,name)=>`<div class="row"><div><label>Назва підприє�
 const readSet=()=>({code:$('#s_code').value,start:$('#s_start').value,tax:$('#s_tax').value,vat:$('#s_vat').value==='1',rate:Number($('#s_rate').value)||0,inv:$('#s_inv').value,dep:$('#s_dep').value,mnma:Number($('#s_mnma').value)||0});
 views.company=async()=>{
   const L=await api('companies'),T=me.role==='superadmin';
-  $('#app').innerHTML=(T?'':`<div class="card"><h3>Нове підприємство</h3>${setForm(DEF,'')}<p><button class="btn pri" onclick="createCo()">Створити й ввести залишки</button> <span id="msg" class="err"></span></p></div>`)+
-  `<div class="card sc"><h3>Підприємства</h3><table><tbody>${L.map(c=>`<tr><td>${esc(c.name)}${c.owner?` <span class="mut">— ${esc(c.owner)}</span>`:''}</td><td class="mut">${(TAXES.find(x=>x[0]===(c.settings?.tax||'general'))||[])[1]||''}; ПДВ: ${c.settings?.vat===false?'ні':'так'}</td><td><button class="btn ${company?.id===c.id?'pri':''}" onclick="pick(${c.id})">${company?.id===c.id?'Обрано':'Обрати'}</button> ${T?`<button class="btn" onclick="assignAdmin(${c.id})">Призначити адміна</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  const mayCreate=T||me.role==='admin'||(await api('company-create-permission')).allowed;
+  $('#app').innerHTML=(!mayCreate?'':`<div class="card"><h3>Нове підприємство</h3>${setForm(DEF,'')}<p><button class="btn pri" onclick="createCo()">Створити й ввести залишки</button> <span id="msg" class="err"></span></p></div>`)+
+  `<div class="card sc"><h3>Підприємства</h3><table><tbody>${L.map(c=>`<tr><td>${esc(c.name)}${c.owner?` <span class="mut">— ${esc(c.owner)}</span>`:''}</td><td class="mut">${(TAXES.find(x=>x[0]===(c.settings?.tax||'general'))||[])[1]||''}; ПДВ: ${c.settings?.vat===false?'ні':'так'}</td><td><button class="btn ${company?.id===c.id?'pri':''}" onclick="pick(${c.id})">${company?.id===c.id?'Обрано':'Обрати'}</button> ${T?`<button class="btn" onclick="assignAdmin(${c.id})">Призначити адміна</button>`:''} ${(T||c.owner_id===me.id)?`<button class="btn" onclick="deleteCompany(${c.id},decodeURIComponent('${encodeURIComponent(c.name)}'))">Видалити</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
 };
 const saveCo=c=>{company=c;localStorage.setItem('company',JSON.stringify(c))};
 async function pick(id){saveCo((await api('companies')).find(c=>c.id===id));go('entries')}
@@ -159,4 +160,14 @@ async function assignAdmin(id){
  const login=prompt('Логін користувача, якому призначити підприємство:');if(!login)return;
  if(!confirm('Передати повне адміністрування підприємства цьому користувачу?'))return;
  try{await api('company-admin',{method:'POST',body:{company_id:id,login}});go('company')}catch(e){alert(e.message)}
+}
+
+async function deleteCompany(id,name){
+ if(!confirm(`УВАГА! Безповоротно видалити підприємство «${name}» та всі його документи, проводки, довідники й залишки? Перед цим зробіть резервну копію Neon.`))return;
+ const typed=prompt(`Для підтвердження введіть точну назву підприємства:\n${name}`);
+ if(typed!==name){alert('Назва не збігається. Видалення скасовано.');return}
+ try{await api('companies/'+id,{method:'DELETE'});
+  if(company?.id===id){company=null;localStorage.removeItem('company');currentRights={manager:false,permissions:{}}}
+  await go('company');
+ }catch(e){alert(e.message)}
 }

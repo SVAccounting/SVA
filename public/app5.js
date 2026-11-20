@@ -108,6 +108,16 @@ async function loadRights(){
 const _bootWithRights=window.boot;
 window.boot=async function(){
   if(token){try{me=await api('me');if(company)await loadRights()}catch(e){}}
+  if(token && me){
+    try{
+      const available=await api('companies');
+      const selected=available.find(c=>c.id===company?.id);
+      if(selected)saveCo(selected);
+      else if(available.length)saveCo(available[0]);
+      else {company=null;localStorage.removeItem('company')}
+      await loadRights();
+    }catch(e){console.warn(e.message)}
+  }
   return _bootWithRights();
 };
 views.members=async function(){
@@ -116,12 +126,12 @@ views.members=async function(){
  if(!r.manager){$('#app').innerHTML='<div class="card err">Лише для адміністратора підприємства</div>';return}
  const members=await api('members?company_id='+company.id);
  const mods=[['refs','Довідники'],['entries','Операції'],['docs','Документи'],['reports','Звіти'],['stock','Склад'],['corrections','Виправлення'],['settings','Налаштування'],['audit','Журнал змін']];
- $('#app').innerHTML=`<div class="card"><h3>Користувачі підприємства: ${esc(company.name)}</h3><p class="mut">Створіть користувача або введіть логін існуючого. Пароль потрібен лише для нового облікового запису.</p><div class="row"><div><label>Логін</label><input id="ul" autocomplete="off"></div><div><label>Ім’я</label><input id="un"></div><div><label>Пароль нового користувача (від 10 символів)</label><input id="up" type="password" autocomplete="new-password"></div></div><h3>Дозволи</h3><table><thead><tr><th>Розділ</th><th>Перегляд</th><th>Створення</th><th>Редагування</th><th>Видалення</th></tr></thead><tbody>${mods.map(([k,n])=>`<tr><td>${n}</td>${['read','create','update','delete'].map(a=>`<td><input type="checkbox" data-module="${k}" data-action="${a}"></td>`).join('')}</tr>`).join('')}</tbody></table><p><button class="btn pri" onclick="saveMember()">Зберегти доступ</button> <span id="msg"></span></p></div><div class="card"><h3>Користувачі з доступом</h3><table><tbody>${members.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.login)}</td><td><button class="btn" onclick="editMember(${u.id})">Права</button> <button class="btn" onclick="removeMember(${u.id})">Відкликати</button></td></tr>`).join('')||'<tr><td>Поки немає користувачів</td></tr>'}</tbody></table></div>`;
+ $('#app').innerHTML=`<div class="card"><h3>Користувачі підприємства: ${esc(company.name)}</h3><p class="mut">Створіть користувача або введіть логін існуючого. Пароль потрібен лише для нового облікового запису.</p><div class="row"><div><label>Логін</label><input id="ul" autocomplete="off"></div><div><label>Ім’я</label><input id="un"></div><div><label>Пароль нового користувача (від 10 символів)</label><input id="up" type="password" autocomplete="new-password"></div></div><h3>Дозволи</h3><p><label><input id="allow_company_create" type="checkbox"> Дозволити користувачу створювати нові підприємства</label></p><table><thead><tr><th>Розділ</th><th>Перегляд</th><th>Створення</th><th>Редагування</th><th>Видалення</th></tr></thead><tbody>${mods.map(([k,n])=>`<tr><td>${n}</td>${['read','create','update','delete'].map(a=>`<td><input type="checkbox" data-module="${k}" data-action="${a}"></td>`).join('')}</tr>`).join('')}</tbody></table><p><button class="btn pri" onclick="saveMember()">Зберегти доступ</button> <span id="msg"></span></p></div><div class="card"><h3>Користувачі з доступом</h3><table><tbody>${members.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.login)}</td><td><button class="btn" onclick="editMember(${u.id})">Права</button> <button class="btn" onclick="removeMember(${u.id})">Відкликати</button></td></tr>`).join('')||'<tr><td>Поки немає користувачів</td></tr>'}</tbody></table></div>`;
  window.memberCache=members;
 };
-window.editMember=function(id){const u=window.memberCache.find(x=>x.id===id);if(!u)return;$('#ul').value=u.login;$('#ul').readOnly=true;$('#un').value=u.name;$('#up').value='';document.querySelectorAll('[data-module]').forEach(el=>el.checked=u.permissions?.[el.dataset.module]?.[el.dataset.action]===true)};
+window.editMember=function(id){const u=window.memberCache.find(x=>x.id===id);if(!u)return;$('#ul').value=u.login;$('#ul').readOnly=true;$('#un').value=u.name;$('#up').value='';$('#allow_company_create').checked=u.can_create_company===true;document.querySelectorAll('[data-module]').forEach(el=>el.checked=u.permissions?.[el.dataset.module]?.[el.dataset.action]===true)};
 window.saveMember=async function(){
  const permissions={};document.querySelectorAll('[data-module]').forEach(el=>{const k=el.dataset.module;permissions[k]??={};permissions[k][el.dataset.action]=el.checked});
- try{await api('members',{method:'POST',body:{company_id:company.id,login:$('#ul').value,name:$('#un').value,password:$('#up').value,permissions}});await views.members()}catch(e){$('#msg').textContent=e.message}
+ try{await api('members',{method:'POST',body:{company_id:company.id,login:$('#ul').value,name:$('#un').value,password:$('#up').value,permissions,can_create_company:$('#allow_company_create').checked}});await views.members()}catch(e){$('#msg').textContent=e.message}
 };
 window.removeMember=async function(id){if(!confirm('Відкликати доступ до підприємства?'))return;try{await api(`members/${id}?company_id=${company.id}`,{method:'DELETE'});await views.members()}catch(e){alert(e.message)}};

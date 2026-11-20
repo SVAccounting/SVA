@@ -11,3 +11,6 @@ CREATE TABLE IF NOT EXISTS company_members (
  PRIMARY KEY(company_id,user_id)
 );
 CREATE INDEX IF NOT EXISTS company_members_user_idx ON company_members(user_id);
+
+-- Дозвіл створення нового підприємства для користувача, прив'язаного до підприємства.
+ALTER TABLE company_members ADD COLUMN IF NOT EXISTS can_create_company BOOLEAN NOT NULL DEFAULT false;
