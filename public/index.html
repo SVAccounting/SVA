@@ -22,20 +22,20 @@ tfoot td{font-weight:700}.err{color:#d33}.mut{color:var(--mut)}
 @media print{header,.noprint,.card:first-child h3+div{display:none}body{background:#fff;color:#000}}
 .lay{display:grid;grid-template-columns:240px minmax(0,1fr);gap:12px;max-width:1400px;margin:12px auto;padding:0 12px}
 aside{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px;align-self:start;position:sticky;top:8px;max-height:calc(100vh - 80px);overflow:auto}
-aside:empty{display:none}.lay:has(aside:empty){grid-template-columns:1fr}
+aside:empty{display:none}.lay:has(aside:empty){grid-template-columns:minmax(0,1fr)}
 aside a{display:block;padding:6px 10px;border-radius:6px;cursor:pointer}aside a:hover{background:var(--bg)}aside a.on{background:var(--ac);color:#fff}
 .ms{font-size:11px;text-transform:uppercase;color:var(--mut);margin:10px 8px 3px}.lay main{max-width:none;margin:0;padding:0}
-@media(max-width:800px){.lay{grid-template-columns:1fr}aside{position:static;max-height:none}}
+@media(max-width:800px){.lay{grid-template-columns:minmax(0,1fr)}aside{position:static;max-height:none}}
 </style><meta name="theme-color" content="#1272c4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=20261120">
 </head><body>
 <header><button class="btn" id="navtg" onclick="toggleNav()" title="Меню">☰</button><span class="logo">Pro<b>Oblik</b></span><span id="co" class="mut" style="flex:1"></span><button class="btn" onclick="logout()">Вийти</button></header>
 <div class="lay"><aside id="nav"></aside><main id="app"></main></div>
-<script src="templates.js"></script>
-<script src="groups.js"></script>
-<script src="forms.js"></script>
+<script src="templates.js?v=20261120"></script>
+<script src="groups.js?v=20261120"></script>
+<script src="forms.js?v=20261120"></script>
 <script>
 const $=s=>document.querySelector(s);
 const fmt=n=>Number(n).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -163,11 +163,11 @@ function login(){
   $('#app').innerHTML=`<div class="card" style="max-width:380px;margin:30px auto"><h3>Вхід</h3>
   <label>Логін</label><input id="lg" autocomplete="username"><label>Пароль</label><input id="pw" type="password" autocomplete="current-password">
   <details><summary class="mut" style="margin-top:10px;cursor:pointer">Реєстрація нового користувача</summary>
-  <label>Прізвище та ім’я</label><input id="nm"><label>Код адміністратора (лише для адміністраторів)</label><input id="tc"></details>
+  <label>Прізвище та ім’я</label><input id="nm"></details>
   <p><button class="btn pri" onclick="auth('login')">Увійти</button> <button class="btn" onclick="auth('register')">Зареєструватись</button></p><p id="msg" class="err"></p></div>`;
 }
 async function auth(m){
-  try{const d=await api(m,{method:'POST',body:{login:$('#lg').value,password:$('#pw').value,name:$('#nm').value,teacher_code:$('#tc').value}});
+  try{const d=await api(m,{method:'POST',body:{login:$('#lg').value,password:$('#pw').value,name:$('#nm').value,teacher_code:''}});
   token=d.token;localStorage.setItem('token',token);boot()}catch(e){$('#msg').textContent=e.message}
 }
 async function boot(){
@@ -194,10 +194,11 @@ async function reports(){
   const sh=(d,days,yrs)=>{const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+days);x.setUTCFullYear(x.getUTCFullYear()+yrs);return x.toISOString().slice(0,10)};
   const O=to=>api(`osv?company_id=${company.id}&from=1900-01-01&to=${to}`),P=(a,b)=>api(`pnl?company_id=${company.id}&from=${a}&to=${b}`);
   const [o0,o1,pc,pp]=await Promise.all([O(sh(f,-1,0)),O(t),P(f,t),P(sh(f,0,-1),sh(t,0,-1))]);
-  $('#res').innerHTML=renderForms(f,t,o0,o1,pc,pp);
+  $('#res').innerHTML=renderForms(f,t,o0,o1,pc,pp,company);
 }
 </script>
-<script src="app2.js"></script>
-<script src="app3.js"></script>
-<script src="app4.js"></script>
-<script src="app5.js"></script></body></html>
+<script src="app2.js?v=20261120"></script>
+<script src="app3.js?v=20261120"></script>
+<script src="app4.js?v=20261120"></script>
+<script src="app5.js?v=20261120"></script>
+<script src="app6.js?v=20261120b"></script></body></html>

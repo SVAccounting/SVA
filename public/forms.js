@@ -176,22 +176,38 @@ function calc(rows,o,p){
   }
   return v;
 }
-function tbl(rows,vs,BR,first,h1,h2){
-  const cell=(v,c)=>{const z=Math.abs(v[c]||0)<0.005,t=z?'–':fmt(v[c]);return BR.has(c)?`( ${t} )`:t};
-  return `<table><thead><tr><th>${first}</th><th>Код рядка</th><th class="n">${h1}</th><th class="n">${h2}</th></tr></thead><tbody>${rows.map(([c,n,s])=>{
+function tbl(rows,vs,BR,first,h1,h2,official=false){
+  const cell=(v,c)=>{const raw=v[c]||0;const rounded=Math.round(Math.abs(raw)/1000)*(raw<0?-1:1);const z=official?rounded===0:Math.abs(raw)<0.005;const t=z?'–':official?String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g,' '):fmt(raw);return BR.has(c)&&!z?`(${t})`:t};
+  return `<table class="financial-table"><colgroup><col style="width:49%"><col style="width:11%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr><th>${first}</th><th>Код рядка</th><th class="n">${h1}</th><th class="n">${h2}</th></tr><tr class="financial-colnumbers"><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody>${rows.map(([c,n,s])=>{
     if(s==='h')return `<tr><td colspan="4" style="font-weight:700;background:var(--bg)">${esc(n)}</td></tr>`;
     const b=/^(Усього|БАЛАНС|Валовий|Чистий фінансовий|Фінансовий результат)/.test(n.trim());
     return `<tr${b?' style="font-weight:700"':''}><td style="padding-left:${8+n.search(/\S/)*8}px">${esc(n.trim())}</td><td>${c}</td><td class="n">${cell(vs[0],c)}</td><td class="n">${cell(vs[1],c)}</td></tr>`}).join('')}</tbody></table>`;
 }
-function renderForms(f,t,o0,o1,pCur,pPrev){
+function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null){
   const a=[calc(F1A,o0,[]),calc(F1A,o1,[])],l=[calc(F1P,o0,[]),calc(F1P,o1,[])],r=[calc(F2,[],pCur),calc(F2,[],pPrev)];
   const ok=Math.abs(a[1][1300]-l[1][1900])<0.005&&Math.abs(a[0][1300]-l[0][1900])<0.005;
-  const hd=(n,k,d)=>`<h3>${n}</h3><p class="mut">${k} · Код за ДКУД ${d} · Одиниця виміру: грн (у офіційній звітності — тис. грн)</p>`;
-  return `<div class="card sc">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
-  ${tbl(F1A,a,BR1,'АКТИВ','На початок звітного періоду','На кінець звітного періоду')}<br>
-  ${tbl(F1P,l,BR1,'ПАСИВ','На початок звітного періоду','На кінець звітного періоду')}
-  <p class="${ok?'mut':'err'}">${ok?'✓ Актив дорівнює пасиву':'Актив ≠ пасив: перевірте проводки'}</p></div>
-  <div class="card sc">${hd('Звіт про фінансові результати (Звіт про сукупний дохід) за '+f+' — '+t,'Форма №2','1801003')}
-  ${tbl(F2,r,BR2,'Стаття','За звітний період','За аналогічний період попереднього року')}</div>
+  const info=companyData||{};const st=info.settings||{};
+  const field=(key)=>esc(String(st[key]??''));
+  const companyName=esc(info.name||'Не зазначено');
+  const official=true;
+  const meta=()=>`<div class="financial-meta"><div class="financial-meta-title">КОДИ</div>
+    <div>Дата (рік, місяць, число): <b>${esc(t)}</b></div>
+    <div>Підприємство: <b>${companyName}</b> <span>за ЄДРПОУ: <b>${field('code')}</b></span></div>
+    <div>Територія: <b>${field('territory')}</b> <span>за КАТОТТГ: <b>${field('katottg')}</b></span></div>
+    <div>Організаційно-правова форма господарювання: <b>${field('legal_form')}</b> <span>за КОПФГ: <b>${field('kopfg')}</b></span></div>
+    <div>Вид економічної діяльності: <b>${field('activity')}</b> <span>за КВЕД: <b>${field('kved')}</b></span></div>
+    <div>Середня кількість працівників: <b>${field('employees')}</b></div>
+    <div>Адреса, телефон: <b>${field('address')}</b> <b>${field('phone')}</b></div>
+    <div>Одиниця виміру: <b>тис. грн без десяткового знака</b></div>
+    <div>Складено: ☑ за НП(С)БО &nbsp; ☐ за МСФЗ</div></div>`;
+  const hd=(n,k,d)=>`${meta()}<div class="financial-form-heading"><h3>${n}</h3><div>${k} · Код за ДКУД <b>${d}</b></div></div>`;
+  const signatures=`<div class="financial-signatures"><div>Керівник ____________________ <span>(підпис, ім’я та прізвище)</span></div><div>Головний бухгалтер ____________________ <span>(підпис, ім’я та прізвище)</span></div></div>`;
+  return `<div class="card sc financial-form official-financial">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
+  ${tbl(F1A,a,BR1,'АКТИВ','На початок звітного періоду','На кінець звітного періоду',official)}
+  ${tbl(F1P,l,BR1,'ПАСИВ','На початок звітного періоду','На кінець звітного періоду',official)}
+  ${signatures}<p class="noprint ${ok?'mut':'err'}">${ok?'✓ Актив дорівнює пасиву':'УВАГА: Актив ≠ пасив — перевірте проводки'}</p></div>
+  <div class="card sc financial-form official-financial">${hd('Звіт про фінансові результати (Звіт про сукупний дохід) за '+f+' — '+t,'Форма №2','1801003')}
+  ${tbl(F2,r,BR2,'Стаття','За звітний період','За аналогічний період попереднього року',official)}${signatures}</div>
+  <p class="noprint mut">Порожні реквізити необхідно заповнити в налаштуваннях підприємства. Перевірте повноту показників перед офіційним поданням.</p>
   <p class="noprint"><button class="btn" onclick="window.print()">Друк</button></p>`;
 }
