@@ -116,3 +116,18 @@ html,body{max-width:100%;overflow-x:clip}
 .recent-tab.active{background:var(--ac);color:#fff;border-color:var(--ac)}
 @media(max-width:600px){.recent-navigation{padding:5px 6px 0;gap:5px}.recent-tab{min-width:86px;max-width:145px;padding:9px 10px}.history-controls .btn{min-width:32px;padding:5px 7px}}
 @media print{.recent-navigation{display:none!important}}
+
+/* Compact 10-tab navigation and dashboard tiles */
+.recent-navigation{gap:6px;padding:5px 9px 0}
+.history-controls{padding-bottom:4px}
+.history-controls .btn{min-width:30px;padding:3px 6px;font-size:16px}
+.recent-tabs{gap:2px;flex:1}
+.recent-tab{min-width:0;max-width:155px;gap:7px;padding:5px 7px 5px 10px;font-size:11px;justify-content:space-between;line-height:1.25}
+.recent-tab-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-tab-close{display:inline-flex;align-items:center;justify-content:center;flex:none;width:17px;height:17px;border-radius:4px;font-size:16px;line-height:1;opacity:.7}
+.recent-tab-close:hover,.recent-tab-close:focus-visible{background:#8883;opacity:1;outline:1px solid currentColor}
+.tiles{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:9px}
+.tile{min-width:0;min-height:94px;padding:11px 12px;gap:10px;font-size:13px;line-height:1.25;overflow-wrap:anywhere}
+.tile-icon{font-size:21px;line-height:1}
+.desk-head{margin-bottom:14px}
+@media(max-width:600px){.recent-tab{max-width:125px;padding:5px 6px;font-size:11px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.tile{min-height:88px;padding:9px;font-size:12px}.tile-icon{font-size:19px}}
