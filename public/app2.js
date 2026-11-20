@@ -14,7 +14,7 @@ const HIDE_T=['add','tpl','pko','vko','bin','bout','rcpt','sale','open'];
 function nav(){
   if(!me)return;
   $('#nav').innerHTML=MENU.map(([s,it])=>`<div class="ms">${s}</div>`+it.filter(([k])=>me.role!=='teacher'||!HIDE_T.includes(k)).map(([k,v])=>`<a class="${k===tab?'on':''}" onclick="go('${k}')">${v}</a>`).join('')).join('');
-  $('#co').textContent=me.name+(me.role==='teacher'?' (викладач)':'')+(company?' · 🏢 '+company.name:'');
+  $('#co').textContent=me.name+(me.role==='teacher'?' (адмін)':'')+(company?' · 🏢 '+company.name:'');
 }
 const NOCO=['company','plan','tasks'];
 async function go(t){
@@ -112,7 +112,7 @@ async function docSave(k){
 }
 // ---------- журнал, сторно ----------
 views.entries=async()=>{
-  const e=await api('entries?company_id='+company.id),T=me.role==='teacher',st=new Set(e.filter(x=>x.storno_of).map(x=>x.storno_of));
+  const e=(EL=await api('entries?company_id='+company.id)),T=me.role==='teacher',st=new Set(e.filter(x=>x.storno_of).map(x=>x.storno_of));
   $('#app').innerHTML=`<div class="card sc"><h3>Журнал операцій</h3><table><thead><tr><th>Дата</th><th>Документ</th><th>Контрагент</th><th>Зміст</th><th>Дт</th><th>Кт</th><th class="n">Сума</th><th></th></tr></thead><tbody>${e.map(x=>`<tr${x.amount<0?' style="color:#d33"':''}><td>${x.date}</td><td>${esc(x.doc)}</td><td>${esc(x.partner)}</td><td>${esc(x.description)}${x.storno_of?' ↩ №'+x.storno_of:''}${st.has(x.id)?' ✕ сторновано':''}</td><td>${x.debit_acc}</td><td>${x.credit_acc}</td><td class="n">${fmt(x.amount)}</td><td>${T?'':jbtn(x,st)}</td></tr>`).join('')||'<tr><td colspan="8" class="mut">Операцій ще немає</td></tr>'}</tbody></table></div>`;
 };
 async function storno(id,fix){

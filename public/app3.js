@@ -22,7 +22,7 @@ MENU[4][1].splice(0,2,['stock','Залишки ТМЦ'],['scard','Картка �
 MENU[3][1].push(['bank','Виписка з банку']);
 MENU.splice(5,0,['Документи',[['inv','Рахунок-фактура'],['act','Акт виконаних робіт'],['docs','Журнал документів і друк']]]);
 HIDE_T.push('wo','mv','ost','inv','act');
-const jbtn=(x,st)=>x.doc_id?`<button class="btn" onclick="stornoDoc(${x.doc_id})">Сторно документа</button>`:(x.storno_of||st.has(x.id)?'':`<button class="btn" onclick="storno(${x.id},0)">Сторно</button> <button class="btn" onclick="storno(${x.id},1)">Виправити</button> `)+`<button class="btn" onclick="del(${x.id})">✕</button>`;
+const jbtn=(x,st)=>actionsMenu(x);
 // ---------- форми документів ----------
 Object.keys(DT).forEach(k=>views[k]=async()=>{
   const d=DT[k],ref=x=>api(`refs?company_id=${company.id}&kind=${x}`);
@@ -120,4 +120,3 @@ async function printDoc(id){
     ost:()=>`${H('ВВЕДЕННЯ ПОЧАТКОВИХ ЗАЛИШКІВ ТМЦ')}<p>${my}</p><p>Склад: ${Z(X.wh)}</p>${tb()}${tot}`};
   showPrint(H2[d.type]());
 }
-boot();

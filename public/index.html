@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="uk"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SV Бухгалтерія</title>
+<title>ProOblik — інтерактивна система бухгалтерського обліку</title>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1d2330;--mut:#6b7385;--ac:#1f6feb;--bd:#dde1e8}
 @media(prefers-color-scheme:dark){:root{--bg:#14171d;--card:#1d222b;--tx:#e8ebf1;--mut:#95a0b5;--ac:#5b9bff;--bd:#2f3744}}
@@ -26,8 +26,12 @@ aside:empty{display:none}.lay:has(aside:empty){grid-template-columns:1fr}
 aside a{display:block;padding:6px 10px;border-radius:6px;cursor:pointer}aside a:hover{background:var(--bg)}aside a.on{background:var(--ac);color:#fff}
 .ms{font-size:11px;text-transform:uppercase;color:var(--mut);margin:10px 8px 3px}.lay main{max-width:none;margin:0;padding:0}
 @media(max-width:800px){.lay{grid-template-columns:1fr}aside{position:static;max-height:none}}
-</style></head><body>
-<header><b>SV Бухгалтерія</b><span id="co" class="mut" style="flex:1"></span><button class="btn" onclick="logout()">Вийти</button></header>
+</style><meta name="theme-color" content="#1272c4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+</head><body>
+<header><button class="btn" id="navtg" onclick="toggleNav()" title="Меню">☰</button><span class="logo">Pro<b>Oblik</b></span><span id="co" class="mut" style="flex:1"></span><button class="btn" onclick="logout()">Вийти</button></header>
 <div class="lay"><aside id="nav"></aside><main id="app"></main></div>
 <script src="templates.js"></script>
 <script src="groups.js"></script>
@@ -159,7 +163,7 @@ function login(){
   $('#app').innerHTML=`<div class="card" style="max-width:380px;margin:30px auto"><h3>Вхід</h3>
   <label>Логін</label><input id="lg" autocomplete="username"><label>Пароль</label><input id="pw" type="password" autocomplete="current-password">
   <details><summary class="mut" style="margin-top:10px;cursor:pointer">Реєстрація нового користувача</summary>
-  <label>Прізвище та ім’я</label><input id="nm"><label>Код викладача (лише для викладачів)</label><input id="tc"></details>
+  <label>Прізвище та ім’я</label><input id="nm"><label>Код адміністратора (лише для адміністраторів)</label><input id="tc"></details>
   <p><button class="btn pri" onclick="auth('login')">Увійти</button> <button class="btn" onclick="auth('register')">Зареєструватись</button></p><p id="msg" class="err"></p></div>`;
 }
 async function auth(m){
@@ -194,4 +198,6 @@ async function reports(){
 }
 </script>
 <script src="app2.js"></script>
-<script src="app3.js"></script></body></html>
+<script src="app3.js"></script>
+<script src="app4.js"></script>
+<script src="app5.js"></script></body></html>

@@ -230,3 +230,26 @@ CREATE TABLE IF NOT EXISTS stock_moves (
   qty NUMERIC(15,3) NOT NULL, amount NUMERIC(15,2) NOT NULL);
 ALTER TABLE entries ADD COLUMN IF NOT EXISTS doc_id INT;
 CREATE INDEX IF NOT EXISTS stock_idx ON stock_moves(company_id, item_id, wh_id, date);
+
+-- Модуль коригувань: періоди, версії документів, журнал коригувань, незмінний аудит (можна виконувати повторно)
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS closed_until TEXT;
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS add_of INT, ADD COLUMN IF NOT EXISTS corr_id INT, ADD COLUMN IF NOT EXISTS superseded_by INT;
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE docs ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1;
+CREATE TABLE IF NOT EXISTS corrections (
+  id SERIAL PRIMARY KEY, company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  number TEXT NOT NULL, method TEXT NOT NULL, source_doc_id INT, source_entry_id INT, cdate DATE NOT NULL,
+  orig_amount NUMERIC(15,2), delta NUMERIC(15,2), result_amount NUMERIC(15,2), reason TEXT NOT NULL, nature TEXT,
+  user_id INT, user_name TEXT, status TEXT NOT NULL DEFAULT 'Проведено', request_key TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(), UNIQUE (company_id, request_key));
+CREATE TABLE IF NOT EXISTS doc_versions (
+  id SERIAL PRIMARY KEY, doc_id INT NOT NULL REFERENCES docs(id) ON DELETE CASCADE, version INT NOT NULL,
+  snapshot JSONB NOT NULL, user_name TEXT, reason TEXT, created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE IF NOT EXISTS audit_log (
+  id SERIAL PRIMARY KEY, company_id INT, user_id INT, user_name TEXT, at TIMESTAMPTZ DEFAULT now(),
+  action TEXT NOT NULL, object_type TEXT, object_id TEXT, old_data JSONB, new_data JSONB, reason TEXT);
+CREATE OR REPLACE FUNCTION audit_immutable() RETURNS trigger AS $$
+BEGIN RAISE EXCEPTION 'Журнал аудиту не можна змінювати'; END; $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS audit_no_change ON audit_log;
+CREATE TRIGGER audit_no_change BEFORE UPDATE OR DELETE ON audit_log FOR EACH ROW EXECUTE FUNCTION audit_immutable();
+CREATE OR REPLACE VIEW entries_a AS SELECT * FROM entries WHERE active;
