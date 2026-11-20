@@ -131,3 +131,23 @@ html,body{max-width:100%;overflow-x:clip}
 .tile-icon{font-size:21px;line-height:1}
 .desk-head{margin-bottom:14px}
 @media(max-width:600px){.recent-tab{max-width:125px;padding:5px 6px;font-size:11px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.tile{min-height:88px;padding:9px;font-size:12px}.tile-icon{font-size:19px}}
+
+/* Dashboard typography: compact, crisp and legible */
+.tiles{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
+.tile,.tile.wide{min-height:96px;padding:12px 13px;gap:12px;box-sizing:border-box;font-family:Inter,Roboto,system-ui,sans-serif;font-size:12px;font-weight:450;line-height:1.35;letter-spacing:0;text-shadow:none;-webkit-font-smoothing:antialiased;overflow:hidden;overflow-wrap:break-word;word-break:normal}
+.tile-icon{font-size:18px;font-weight:400;line-height:1;opacity:.9}
+.tile>span:last-child{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;max-width:100%;font-size:12px;font-weight:450;line-height:1.35}
+.tile:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.recent-tab{padding:0;gap:0;min-width:0;max-width:160px;overflow:hidden;display:flex;align-items:center;justify-content:space-between}
+.recent-tab-open{flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:6px 5px 6px 10px;cursor:pointer}
+.recent-tab-close{flex:0 0 22px;width:22px;height:25px;border:0;background:transparent;color:inherit;cursor:pointer;opacity:.7;font-size:17px;line-height:1}
+.recent-tab-close:hover{background:#8883;opacity:1}
+.recent-tab.home-tab{min-width:108px;flex:none}
+@media(max-width:600px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tile,.tile.wide{min-height:86px;padding:10px;font-size:12px}.tile>span:last-child{font-size:12px}.recent-tab{max-width:135px}}
+
+/* Readable dashboard tiles: balanced typography without oversized bold headings */
+.tiles{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.tile,.tile.wide{min-height:104px;padding:13px 14px;gap:9px;font-family:Arial,Roboto,system-ui,sans-serif;font-size:15px;font-weight:500;line-height:1.4;letter-spacing:0;text-shadow:none;-webkit-font-smoothing:auto;overflow-wrap:normal;word-break:normal}
+.tile>span:last-child{font-family:inherit;font-size:15px;font-weight:500;line-height:1.4;letter-spacing:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
+.tile-icon{font-size:21px;font-weight:400;line-height:1.1}
+@media(max-width:600px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tile,.tile.wide{min-height:100px;padding:11px 12px;font-size:14px}.tile>span:last-child{font-size:14px;line-height:1.35}}
