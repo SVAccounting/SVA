@@ -2,7 +2,7 @@
 const today=new Date().toISOString().slice(0,10),R2=n=>Math.round(n*100)/100;
 const prevDay=d=>{const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()-1);return x.toISOString().slice(0,10)};
 const nameOf=a=>accounts.find(x=>x.code===a)?.name||'';
-const MENU=[['Головне',[['company','🏢 Підприємства'],['set','⚙ Облікова політика й налаштування'],['open','Початкові залишки']]],
+const MENU=[['Головне',[['company','🏢 Підприємства'],['members','👥 Користувачі та права'],['set','⚙ Облікова політика й налаштування'],['open','Початкові залишки']]],
 ['Довідники',[['plan','План рахунків'],['r_staff','Персонал'],['r_customer','Покупці'],['r_supplier','Постачальники'],['r_bank','Банки'],['r_wh','Склади'],['r_item','Номенклатура']]],
 ['Каса',[['pko','ПКО — прибутковий ордер'],['vko','ВКО — видатковий ордер'],['cashbook','Касова книга']]],
 ['Банк',[['bin','Надходження на р/р'],['bout','Списання з р/р']]],
@@ -13,8 +13,8 @@ const MENU=[['Головне',[['company','🏢 Підприємства'],['set
 const HIDE_T=['add','tpl','pko','vko','bin','bout','rcpt','sale','open'];
 function nav(){
   if(!me)return;
-  $('#nav').innerHTML=MENU.map(([s,it])=>`<div class="ms">${s}</div>`+it.filter(([k])=>me.role!=='teacher'||!HIDE_T.includes(k)).map(([k,v])=>`<a class="${k===tab?'on':''}" onclick="go('${k}')">${v}</a>`).join('')).join('');
-  $('#co').textContent=me.name+(me.role==='teacher'?' (адмін)':'')+(company?' · 🏢 '+company.name:'');
+  $('#nav').innerHTML=MENU.map(([s,it])=>`<div class="ms">${s}</div>`+it.filter(([k])=>me.role!=='superadmin'||!HIDE_T.includes(k)).map(([k,v])=>`<a class="${k===tab?'on':''}" onclick="go('${k}')">${v}</a>`).join('')).join('');
+  $('#co').textContent=me.name+(me.role==='superadmin'?' (адмін)':'')+(company?' · 🏢 '+company.name:'');
 }
 const NOCO=['company','plan','tasks'];
 async function go(t){
@@ -34,15 +34,15 @@ const setForm=(s,name)=>`<div class="row"><div><label>Назва підприє�
 <div class="row"><div><label>Облікова політика: оцінка запасів при вибутті</label><select id="s_inv">${OPT(INV,s.inv)}</select></div><div><label>Метод амортизації ОЗ</label><select id="s_dep">${OPT(DEP,s.dep)}</select></div><div><label>Вартісна межа МНМА, грн</label><input id="s_mnma" type="number" value="${s.mnma}"></div></div>`;
 const readSet=()=>({code:$('#s_code').value,start:$('#s_start').value,tax:$('#s_tax').value,vat:$('#s_vat').value==='1',rate:Number($('#s_rate').value)||0,inv:$('#s_inv').value,dep:$('#s_dep').value,mnma:Number($('#s_mnma').value)||0});
 views.company=async()=>{
-  const L=await api('companies'),T=me.role==='teacher';
+  const L=await api('companies'),T=me.role==='superadmin';
   $('#app').innerHTML=(T?'':`<div class="card"><h3>Нове підприємство</h3>${setForm(DEF,'')}<p><button class="btn pri" onclick="createCo()">Створити й ввести залишки</button> <span id="msg" class="err"></span></p></div>`)+
-  `<div class="card sc"><h3>Підприємства</h3><table><tbody>${L.map(c=>`<tr><td>${esc(c.name)}${c.owner?` <span class="mut">— ${esc(c.owner)}</span>`:''}</td><td class="mut">${(TAXES.find(x=>x[0]===(c.settings?.tax||'general'))||[])[1]||''}; ПДВ: ${c.settings?.vat===false?'ні':'так'}</td><td><button class="btn ${company?.id===c.id?'pri':''}" onclick="pick(${c.id})">${company?.id===c.id?'Обрано':'Обрати'}</button></td></tr>`).join('')}</tbody></table></div>`;
+  `<div class="card sc"><h3>Підприємства</h3><table><tbody>${L.map(c=>`<tr><td>${esc(c.name)}${c.owner?` <span class="mut">— ${esc(c.owner)}</span>`:''}</td><td class="mut">${(TAXES.find(x=>x[0]===(c.settings?.tax||'general'))||[])[1]||''}; ПДВ: ${c.settings?.vat===false?'ні':'так'}</td><td><button class="btn ${company?.id===c.id?'pri':''}" onclick="pick(${c.id})">${company?.id===c.id?'Обрано':'Обрати'}</button> ${T?`<button class="btn" onclick="assignAdmin(${c.id})">Призначити адміна</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
 };
 const saveCo=c=>{company=c;localStorage.setItem('company',JSON.stringify(c))};
 async function pick(id){saveCo((await api('companies')).find(c=>c.id===id));go('entries')}
 async function createCo(){try{saveCo(await api('companies',{method:'POST',body:{name:$('#s_name').value,settings:readSet()}}));go('open')}catch(e){$('#msg').textContent=e.message}}
 views.set=async()=>{
-  const ro=me.role==='teacher';
+  const ro=!canDo('settings','update');
   $('#app').innerHTML=`<div class="card"><h3>Налаштування та облікова політика</h3>${setForm(S(),company.name)}${ro?'':'<p><button class="btn pri" onclick="saveSet()">Зберегти</button> <span id="msg"></span></p>'}</div>`;
   if(ro)document.querySelectorAll('#app input,#app select').forEach(e=>e.disabled=true);
 };
@@ -69,7 +69,7 @@ const REF={staff:['Персонал',[['name','ПІБ'],['pos','Посада'],[
 let RL=[],RK='',RE=null;
 Object.keys(REF).forEach(k=>views['r_'+k]=async()=>{RK=k;RE=null;RL=await api(`refs?company_id=${company.id}&kind=${k}`);drawRef()});
 function drawRef(){
-  const [t,F]=REF[RK],ro=me.role==='teacher',e=RE?RL.find(x=>x.id===RE):null;
+  const [t,F]=REF[RK],ro=!canDo('refs','create'),e=RE?RL.find(x=>x.id===RE):null;
   $('#app').innerHTML=(ro?'':`<div class="card"><h3>${t}: ${e?'редагування':'новий запис'}</h3><div class="row">${F.map(([f,l])=>`<div><label>${l}</label><input id="rf_${f}" value="${esc(f==='name'?e?.name:e?.data?.[f])}"></div>`).join('')}</div><p><button class="btn pri" onclick="saveRef()">Зберегти</button> ${e?'<button class="btn" onclick="RE=null;drawRef()">Скасувати</button>':''} <span id="msg" class="err"></span></p></div>`)+
   `<div class="card sc"><h3>${t}</h3><table><thead><tr>${F.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${RL.map(x=>`<tr>${F.map(([f])=>`<td>${esc(f==='name'?x.name:x.data[f])}</td>`).join('')}<td>${ro?'':`<button class="btn" onclick="RE=${x.id};drawRef()">✎</button> <button class="btn" onclick="delRef(${x.id})">✕</button>`}</td></tr>`).join('')||'<tr><td class="mut">Записів немає</td></tr>'}</tbody></table></div>`;
 }
@@ -77,7 +77,7 @@ async function saveRef(){const data={};REF[RK][1].forEach(([f])=>{if(f!=='name')
 async function delRef(id){if(confirm('Видалити запис?')){await api(`refs/${id}?company_id=${company.id}`,{method:'DELETE'});views['r_'+RK]()}}
 // ---------- план рахунків (редагує викладач) ----------
 views.plan=async()=>{
-  const T=me.role==='teacher',KN={A:'Активний',P:'Пасивний',AP:'Активно-пасивний',O:'Позабалансовий'};
+  const T=me.role==='superadmin',KN={A:'Активний',P:'Пасивний',AP:'Активно-пасивний',O:'Позабалансовий'};
   $('#app').innerHTML=(T?`<div class="card"><h3>Додати або змінити рахунок (діє для всіх)</h3><div class="row"><div><label>Код</label><input id="pc"></div><div><label>Назва</label><input id="pn"></div><div><label>Тип</label><select id="pk">${OPT(Object.entries(KN),'A')}</select></div></div><p><button class="btn pri" onclick="saveAcc()">Зберегти</button> <span id="msg" class="err"></span></p></div>`:'')+
   `<div class="card sc"><h3>План рахунків</h3><table><thead><tr><th>Код</th><th>Назва</th><th>Тип</th><th></th></tr></thead><tbody>${accounts.map(a=>`<tr><td>${a.code}</td><td>${esc(a.name)}</td><td>${KN[a.kind]}</td><td>${T?`<button class="btn" onclick="editAcc('${a.code}')">✎</button> <button class="btn" onclick="delAcc('${a.code}')">✕</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
 };
@@ -112,7 +112,7 @@ async function docSave(k){
 }
 // ---------- журнал, сторно ----------
 views.entries=async()=>{
-  const e=(EL=await api('entries?company_id='+company.id)),T=me.role==='teacher',st=new Set(e.filter(x=>x.storno_of).map(x=>x.storno_of));
+  const e=(EL=await api('entries?company_id='+company.id)),T=me.role==='superadmin',st=new Set(e.filter(x=>x.storno_of).map(x=>x.storno_of));
   $('#app').innerHTML=`<div class="card sc"><h3>Журнал операцій</h3><table><thead><tr><th>Дата</th><th>Документ</th><th>Контрагент</th><th>Зміст</th><th>Дт</th><th>Кт</th><th class="n">Сума</th><th></th></tr></thead><tbody>${e.map(x=>`<tr${x.amount<0?' style="color:#d33"':''}><td>${x.date}</td><td>${esc(x.doc)}</td><td>${esc(x.partner)}</td><td>${esc(x.description)}${x.storno_of?' ↩ №'+x.storno_of:''}${st.has(x.id)?' ✕ сторновано':''}</td><td>${x.debit_acc}</td><td>${x.credit_acc}</td><td class="n">${fmt(x.amount)}</td><td>${T?'':jbtn(x,st)}</td></tr>`).join('')||'<tr><td colspan="8" class="mut">Операцій ще немає</td></tr>'}</tbody></table></div>`;
 };
 async function storno(id,fix){
@@ -153,4 +153,10 @@ async function card(){
   const rows=E.filter(e=>e.date>=f&&e.date<=t).map(e=>{const d=e.debit_acc.startsWith(a),v=Number(e.amount);bal+=d?v:-v;if(d)td+=v;else tk+=v;
     return `<tr><td>${e.date}</td><td>${esc(e.doc)}</td><td>${esc(e.description)}</td><td>${d?e.credit_acc:e.debit_acc}</td><td class="n">${d?fmt(v):''}</td><td class="n">${d?'':fmt(v)}</td><td class="n">${sd(bal)}</td></tr>`}).join('');
   $('#res').innerHTML=`<div class="card sc"><table><thead><tr><th>Дата</th><th>Документ</th><th>Зміст</th><th>Кореспонд.</th><th class="n">Дебет</th><th class="n">Кредит</th><th class="n">Сальдо</th></tr></thead><tbody><tr style="font-weight:700"><td colspan="6">Сальдо на початок</td><td class="n">${sd(open)}</td></tr>${rows}</tbody><tfoot><tr><td colspan="4">Обороти за період / сальдо на кінець</td><td class="n">${fmt(td)}</td><td class="n">${fmt(tk)}</td><td class="n">${sd(bal)}</td></tr></tfoot></table></div>`;
+}
+
+async function assignAdmin(id){
+ const login=prompt('Логін користувача, якому призначити підприємство:');if(!login)return;
+ if(!confirm('Передати повне адміністрування підприємства цьому користувачу?'))return;
+ try{await api('company-admin',{method:'POST',body:{company_id:id,login}});go('company')}catch(e){alert(e.message)}
 }

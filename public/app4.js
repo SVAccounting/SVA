@@ -14,7 +14,7 @@ const ti=MENU.findIndex(m=>m[0]==='Навчання');if(ti>=0)MENU.splice(ti,1)
 MENU.splice(MENU.findIndex(m=>m[0]==='Звіти'),0,['Виправлення',[['corr','Журнал коригувань'],['period','Облікові періоди'],['audit','Журнал аудиту'],['trainer','Навчальний режим']]]);
 // контекстне меню «Дії»
 const actionsMenu=(x)=>{
-  const T=me.role==='teacher',it=[`<a onclick="viewEntry(${x.id})">Переглянути</a>`];
+  const T=me.role==='superadmin',it=[`<a onclick="viewEntry(${x.id})">Переглянути</a>`];
   if(!T&&Number(x.amount)>0&&!x.storno_of&&!x.add_of){
     if(x.doc_id)it.push(`<a onclick="fixDoc(${x.doc_id})">Виправити документ</a>`);
     it.push(`<a onclick="stornoDlg(${x.id})">Сторнувати</a>`,`<a onclick="addDlg(${x.id})">Створити додатковий запис</a>`);
@@ -82,7 +82,7 @@ async function corrList(){
   $('#res').innerHTML=`<div class="card sc"><table><thead><tr><th>Дата</th><th>№ коригування</th><th>Початковий документ</th><th>Метод</th><th class="n">Початкова сума</th><th class="n">Коригування</th><th class="n">Результат</th><th>Причина</th><th>Користувач</th><th>Статус</th><th></th></tr></thead><tbody>${L.map(k=>`<tr><td>${k.cdate}</td><td>${esc(k.number)}</td><td>${esc(k.source)}</td><td>${mtag(k.method)}</td><td class="n">${fmt(k.orig_amount)}</td><td class="n ${Number(k.delta)<0?'t-red':'t-grn'}">${Number(k.delta)>0?'+':''}${fmt(k.delta)}</td><td class="n">${fmt(k.result_amount)}</td><td>${esc(k.reason)}</td><td>${esc(k.user_name)}</td><td>${esc(k.status)}</td><td><button class="btn" onclick="history_('${k.source_doc_id?'doc':'entry'}',${k.source_doc_id||k.source_entry_id})">Історія</button></td></tr>`).join('')||'<tr><td colspan="11" class="mut">Коригувань немає</td></tr>'}</tbody></table></div>`;
 }
 views.period=async()=>{
-  const c=(await api('companies')).find(x=>x.id===company.id),T=me.role==='teacher';
+  const c=(await api('companies')).find(x=>x.id===company.id),T=me.role==='superadmin';
   $('#app').innerHTML=`<div class="card"><h3>Облікові періоди</h3><p>Статус: <span class="tag">${c.closed_until?'Закрито до '+c.closed_until+' включно':'Усі періоди відкриті'}</span></p>${T?'':`<div class="row"><div><label>Закрити періоди по дату (включно)</label><input id="pd" type="date" value="${c.closed_until||''}"></div></div><p><button class="btn pri" onclick="setPeriod(true)">Закрити</button> <button class="btn" onclick="setPeriod(false)">Відкрити всі періоди</button> <span id="msg" class="err"></span></p>`}<p class="mut">У закритому періоді заборонено вводити, редагувати й перепроводити документи. Виправлення оформлюють поточною датою (сторно, додатковий запис) з посиланням на початковий документ. Помилки минулих років — за НП(С)БО 6: система просить визначити їх характер, але не формує автоматично проводку на нерозподілений прибуток.</p></div>`;
 };
 async function setPeriod(close){try{const v=close?$('#pd').value:null;await api('periods',{method:'POST',body:{company_id:company.id,closed_until:v}});saveCo({...company,closed_until:v});views.period()}catch(e){$('#msg').textContent=e.message}}

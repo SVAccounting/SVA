@@ -146,11 +146,8 @@ export default async (req) => {
     if (res === 'register' && M === 'POST') {
       const login = String(body.login || '').trim().toLowerCase(), name = String(body.name || '').trim(), pw = String(body.password || '');
       if (!login || !name || pw.length < 6) return fail('Вкажіть логін, ім’я та пароль (від 6 символів)');
-      let role = 'student';
-      if (body.teacher_code) {
-        if (!process.env.TEACHER_CODE || body.teacher_code !== process.env.TEACHER_CODE) return fail('Невірний код адміністратора', 403);
-        role = 'teacher';
-      }
+      // Public registration never grants administrative privileges.
+      const role = 'user';
       const salt = randomBytes(16).toString('hex');
       try {
         const r = await sql`INSERT INTO users(login,name,role,salt,hash) VALUES (${login},${name},${role},${salt},${hash(pw, salt)}) RETURNING id,name,role`;
@@ -166,20 +163,84 @@ export default async (req) => {
 
     const me = readToken(req);
     if (!me) return fail('Потрібен вхід', 401);
-    const T = me.role === 'teacher';
-    // доступ до підприємства: власник — читання й запис; викладач — лише читання
-    const own = async (cid, write) => {
-      const c = (await sql`SELECT * FROM companies WHERE id=${cid}`)[0];
+    // Existing teacher accounts become superadmins after the migration.
+    const T = me.role === 'superadmin' || me.role === 'teacher';
+    const MODULES = ['refs','entries','docs','reports','stock','corrections','settings','audit'];
+    const resourceModule = {refs:'refs',entries:'entries',docs:'docs',osv:'reports',pnl:'reports',stock:'stock',periods:'settings',audit:'audit',history:'audit',corrections:'corrections'};
+    const own = async (cid, write = false, module = 'reports', action = null) => {
+      if (!Number.isSafeInteger(Number(cid)) || Number(cid) <= 0) return null;
+      const c = (await sql`SELECT * FROM companies WHERE id=${Number(cid)}`)[0];
       if (!c) return null;
-      return c.owner_id === me.id || (!write && T) ? c : null;
+      if (T || c.owner_id === me.id) return c;
+      const member = (await sql`SELECT permissions FROM company_members WHERE company_id=${c.id} AND user_id=${me.id}`)[0];
+      if (!member) return null;
+      const permission = member.permissions?.[module] || {};
+      const required = action || (write ? 'create' : 'read');
+      return permission[required] === true ? c : null;
     };
+    const mod = resourceModule[res] || 'reports';
+    const access = (cid, action) => own(cid, action !== 'read', mod, action);
+    // Ensure every request for a company is authorized on the server.
+    const companyAction = M === 'DELETE' ? 'delete' : M === 'POST' ? 'create' : 'read';
 
     const aud = (c, action, type, oid, oldd, newd, reason) => sql`INSERT INTO audit_log(company_id,user_id,user_name,action,object_type,object_id,old_data,new_data,reason)
       VALUES (${c.id},${me.id},${me.name},${action},${type},${String(oid)},${JSON.stringify(oldd ?? null)}::jsonb,${JSON.stringify(newd ?? null)}::jsonb,${reason || null})`;
-    if (res === 'me') return json({ id: me.id, name: me.name, role: me.role });
+    if (res === 'me') return json({ id: me.id, name: me.name, role: T ? 'superadmin' : me.role });
+    if (res === 'company-admin' && M === 'POST') {
+      if (!T) return fail('Лише для суперадміністратора',403);
+      const cid=Number(body.company_id),login=String(body.login||'').trim().toLowerCase();
+      const u=(await sql`SELECT id,role FROM users WHERE login=${login}`)[0];
+      if (!u || u.role==='superadmin') return fail('Користувача не знайдено або роль несумісна',400);
+      const updated=await sql`UPDATE companies SET owner_id=${u.id} WHERE id=${cid} RETURNING id`;
+      if (!updated.length) return fail('Підприємство не знайдено',404);
+      await sql`UPDATE users SET role='admin' WHERE id=${u.id}`;
+      return json({ok:true});
+    }
+    if (res === 'members') {
+      const cid = Number(q.get('company_id') || body.company_id);
+      const c = await own(cid);
+      if (!c) return fail('Немає доступу', 403);
+      const manager = T || c.owner_id === me.id;
+      if (M === 'GET') {
+        if (!manager) return fail('Недостатньо прав', 403);
+        return json(await sql`SELECT u.id,u.login,u.name,m.permissions FROM company_members m JOIN users u ON u.id=m.user_id WHERE m.company_id=${cid} ORDER BY u.name`);
+      }
+      if (!manager) return fail('Тільки адміністратор підприємства', 403);
+      if (M === 'POST') {
+        const login = String(body.login || '').trim().toLowerCase();
+        const name = String(body.name || '').trim();
+        const pw = String(body.password || '');
+        const permissions = body.permissions || {};
+        if (!/^[a-z0-9._-]{3,64}$/.test(login)) return fail('Логін: 3–64 латинські символи, цифри, крапка, дефіс або _');
+        if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions) || Object.keys(permissions).some(k => !MODULES.includes(k))) return fail('Невірні дозволи');
+        for (const item of Object.values(permissions)) if (!item || typeof item !== 'object' || Object.keys(item).some(k=>!['read','create','update','delete'].includes(k)) || Object.values(item).some(v=>typeof v!=='boolean')) return fail('Невірні дозволи');
+        let user = (await sql`SELECT id,role FROM users WHERE login=${login}`)[0];
+        if (!user) {
+          if (!name || pw.length < 10) return fail('Вкажіть ім’я та пароль від 10 символів');
+          const salt = randomBytes(16).toString('hex');
+          user = (await sql`INSERT INTO users(login,name,role,salt,hash) VALUES (${login},${name},'user',${salt},${hash(pw,salt)}) RETURNING id,role`)[0];
+        }
+        if (user.role !== 'user' && user.role !== 'student') return fail('Не можна змінювати доступ адміністратора',403);
+        await sql`INSERT INTO company_members(company_id,user_id,permissions) VALUES (${cid},${user.id},${JSON.stringify(permissions)}::jsonb) ON CONFLICT(company_id,user_id) DO UPDATE SET permissions=EXCLUDED.permissions`;
+        return json({ok:true});
+      }
+      if (M === 'DELETE') {
+        await sql`DELETE FROM company_members WHERE company_id=${cid} AND user_id=${Number(id)}`;
+        return json({ok:true});
+      }
+      return fail('Метод не підтримується',405);
+    }
+    if (res === 'permissions') {
+      const cid = Number(q.get('company_id'));
+      const c = await own(cid);
+      if (!c) return fail('Немає доступу',403);
+      if (T || c.owner_id === me.id) return json({manager:true,permissions:Object.fromEntries(MODULES.map(k=>[k,{read:true,create:true,update:true,delete:true}]))});
+      const m = (await sql`SELECT permissions FROM company_members WHERE company_id=${cid} AND user_id=${me.id}`)[0];
+      return json({manager:false,permissions:m?.permissions||{}});
+    }
     if (res === 'accounts') {
       if (M === 'POST') {
-        if (!T) return fail('Лише для адміністратора', 403);
+        if (!T) return fail('Лише для суперадміністратора', 403);
         const code = String(body.code || '').trim();
         if (!/^\d{1,4}$/.test(code) || !String(body.name || '').trim() || !['A', 'P', 'AP', 'O'].includes(body.kind)) return fail('Невірні дані рахунку');
         await sql`INSERT INTO accounts(code,name,kind) VALUES (${code},${body.name.trim()},${body.kind})
@@ -187,7 +248,7 @@ export default async (req) => {
         return json({ ok: true });
       }
       if (M === 'DELETE') {
-        if (!T) return fail('Лише для адміністратора', 403);
+        if (!T) return fail('Лише для суперадміністратора', 403);
         if ((await sql`SELECT 1 FROM entries_a WHERE debit_acc=${id} OR credit_acc=${id} LIMIT 1`).length) return fail('Рахунок використовується в проводках — видалити не можна', 409);
         await sql`DELETE FROM accounts WHERE code=${id}`;
         return json({ ok: true });
@@ -200,28 +261,29 @@ export default async (req) => {
         const name = String(body.name || '').trim(), st = JSON.stringify(body.settings || {});
         if (!name) return fail('Вкажіть назву');
         if (id) {
-          const c = await own(Number(id), true);
+          const c = await own(Number(id), true, 'settings', 'update');
           if (!c) return fail('Немає доступу', 403);
           return json((await sql`UPDATE companies SET name=${name}, settings=${st}::jsonb WHERE id=${c.id} RETURNING id, name, settings`)[0]);
         }
+        if (!T && me.role !== 'admin') return fail('Лише адміністратор може створювати підприємства', 403);
         return json((await sql`INSERT INTO companies(name, owner_id, settings) VALUES (${name}, ${me.id}, ${st}::jsonb) RETURNING id, name, settings`)[0], 201);
       }
       return json(T
         ? await sql`SELECT c.id, c.name, c.settings, c.closed_until, u.name AS owner FROM companies c LEFT JOIN users u ON u.id=c.owner_id ORDER BY u.name NULLS LAST, c.id DESC`
-        : await sql`SELECT id, name, settings, closed_until FROM companies WHERE owner_id=${me.id} ORDER BY id DESC`);
+        : await sql`SELECT DISTINCT c.id, c.name, c.settings, c.closed_until FROM companies c LEFT JOIN company_members m ON m.company_id=c.id AND m.user_id=${me.id} WHERE c.owner_id=${me.id} OR m.user_id=${me.id} ORDER BY c.id DESC`);
     }
 
     if (res === 'refs') {
       if (M === 'POST') {
-        const c = await own(Number(body.company_id), true);
+        const c = await access(Number(body.company_id), body.id ? 'update' : 'create');
         if (!c) return fail('Немає доступу', 403);
         const name = String(body.name || '').trim(), data = JSON.stringify(body.data || {});
         if (!name || !body.kind) return fail('Вкажіть назву');
-        if (body.id) await sql`UPDATE refs SET name=${name}, data=${data}::jsonb WHERE id=${Number(body.id)} AND company_id=${c.id}`;
+        if (body.id) await sql`UPDATE refs SET name=${name}, data=${data}::jsonb WHERE id=${Number(body.id)} AND company_id=${c.id} AND kind=${body.kind}`;
         else await sql`INSERT INTO refs(company_id,kind,name,data) VALUES (${c.id},${body.kind},${name},${data}::jsonb)`;
         return json({ ok: true });
       }
-      const c = await own(Number(q.get('company_id')), M === 'DELETE');
+      const c = await access(Number(q.get('company_id')), M === 'DELETE' ? 'delete' : 'read');
       if (!c) return fail('Немає доступу', 403);
       if (M === 'DELETE') { await sql`DELETE FROM refs WHERE id=${Number(id)} AND company_id=${c.id}`; return json({ ok: true }); }
       return json(await sql`SELECT id, kind, name, data FROM refs WHERE company_id=${c.id} AND kind=${q.get('kind')} ORDER BY name`);
@@ -229,7 +291,7 @@ export default async (req) => {
 
     if (res === 'entries') {
       if (M === 'POST') {
-        const c = await own(Number(body.company_id), true);
+        const c = await access(Number(body.company_id), body.id ? 'update' : 'create');
         if (!c) return fail('Немає доступу', 403);
         lockCheck(c, body.date);
         const lines = body.lines || [{ debit_acc: body.debit_acc, credit_acc: body.credit_acc, amount: body.amount }];
@@ -239,7 +301,7 @@ export default async (req) => {
           VALUES (${c.id},${body.date},${body.doc || ''},${body.description || ''},${body.partner || ''},${l.debit_acc},${l.credit_acc},${Number(l.amount)})`));
         return json({ ok: true }, 201);
       }
-      const c = await own(Number(q.get('company_id')), M === 'DELETE');
+      const c = await access(Number(q.get('company_id')), M === 'DELETE' ? 'delete' : 'read');
       if (!c) return fail('Немає доступу', 403);
       if (M === 'DELETE') return fail('Фізичне видалення проводок заборонено: використайте сторно або виправлення', 405);
       return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount
@@ -247,7 +309,7 @@ export default async (req) => {
     }
 
     if (res === 'osv' || res === 'pnl') {
-      const c = await own(Number(q.get('company_id')));
+      const c = await access(Number(q.get('company_id')), 'read');
       if (!c) return fail('Немає доступу', 403);
       const from = q.get('from') || '1900-01-01', to = q.get('to') || '2999-12-31';
       if (res === 'pnl') { // обороти доходів і витрат без закриття на рахунок 79
@@ -277,7 +339,7 @@ export default async (req) => {
     }
 
     if (res === 'stock') {
-      const c = await own(Number(q.get('company_id')));
+      const c = await access(Number(q.get('company_id')), 'read');
       if (!c) return fail('Немає доступу', 403);
       if (q.get('item_id')) return json(await sql`SELECT m.id, to_char(m.date,'YYYY-MM-DD') AS date, m.qty, m.amount, w.name AS wh, d.number, d.type
         FROM stock_moves m JOIN refs w ON w.id=m.wh_id LEFT JOIN docs d ON d.id=m.doc_id
@@ -291,11 +353,11 @@ export default async (req) => {
     if (res === 'docs') {
       if (id && M === 'GET') {
         const d = (await sql`SELECT id, company_id, type, number, to_char(date,'YYYY-MM-DD') AS date, partner, data, storno, version FROM docs WHERE id=${Number(id)}`)[0];
-        if (!d || !(await own(d.company_id))) return fail('Не знайдено', 404);
+        if (!d || !(await own(d.company_id, false, 'docs', 'read'))) return fail('Не знайдено', 404);
         return json(d);
       }
       if (M === 'POST') {
-        const c = await own(Number(body.company_id), true);
+        const c = await access(Number(body.company_id), body.id ? 'update' : 'create');
         if (!c) return fail('Немає доступу', 403);
         lockCheck(c, body.date);
         const B = await buildDoc(c, body, null);
@@ -306,14 +368,14 @@ export default async (req) => {
           ...mvIns(c, B, body.date, docId)]);
         return json({ id: docId }, 201);
       }
-      const c = await own(Number(q.get('company_id')));
+      const c = await access(Number(q.get('company_id')), 'read');
       if (!c) return fail('Немає доступу', 403);
       return json(await sql`SELECT id, type, number, to_char(date,'YYYY-MM-DD') AS date, partner, storno, (data->>'total')::numeric AS total
         FROM docs WHERE company_id=${c.id} ORDER BY date DESC, id DESC`);
     }
 
     if (res === 'periods' && M === 'POST') {
-      const c = await own(Number(body.company_id), true);
+      const c = await own(Number(body.company_id), true, 'settings', 'update');
       if (!c) return fail('Немає доступу', 403);
       const v = body.closed_until ? String(body.closed_until) : null;
       if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) throw bad('Невірна дата');
@@ -321,13 +383,13 @@ export default async (req) => {
       return json({ ok: true });
     }
     if (res === 'audit') {
-      const c = await own(Number(q.get('company_id')));
+      const c = await access(Number(q.get('company_id')), 'read');
       if (!c) return fail('Немає доступу', 403);
       return json(await sql`SELECT id, to_char(at,'YYYY-MM-DD HH24:MI:SS') AS at, user_name, action, object_type, object_id, old_data, new_data, reason
         FROM audit_log WHERE company_id=${c.id} ORDER BY id DESC LIMIT 300`);
     }
     if (res === 'history') {
-      const c = await own(Number(q.get('company_id')));
+      const c = await access(Number(q.get('company_id')), 'read');
       if (!c) return fail('Немає доступу', 403);
       const doc = Number(q.get('doc_id')) || 0, ent = Number(q.get('entry_id')) || 0;
       return json({
@@ -340,7 +402,7 @@ export default async (req) => {
     }
     if (res === 'corrections') {
       if (M !== 'POST') {
-        const c = await own(Number(q.get('company_id')));
+        const c = await access(Number(q.get('company_id')), 'read');
         if (!c) return fail('Немає доступу', 403);
         const g = (k) => q.get(k) || '';
         return json(await sql`SELECT k.id, k.number, to_char(k.cdate,'YYYY-MM-DD') AS cdate, k.method, k.orig_amount, k.delta, k.result_amount, k.reason, k.user_name, k.status,
@@ -352,7 +414,7 @@ export default async (req) => {
             AND (${g('q')}='' OR (COALESCE(d.number, e.doc, '') || ' ' || k.number || ' ' || k.reason) ILIKE '%' || ${g('q')} || '%')
           ORDER BY k.id DESC LIMIT 500`);
       }
-      const c = await own(Number(body.company_id), true);
+      const c = await access(Number(body.company_id), body.id ? 'update' : 'create');
       if (!c) return fail('Немає доступу', 403);
       const kind = id, key = String(body.request_key || '');
       if (!['storno', 'add', 'fix'].includes(kind)) return fail('Невідомий метод', 404);

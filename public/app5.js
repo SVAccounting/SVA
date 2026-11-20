@@ -22,12 +22,12 @@ Object.keys(RM).forEach(n=>{const f=window[n];window[n]=async function(...a){con
 let GO={};try{GO=JSON.parse(LS.getItem('navOpen')||'{}')}catch{}
 function nav(){
   if(!me)return;document.body.classList.add('authed');
-  const hid=me.role==='teacher'?HIDE_T:[];
+  const hid=me.role==='user'?MENU.flatMap(([,it])=>it.map(([k])=>k)).filter(k=>!visibleTab(k)):[];
   $('#nav').innerHTML=MENU.map(([s,it])=>{
-    const items=it.filter(([k])=>!hid.includes(k));if(!items.length)return'';
+    const items=it.filter(([k])=>!hid.includes(k) && (k!=='members'||me.role==='superadmin'||currentRights.manager));if(!items.length)return'';
     const open=GO[s]??(items.some(([k])=>k===tab)||s==='Головне'||s==='Операції');
     return `<div class="ng${open?' open':''}"><div class="nh" onclick="togG(this,'${s}')"><span>${BR(s)} ${s}</span><i>▾</i></div><div class="nb">${items.map(([k,v])=>`<a class="${k===tab?'on':''}" onclick="go('${k}')">${v}</a>`).join('')}</div></div>`}).join('');
-  $('#co').textContent=me.name+(me.role==='teacher'?' (адмін)':'')+(company?' · 🏢 '+company.name:'');
+  $('#co').textContent=me.name+(me.role==='superadmin'?' (суперадмін)':me.role==='admin'?' (адмін)':' (користувач)')+(company?' · 🏢 '+company.name:'');
 }
 function togG(h,s){const g=h.parentElement;g.classList.toggle('open');GO[s]=g.classList.contains('open');LS.setItem('navOpen',JSON.stringify(GO))}
 function toggleNav(){const c=document.body.classList.toggle('nav-closed');LS.setItem('navClosed',c?'1':'0')}
@@ -84,7 +84,7 @@ window.showPrint=function(html){
 };
 // журнал документів: редагування, друк/PDF/Excel, сторно
 views.docs=async()=>{
-  const D=await api('docs?company_id='+company.id),T=me.role==='teacher';
+  const D=await api('docs?company_id='+company.id),T=me.role==='superadmin';
   $('#app').innerHTML=`<div class="card sc"><h3>Журнал документів</h3><table><thead><tr><th>Дата</th><th>Вид</th><th>№</th><th>Контрагент</th><th class="n">Сума</th><th></th></tr></thead><tbody>${D.map(x=>`<tr${x.storno?' style="opacity:.55"':''}><td>${x.date}</td><td>${esc(DT[x.type]?.h.replace(/ \(.*\)/,''))}</td><td>${esc(x.number)}${x.storno?' (сторновано)':''}</td><td>${esc(x.partner)}</td><td class="n">${fmt(x.total||0)}</td><td style="white-space:nowrap"><button class="btn" onclick="printDoc(${x.id})">🖨 Друк · PDF · Excel</button>${T||x.storno?'':` <button class="btn" onclick="fixDoc(${x.id})">✎ Редагувати</button> <button class="btn" onclick="stornoDoc(${x.id})">↩ Сторно</button>`}</td></tr>`).join('')||'<tr><td colspan="6" class="mut">Документів ще немає</td></tr>'}</tbody></table></div>`;
 };
 async function stornoDoc(id){
@@ -93,3 +93,35 @@ async function stornoDoc(id){
   mdl(`<h3>${mtag('storno')} документа</h3><p class="mut">Документ не має проводок і буде позначений сторнованим.</p>${cf(today)}`);
 }
 boot();
+
+// Company-level permissions are loaded after each company selection.
+let currentRights={manager:false,permissions:{}};
+const canDo=(module,action='read')=>me?.role==='superadmin'||currentRights.permissions?.[module]?.[action]===true;
+const visibleTab=k=>{const map={set:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',rcpt:'docs',sale:'docs',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',plan:'reports',tasks:'reports',members:'settings'};return k==='company'||canDo(k.startsWith('r_')?'refs':map[k]||'reports','read')};
+const _pickWithRights=window.pick;
+window.pick=async function(id){await _pickWithRights(id);await loadRights();nav()};
+async function loadRights(){
+  currentRights={manager:false,permissions:{}};
+  if(!company)return;
+  try{currentRights=await api('permissions?company_id='+company.id)}catch(e){console.warn(e.message)}
+}
+const _bootWithRights=window.boot;
+window.boot=async function(){
+  if(token){try{me=await api('me');if(company)await loadRights()}catch(e){}}
+  return _bootWithRights();
+};
+views.members=async function(){
+ if(!company)return go('company');
+ const r=await api('permissions?company_id='+company.id);
+ if(!r.manager){$('#app').innerHTML='<div class="card err">Лише для адміністратора підприємства</div>';return}
+ const members=await api('members?company_id='+company.id);
+ const mods=[['refs','Довідники'],['entries','Операції'],['docs','Документи'],['reports','Звіти'],['stock','Склад'],['corrections','Виправлення'],['settings','Налаштування'],['audit','Журнал змін']];
+ $('#app').innerHTML=`<div class="card"><h3>Користувачі підприємства: ${esc(company.name)}</h3><p class="mut">Створіть користувача або введіть логін існуючого. Пароль потрібен лише для нового облікового запису.</p><div class="row"><div><label>Логін</label><input id="ul" autocomplete="off"></div><div><label>Ім’я</label><input id="un"></div><div><label>Пароль нового користувача (від 10 символів)</label><input id="up" type="password" autocomplete="new-password"></div></div><h3>Дозволи</h3><table><thead><tr><th>Розділ</th><th>Перегляд</th><th>Створення</th><th>Редагування</th><th>Видалення</th></tr></thead><tbody>${mods.map(([k,n])=>`<tr><td>${n}</td>${['read','create','update','delete'].map(a=>`<td><input type="checkbox" data-module="${k}" data-action="${a}"></td>`).join('')}</tr>`).join('')}</tbody></table><p><button class="btn pri" onclick="saveMember()">Зберегти доступ</button> <span id="msg"></span></p></div><div class="card"><h3>Користувачі з доступом</h3><table><tbody>${members.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.login)}</td><td><button class="btn" onclick="editMember(${u.id})">Права</button> <button class="btn" onclick="removeMember(${u.id})">Відкликати</button></td></tr>`).join('')||'<tr><td>Поки немає користувачів</td></tr>'}</tbody></table></div>`;
+ window.memberCache=members;
+};
+window.editMember=function(id){const u=window.memberCache.find(x=>x.id===id);if(!u)return;$('#ul').value=u.login;$('#ul').readOnly=true;$('#un').value=u.name;$('#up').value='';document.querySelectorAll('[data-module]').forEach(el=>el.checked=u.permissions?.[el.dataset.module]?.[el.dataset.action]===true)};
+window.saveMember=async function(){
+ const permissions={};document.querySelectorAll('[data-module]').forEach(el=>{const k=el.dataset.module;permissions[k]??={};permissions[k][el.dataset.action]=el.checked});
+ try{await api('members',{method:'POST',body:{company_id:company.id,login:$('#ul').value,name:$('#un').value,password:$('#up').value,permissions}});await views.members()}catch(e){$('#msg').textContent=e.message}
+};
+window.removeMember=async function(id){if(!confirm('Відкликати доступ до підприємства?'))return;try{await api(`members/${id}?company_id=${company.id}`,{method:'DELETE'});await views.members()}catch(e){alert(e.message)}};

@@ -47,7 +47,7 @@ async function docPost(k){
   try{const r=await api('docs',{method:'POST',body:{company_id:company.id,type:k,date:g('d_d'),number:g('d_n'),partner:g('d_p'),wh_id:Number(g('d_w'))||null,wh2_id:Number(g('d_w2'))||null,corr:g('d_c'),stock:g('d_st'),basis:g('d_b'),sum:g('d_s'),lines}});await go('docs');printDoc(r.id)}catch(e){$('#msg').textContent=e.message}
 }
 views.docs=async()=>{
-  const D=await api('docs?company_id='+company.id),T=me.role==='teacher';
+  const D=await api('docs?company_id='+company.id),T=me.role==='superadmin';
   $('#app').innerHTML=`<div class="card sc"><h3>Журнал документів</h3><table><thead><tr><th>Дата</th><th>Вид</th><th>№</th><th>Контрагент</th><th class="n">Сума</th><th></th></tr></thead><tbody>${D.map(x=>`<tr${x.storno?' style="opacity:.55"':''}><td>${x.date}</td><td>${esc(DT[x.type]?.h.replace(/ \(.*\)/,''))}</td><td>${esc(x.number)}${x.storno?' (сторновано)':''}</td><td>${esc(x.partner)}</td><td class="n">${fmt(x.total||0)}</td><td><button class="btn" onclick="printDoc(${x.id})">Друк</button> ${T||x.storno?'':`<button class="btn" onclick="stornoDoc(${x.id})">Сторно</button>`}</td></tr>`).join('')||'<tr><td class="mut">Документів ще немає</td></tr>'}</tbody></table></div>`;
 };
 async function stornoDoc(id){
