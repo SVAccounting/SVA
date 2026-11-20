@@ -302,6 +302,46 @@ export default async (req) => {
         : await sql`SELECT DISTINCT c.id, c.name, c.settings, c.closed_until, c.owner_id FROM companies c LEFT JOIN company_members m ON m.company_id=c.id AND m.user_id=${me.id} WHERE c.owner_id=${me.id} OR m.user_id=${me.id} ORDER BY c.id DESC`);
     }
 
+    // Monthly payroll calculations. No accounting postings are generated implicitly.
+    if (res === 'payroll') {
+      const cid=Number(M==='POST'?body.company_id:q.get('company_id'));
+      const c=await own(cid,M==='POST','entries',M==='POST'?'create':'read');
+      if(!c)return fail('Немає прав на розрахунок зарплати',403);
+      if(M==='GET') return json(await sql`SELECT p.*, r.name AS staff_name FROM payroll_calculations p LEFT JOIN refs r ON r.id=p.staff_id AND r.company_id=p.company_id WHERE p.company_id=${cid} ORDER BY p.year DESC,p.month DESC,p.id DESC`);
+      if(M!=='POST')return fail('Метод не дозволено',405);
+      const staffId=Number(body.staff_id),year=Number(body.year),month=Number(body.month),gross=Number(body.gross);
+      if(!Number.isSafeInteger(staffId)||!Number.isSafeInteger(year)||year<2020||year>2100||!Number.isSafeInteger(month)||month<1||month>12||!Number.isFinite(gross)||gross<0||gross>1e9)return fail('Перевірте працівника, період та нараховану суму');
+      const employee=(await sql`SELECT id,name,data FROM refs WHERE id=${staffId} AND company_id=${cid} AND kind='staff'`)[0];
+      if(!employee)return fail('Працівника не знайдено',404);
+      const norm=(await sql`SELECT data FROM refs WHERE company_id=${cid} AND kind='taxnorm' AND data->>'year'=${String(year)} ORDER BY id DESC LIMIT 1`)[0]?.data;
+      if(!norm)return fail('Спочатку створіть нормативи для цього року в довіднику «Податкові нормативи»');
+      const living=Number(norm.living),minWage=Number(norm.minimum_wage);
+      if(!(living>0&&minWage>0))return fail('У нормативі потрібно задати прожитковий мінімум і мінімальну зарплату');
+      const pct=Number(employee.data?.psp_pct||100);
+      const entitled=employee.data?.psp_eligible==='yes';
+      if(![100,150,200].includes(pct))return fail('Вкажіть правильний відсоток ПСП (100, 150 або 200) у довіднику персоналу');
+      const threshold=Math.round(living*1.4/10)*10;
+      const psp=entitled&&gross<=threshold?r2(living*0.5*pct/100):0;
+      const pit=r2(Math.max(0,gross-psp)*0.18);
+      const military=r2(gross*0.05);
+      const extra=Array.isArray(body.deductions)?body.deductions:[];
+      if(extra.length>25||extra.some(d=>!d||String(d.name||'').length>100||!String(d.name||'').trim()||!Number.isFinite(Number(d.amount))||Number(d.amount)<0||Number(d.amount)>gross))return fail('Некоректні додаткові утримання');
+      const extras=extra.map(d=>({name:String(d.name).trim(),amount:r2(Number(d.amount))}));
+      const extraTotal=r2(extras.reduce((a,d)=>a+d.amount,0));
+      const net=r2(gross-pit-military-extraTotal);
+      if(net<0)return fail('Утримання перевищують суму до виплати');
+      const esvRate=Number(employee.data?.esv_rate||22);
+      if(!(esvRate>=0&&esvRate<=50))return fail('Некоректна ставка ЄСВ');
+      // Minimum ESV basis only when user explicitly confirms full month/main employment.
+      const fullMain=body.full_main_job===true;
+      const esvBase=Math.min(Math.max(gross,fullMain?minWage:0),20*minWage);
+      const esv=r2(esvBase*esvRate/100);
+      const details={gross:r2(gross),pit,military,psp,threshold,net,esv,esv_base:r2(esvBase),esv_rate:esvRate,extras,year,month,full_main_job:fullMain,staff_name:employee.name,psp_applied:psp>0};
+      const row=(await sql`INSERT INTO payroll_calculations(company_id,staff_id,year,month,gross,details,created_by) VALUES (${cid},${staffId},${year},${month},${gross},${JSON.stringify(details)}::jsonb,${me.id}) ON CONFLICT(company_id,staff_id,year,month) DO UPDATE SET gross=EXCLUDED.gross,details=EXCLUDED.details,created_by=EXCLUDED.created_by,updated_at=now() RETURNING id,details`)[0];
+      await aud(c,'payroll-calculate','payroll',row.id,null,details,'Розрахунок без бухгалтерського проведення');
+      return json(row);
+    }
+
     if (res === 'refs') {
       if (M === 'POST') {
         const c = await access(Number(body.company_id), body.id ? 'update' : 'create');

@@ -201,7 +201,7 @@ function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null){
     <div>Одиниця виміру: <b>тис. грн без десяткового знака</b></div>
     <div>Складено: ☑ за НП(С)БО &nbsp; ☐ за МСФЗ</div></div>`;
   const hd=(n,k,d)=>`${meta()}<div class="financial-form-heading"><h3>${n}</h3><div>${k} · Код за ДКУД <b>${d}</b></div></div>`;
-  const signatures=`<div class="financial-signatures"><div>Керівник ____________________ <span>(підпис, ім’я та прізвище)</span></div><div>Головний бухгалтер ____________________ <span>(підпис, ім’я та прізвище)</span></div></div>`;
+  const signatures=`<div class="financial-signatures"><div>Керівник: ${esc(st.head_name||"____________________")} ____________________ <span>(підпис, ім’я та прізвище)</span></div><div>Головний бухгалтер: ${esc(st.chief_accountant_name||"____________________")} ____________________ <span>(підпис, ім’я та прізвище)</span></div></div>`;
   return `<div class="card sc financial-form official-financial">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
   ${tbl(F1A,a,BR1,'АКТИВ','На початок звітного періоду','На кінець звітного періоду',official)}
   ${tbl(F1P,l,BR1,'ПАСИВ','На початок звітного періоду','На кінець звітного періоду',official)}

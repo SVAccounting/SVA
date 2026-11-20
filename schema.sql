@@ -262,3 +262,22 @@ CREATE OR REPLACE VIEW entries_a AS SELECT * FROM entries WHERE active;
 
 -- Permissions for company creation (run permissions_migration.sql on existing DB).
 ALTER TABLE company_members ADD COLUMN IF NOT EXISTS can_create_company BOOLEAN NOT NULL DEFAULT false;
+
+-- Payroll calculations for newly initialized databases
+-- Перед виконанням створити резервну копію Neon. Повторний запуск безпечний.
+
+CREATE TABLE IF NOT EXISTS payroll_calculations (
+ id BIGSERIAL PRIMARY KEY,
+ company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+ staff_id INTEGER NOT NULL REFERENCES refs(id) ON DELETE RESTRICT,
+ year INTEGER NOT NULL CHECK(year BETWEEN 2020 AND 2100),
+ month INTEGER NOT NULL CHECK(month BETWEEN 1 AND 12),
+ gross NUMERIC(16,2) NOT NULL CHECK(gross >= 0),
+ details JSONB NOT NULL,
+ created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+ UNIQUE(company_id,staff_id,year,month)
+);
+CREATE INDEX IF NOT EXISTS payroll_calculations_company_period ON payroll_calculations(company_id,year,month);
+
