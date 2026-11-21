@@ -1,5 +1,4 @@
 import { neon } from '@neondatabase/serverless';
-import { buildFinancialClose } from './closing-logic.js';
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const sql = neon(process.env.DATABASE_URL);
@@ -470,80 +469,6 @@ export default async (req) => {
         FROM entries_a WHERE company_id=${c.id} ORDER BY date DESC, id DESC LIMIT ${pageSize} OFFSET ${offset}`);
       return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount
         FROM entries_a WHERE company_id=${c.id} ORDER BY date DESC, id DESC`);
-    }
-
-    if (res === 'financial-close') {
-      const cid=Number(M==='POST'?body.company_id:q.get('company_id'));
-      const date=String(M==='POST'?body.period_end:q.get('period_end')||'');
-      if(!validISODate(date))return fail('Вкажіть правильну дату завершення місяця');
-      if(date>new Date().toISOString().slice(0,10))return fail('Не можна закривати фінансові результати майбутнім числом');
-      const day=new Date(date+'T00:00:00Z');day.setUTCDate(day.getUTCDate()+1);
-      if(day.getUTCDate()!==1)return fail('Закриття фінансових результатів можливе останнім днем місяця');
-      const c=await own(cid,M==='POST','entries',M==='POST'?'create':'read');
-      if(!c)return fail('Недостатньо прав для фінансового закриття',403);
-      const existing=(await sql`SELECT id,to_char(period_end,'YYYY-MM-DD') AS period_end,doc_number,created_at FROM financial_closings WHERE company_id=${cid} AND period_end=${date}::date`)[0];
-      if(M==='POST' && !(await own(cid,true,'settings','update')))return fail('Закривати фінансові результати може лише користувач із правом змінювати облікові періоди',403);
-      // Aggregate on the server, not from paginated browser journals.
-      const bals=await sql`SELECT code,SUM(delta)::numeric AS balance FROM (
-        SELECT debit_acc AS code, amount AS delta FROM entries_a WHERE company_id=${cid} AND date<=${date}::date
-        UNION ALL
-        SELECT credit_acc AS code, -amount AS delta FROM entries_a WHERE company_id=${cid} AND date<=${date}::date
-      ) q WHERE code ~ '^[789]' GROUP BY code HAVING ABS(SUM(delta))>=0.005 ORDER BY code`;
-      const plan=buildFinancialClose(bals);
-      if(M==='GET')return json({period_end:date,existing:existing||null,...plan});
-      if(existing)return fail('Результати за цю дату вже закрито. Для виправлення використайте коригувальні записи.',409);
-      lockCheck(c,date);
-      if(plan.unclosed8.length)return fail('Є незакриті рахунки класу 8 ('+plan.unclosed8.map(x=>x.code).join(', ')+'). Спочатку правильно віднесіть витрати до рахунків 9 класу або 23.',409);
-      if(!plan.lines.length)return fail('Немає доходів, витрат або залишків рахунка 79 для закриття',409);
-      if(body.confirm !== true)return fail('Необхідно підтвердити попередній перегляд проводок');
-      const doc='ЗФР-'+date;
-      // One atomic SQL statement. Unique claim protects from duplicate closing.
-      // Materialize balances and all closing entries from one DB snapshot.
-      const done=await sql`WITH claim AS (
-        INSERT INTO financial_closings(company_id,period_end,doc_number,created_by)
-        VALUES (${cid},${date}::date,${doc},${me.id}) ON CONFLICT DO NOTHING RETURNING id
-      ), movements AS (
-        SELECT debit_acc code,amount delta FROM entries_a WHERE company_id=${cid} AND date<=${date}::date
-        UNION ALL
-        SELECT credit_acc code,-amount delta FROM entries_a WHERE company_id=${cid} AND date<=${date}::date
-      ), balances AS (
-        SELECT code,SUM(delta) balance FROM movements WHERE code~'^[789]' GROUP BY code HAVING ABS(SUM(delta))>=0.005
-      ), sources AS (
-        SELECT code,balance,
-          CASE WHEN code ~ '^(70|71|90|91|92|93|94)' THEN '791'
-               WHEN code ~ '^(72|73|95|96)' THEN '792' ELSE '793' END target
-        FROM balances WHERE (code LIKE '7%' AND code NOT LIKE '79%') OR code LIKE '9%'
-      ), results AS (
-        SELECT code,SUM(balance) AS balance FROM (
-          SELECT code,balance FROM balances WHERE code IN ('79','791','792','793')
-          UNION ALL SELECT target AS code,balance FROM sources
-        ) x GROUP BY code HAVING ABS(SUM(balance))>=0.005
-      ), lines AS (
-        SELECT CASE WHEN balance<0 THEN code ELSE target END debit_acc,
-               CASE WHEN balance<0 THEN target ELSE code END credit_acc,ABS(balance) amount,
-               'Закриття рахунка '||code||' на '||target description FROM sources
-        UNION ALL
-        SELECT CASE WHEN balance<0 THEN code ELSE '44' END,
-               CASE WHEN balance<0 THEN '44' ELSE code END,ABS(balance),
-               'Списання фінансового результату '||code||' на 44' FROM results
-      ), insert_entries AS (
-        INSERT INTO entries(company_id,date,doc,description,debit_acc,credit_acc,amount)
-        SELECT ${cid},${date}::date,${doc},l.description,l.debit_acc,l.credit_acc,l.amount
-        FROM lines l CROSS JOIN claim WHERE l.amount>=0.005 RETURNING id
-      ), lock_period AS (
-        UPDATE companies SET closed_until=${date} WHERE id=${cid} AND EXISTS(SELECT 1 FROM claim) RETURNING id
-      ), audit_record AS (
-        INSERT INTO audit_log(company_id,user_id,user_name,action,object_type,object_id,new_data,reason)
-        SELECT ${cid},${me.id},${me.name},'financial-close','company',(SELECT id::text FROM claim),
-          ${JSON.stringify({period_end:date,expected_profit:plan.profit})}::jsonb,'Закриття доходів і витрат на 79, результату — на 44'
-        WHERE EXISTS(SELECT 1 FROM claim) RETURNING id
-      ) SELECT (SELECT count(*) FROM claim)::int AS claimed,
-         (SELECT count(*) FROM insert_entries)::int AS entries,
-         (SELECT count(*) FROM lock_period)::int AS locked,
-         (SELECT COALESCE(-SUM(balance),0)::numeric FROM results) AS profit`;
-      if(!done[0]?.claimed)return fail('Закриття за цю дату вже проведено',409);
-      if(!done[0]?.entries)return fail('Не створено проводок: перевірте базу та зверніться до адміністратора',500);
-      return json({ok:true,period_end:date,doc_number:doc,entries:Number(done[0].entries),profit:Number(done[0].profit),period_locked:true});
     }
 
     if (res === 'osv' || res === 'pnl') {

@@ -143,7 +143,8 @@ async function osv(){
   const r=await api(`osv?company_id=${company.id}&from=${$('#f').value}&to=${$('#t').value}`);
   const side=(v,dt)=>v>0?(dt?fmt(v):''):(v<0?(dt?'':fmt(-v)):'');
   const cells=x=>`<td class="n">${side(x.opening,1)}</td><td class="n">${side(x.opening,0)}</td><td class="n">${fmt(x.debit)}</td><td class="n">${fmt(x.credit)}</td><td class="n">${side(x.closing,1)}</td><td class="n">${side(x.closing,0)}</td>`;
-  const sum=a=>a.reduce((s,x)=>({opening:s.opening+x.opening,debit:s.debit+x.debit,credit:s.credit+x.credit,closing:s.closing+x.closing}),{opening:0,debit:0,credit:0,closing:0});
+  const leaf=a=>a.filter(x=>!a.some(y=>y!==x&&y.code.length>x.code.length&&y.code.startsWith(x.code)));
+  const sum=a=>leaf(a).reduce((s,x)=>({opening:s.opening+x.opening,debit:s.debit+x.debit,credit:s.credit+x.credit,closing:s.closing+x.closing}),{opening:0,debit:0,credit:0,closing:0});
   const g={};r.forEach(x=>(g[x.code.slice(0,2)]??=[]).push(x));
   let body='';
   for(const k of Object.keys(g).sort()){
@@ -152,10 +153,12 @@ async function osv(){
     body+=`<tr style="font-weight:700;background:var(--bg)"><td>${k} ${esc(SYN[k]||'')}</td>${cells(sum(a))}</tr>`;
     body+=a.map(x=>`<tr><td style="padding-left:24px">${x.code} ${esc(x.name)}</td>${cells(x)}</tr>`).join('');
   }
-  const T=sum(r);const openD=r.reduce((a,x)=>a+Math.max(Number(x.opening),0),0),openC=r.reduce((a,x)=>a+Math.max(-Number(x.opening),0),0),closeD=r.reduce((a,x)=>a+Math.max(Number(x.closing),0),0),closeC=r.reduce((a,x)=>a+Math.max(-Number(x.closing),0),0);
+  const T=sum(r),LF=leaf(r);
+  // «Разом»: сальдо — по кожному рахунку окремо (Дт-залишки в Дт, Кт-залишки в Кт), а не згорнуте
+  const pos=(a,k)=>a.reduce((s,x)=>s+Math.max(x[k],0),0),ngt=(a,k)=>a.reduce((s,x)=>s+Math.max(-x[k],0),0);
   $('#res').innerHTML=`<div class="card sc"><table><thead><tr><th rowspan="2">Рахунок</th><th colspan="2" class="n">Сальдо на початок</th><th colspan="2" class="n">Обороти</th><th colspan="2" class="n">Сальдо на кінець</th></tr>
   <tr><th class="n">Дт</th><th class="n">Кт</th><th class="n">Дт</th><th class="n">Кт</th><th class="n">Дт</th><th class="n">Кт</th></tr></thead><tbody>${body}</tbody>
-  <tfoot><tr><td>Разом</td><td class="n">${fmt(openD)}</td><td class="n">${fmt(openC)}</td><td class="n">${fmt(T.debit)}</td><td class="n">${fmt(T.credit)}</td><td class="n">${fmt(closeD)}</td><td class="n">${fmt(closeC)}</td></tr></tfoot></table></div>`;
+  <tfoot><tr style="font-weight:700"><td>Разом</td><td class="n">${fmt(pos(LF,'opening'))}</td><td class="n">${fmt(ngt(LF,'opening'))}</td><td class="n">${fmt(T.debit)}</td><td class="n">${fmt(T.credit)}</td><td class="n">${fmt(pos(LF,'closing'))}</td><td class="n">${fmt(ngt(LF,'closing'))}</td></tr></tfoot></table></div>`;
 }
 function logout(){token=null;me=null;company=null;localStorage.removeItem('token');localStorage.removeItem('company');login()}
 function login(){
@@ -198,13 +201,14 @@ async function reports(){
 }
 </script>
 <script src="app2.js?v=20261120scan2"></script>
-<script src="app3.js?v=20261121a"></script>
-<script src="app4.js?v=20261121a"></script>
-<script src="export-tools.js?v=20261121a"></script>
-<script src="app5.js?v=20261121a"></script>
+<script src="app3.js?v=20261120hr3"></script>
+<script src="app4.js?v=20261120hr3"></script>
+<script src="app5.js?v=20261120hr3"></script>
 <script src="app6.js?v=20261120hr3"></script>
 <script src="app7.js?v=20261120hr3"></script>
 <script src="app8.js?v=20261120hr3"></script>
-<script src="app9.js?v=20261121a"></script>
+<script src="app9.js?v=20261120hr3"></script>
+<script src="closefin.js?v=20261121a"></script>
+<script src="export.js?v=20261121a"></script>
 <script src="barcode-scanner.js?v=20261120scan2"></script>
 <script>boot();</script></body></html>

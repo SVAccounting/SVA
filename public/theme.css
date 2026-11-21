@@ -259,7 +259,17 @@ html,body{max-width:100%;overflow-x:clip}
  .card.sc:has(.mobile-card-table) table{min-width:0!important}
 }
 
-/* Audit and finance-close feedback. */
-.report-warning{padding:12px 15px;margin:10px 0 14px;border:1px solid #dec69f;border-radius:10px;background:#fff9eb;color:#5b442b;line-height:1.5;font-size:14px}
-@media(max-width:700px){.report-warning{font-size:13px}.official-financial .financial-table{font-size:10px}}
-@media print{.report-warning,.noprint{display:none!important}}
+/* ===== Друк: таблиці завжди вміщуються на аркуші (прокручувані контейнери .sc у друці розгортаються) ===== */
+@media print{
+  html,body{height:auto!important;overflow:visible!important;background:#fff!important;color:#000!important}
+  .lay,.lay>main,main,#app{display:block!important;width:auto!important;max-width:none!important;height:auto!important;overflow:visible!important;padding:0!important;margin:0!important}
+  #app .sc,#app .card.sc{overflow:visible!important;max-width:none!important;width:100%!important;box-shadow:none!important;border:0!important;border-radius:0!important;padding:0!important;background:#fff!important}
+  #app table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:auto;border-collapse:collapse;font-size:8.5pt;color:#000}
+  #app table th,#app table td{white-space:normal!important;overflow-wrap:anywhere;word-break:normal;padding:2px 4px!important;border:.5pt solid #555;color:#000}
+  #app table td.n,#app table th.n{white-space:nowrap!important;text-align:right}
+  #app table thead{display:table-header-group}
+  #app table tfoot{display:table-footer-group}
+  #app table tr{break-inside:avoid;page-break-inside:avoid}
+  .financial-form .financial-table{table-layout:fixed}
+  .recent-navigation,.navx,#nav,aside,header,#toasts,.toast{display:none!important}
+}
