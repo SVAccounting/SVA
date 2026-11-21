@@ -1,3 +1,16 @@
 [build]
   publish = "public"
   functions = "netlify/functions"
+
+# service worker і маніфест не повинні довго кешуватися браузером — інакше оновлення застосунку запізнюватимуться
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
+    Cache-Control = "no-cache"

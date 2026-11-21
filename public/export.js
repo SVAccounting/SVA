@@ -11,10 +11,47 @@
   const SKIP='.noprint,.tb,button,select,input,textarea,label,script,style,.spin,.toast';
   const BLOCK=/^(DIV|P|H[1-6]|TABLE|UL|OL|SECTION|ARTICLE|FORM|HEADER|FOOTER|MAIN)$/;
   const clean=s=>String(s||'').replace(/[\u00a0\u202f]/g,' ').replace(/\u2611/g,'[x]').replace(/\u2610/g,'[ ]').replace(/[ \t]+/g,' ').replace(/ ?\n ?/g,'\n').trim();
+  // Liberation Sans не містить символів ↩ ✕ ✓ ⚠ та емодзі: у PDF вони б перетворилися на «сміття»
+  const GLYPHS=[[/\u21a9/g,'←'],[/[\u2715\u2716]/g,'×'],[/[\u2713\u2714]/g,'+'],[/\u2705/g,'[+]'],[/\u274c/g,'[–]'],[/\u26a0\ufe0f?/g,'!']];
+  const pdfText=s=>GLYPHS.reduce((t,[re,r])=>t.replace(re,r),clean(s)).replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF\uFE0F\u25BE\u270E]/gu,'').replace(/ {2,}/g,' ').trim();
   const nowStr=()=>new Date().toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const dmy=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s.split('-').reverse().join('.'):s;
   const coName=()=>(typeof company!=='undefined'&&company&&company.name)||'';
 
+  // ---------- підготовка таблиці до експорту ----------
+  // Кнопки («✎», «Сторно», «Друк · PDF · Excel») та порожні стовпці «Дії» не мають потрапляти в PDF/Excel,
+  // а значення полів вводу (напр. суми у перегляді проводок) мають замінюватися їх текстом.
+  const CTRL='button,input,select,textarea,.noprint,details.dd';
+  const styleOf=el=>el.dataset&&el.dataset.ta!==undefined?{textAlign:el.dataset.ta,fontWeight:el.dataset.fw}:getComputedStyle(el);
+  function dropActionCols(c){
+    const rows=[...c.rows];if(!rows.length||rows.some(r=>[...r.cells].some(x=>(x.rowSpan||1)>1)))return;
+    const layout=r=>{let p=0;return [...r.cells].map(x=>{const o=[x,p];p+=x.colSpan||1;return o})};
+    const n=Math.max(...rows.map(r=>[...r.cells].reduce((a,x)=>a+(x.colSpan||1),0)));
+    const drop=[];
+    for(let i=0;i<n;i++){
+      let any=false,ok=true;
+      for(const r of rows){
+        const hit=layout(r).find(([x,p])=>p===i&&(x.colSpan||1)===1);if(!hit)continue;
+        const x=hit[0],t=clean(x.textContent),head=x.tagName==='TH'||r.parentElement.tagName==='THEAD';
+        if(head){if(/^дії?$/i.test(t))any=true;else if(t)ok=false}
+        else{if(t)ok=false;if(x.dataset.ctl)any=true}
+      }
+      if(ok&&any)drop.push(i);
+    }
+    drop.reverse().forEach(i=>rows.forEach(r=>{for(const [x,p] of layout(r)){const w=x.colSpan||1;if(p<=i&&i<p+w){if(w>1)x.colSpan=w-1;else x.remove();break}}}));
+  }
+  function prepTable(tb){
+    if(!tb.querySelector(CTRL))return tb;          // звичайні таблиці (ОСВ, форми №1/№2) не чіпаємо
+    const c=tb.cloneNode(true),src=[...tb.querySelectorAll('th,td')],dst=[...c.querySelectorAll('th,td')];
+    dst.forEach((d,i)=>{const st=getComputedStyle(src[i]);d.dataset.ta=st.textAlign;d.dataset.fw=st.fontWeight;if(d.querySelector('button,.noprint,details.dd'))d.dataset.ctl='1'});
+    c.querySelectorAll('button,.noprint,details.dd,script,style,.spin').forEach(x=>x.remove());
+    c.querySelectorAll('select').forEach(x=>x.replaceWith(document.createTextNode(x.selectedOptions&&x.selectedOptions[0]?x.selectedOptions[0].textContent:'')));
+    c.querySelectorAll('input,textarea').forEach(x=>{
+      const isCheck=x.type==='checkbox'||x.type==='radio';
+      x.replaceWith(document.createTextNode(isCheck?(x.checked?'[x]':'[ ]'):(x.value||'')))});
+    dropActionCols(c);
+    return c;
+  }
   // ---------- розбір DOM у «блоки»: text / table / break / sec ----------
   function textOf(el){const c=el.cloneNode(true);c.querySelectorAll(SKIP).forEach(x=>x.remove());
     // <br> → перенос рядка
@@ -24,7 +61,7 @@
       if(el.matches&&el.matches(SKIP))continue;
       if(el.matches('.card,.financial-form'))out.push({t:'sec',el});
       if(el.matches('.financial-form')&&ctx.forms++>0)out.push({t:'break'});
-      if(el.tagName==='TABLE'){out.push({t:'table',el});continue}
+      if(el.tagName==='TABLE'){out.push({t:'table',el:prepTable(el)});continue}
       if([...el.children].some(c=>BLOCK.test(c.tagName)||c.tagName==='TABLE')){walk(el,out,ctx);continue}
       const t=textOf(el);if(!t)continue;
       const h=/^H([1-4])$/.test(el.tagName)?+el.tagName[1]:0;
@@ -79,7 +116,7 @@
           const pt=b.h===3?12:b.h===1||b.h===2?14:b.h?10.5:b.small?8:9,bold=!!b.h||b.right;
           if(b.center)y+=3;
           doc.setFont('LS',bold?'bold':'normal');doc.setFontSize(pt);doc.setTextColor(20);
-          const lines=doc.splitTextToSize(b.text,W),lh=pt*0.3528*1.28;room(lines.length*lh+1);
+          const lines=doc.splitTextToSize(pdfText(b.text),W),lh=pt*0.3528*1.28;room(lines.length*lh+1);
           const x=b.center?PW/2:b.right?PW-M.right:M.left,al=b.center?'center':b.right?'right':'left';
           lines.forEach((ln,i)=>doc.text(ln,x,y+pt*0.3528+i*lh,{align:al}));
           y+=lines.length*lh+(b.h?2:b.small?0.6:1.2);continue;
@@ -100,8 +137,8 @@
           columnStyles,rowPageBreak:'avoid',showHead:'everyPage',showFoot:'lastPage',
           didParseCell(d){
             const el=d.cell.raw;if(!el||el.nodeType!==1)return;
-            d.cell.text=d.cell.text.map(s=>clean(s).replace(/\n/g,' ').trim());
-            const cs=getComputedStyle(el);
+            d.cell.text=d.cell.text.map(s=>pdfText(s).replace(/\n/g,' ').trim());
+            const cs=styleOf(el);
             if(d.section!=='head'){
               const ta=cs.textAlign;d.cell.styles.halign=ta==='right'||ta==='end'?'right':ta==='center'?'center':'left';
               if(parseInt(cs.fontWeight,10)>=600)d.cell.styles.fontStyle='bold';
@@ -134,6 +171,10 @@
     const dm=core.match(/[.,](\d+)$/);const v=Number(core.replace(/[ -]/g,'').replace(',','.'))*(neg?-1:1);
     return{v,dec:dm?dm[1].length:0,grp:/ /.test(core),paren:/^\(/.test(t)};
   }
+  function cellText(td){
+    if(td.isConnected&&td.innerText!==undefined)return clean(td.innerText);
+    const c=td.cloneNode(true);c.querySelectorAll('br').forEach(b=>b.replaceWith('\n'));return clean(c.textContent);
+  }
   const THIN={style:'thin',color:{argb:'FF666666'}},BORDER={top:THIN,left:THIN,bottom:THIN,right:THIN};
   const argbFill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}});
   function tableModel(tb,fin){
@@ -145,7 +186,7 @@
         while(occ[r][c])c++;
         const cs=td.colSpan||1,rs=td.rowSpan||1;
         for(let i=0;i<rs;i++)for(let j=0;j<cs;j++){(occ[r+i]=occ[r+i]||[])[c+j]=true}
-        const st=getComputedStyle(td),text=clean(td.innerText!==undefined?td.innerText:td.textContent);
+        const st=styleOf(td),text=cellText(td);
         const inHead=tr.parentElement.tagName==='THEAD',inFoot=tr.parentElement.tagName==='TFOOT';
         const num=inHead||(fin&&c<2)?null:parseNum(text,fin&&c>=2);
         const ta=st.textAlign;
@@ -249,9 +290,22 @@
     s.textContent=`@page{size:A4 ${orient};margin:10mm}`}
   function autoOrientation(){
     const root=document.querySelector('body.printing #prn .pdoc')||document.querySelector('#app');if(!root)return;
+    if(root.classList.contains('pdoc')){setPage('portrait');return}   // накладні, ордери, акти — завжди книжкова
     const blocks=[];walk(root,blocks,{forms:0});
     setPage(wantLand(root,blocks)?'landscape':'portrait');
   }
-  window.addEventListener('beforeprint',autoOrientation);
+  // Шапка друку: у друці приховані картки з полями «з / по», тому підприємство, розділ і період додаємо окремим рядком
+  function printHead(){
+    const app=document.querySelector('#app');if(!app||document.body.classList.contains('printing')||app.querySelector('.financial-form'))return;
+    document.getElementById('printhead')?.remove();
+    const label=(typeof MENU!=='undefined'&&MENU.flatMap(([,i])=>i).find(([k])=>k===tab)||[])[1]||'';
+    const title=String(label).replace(/^[^\p{L}\p{N}]+/u,'')||(app.querySelector('h3')?.textContent||'');
+    const f=document.querySelector('#f'),t=document.querySelector('#t');
+    const el=document.createElement('div');el.id='printhead';
+    el.innerHTML='<b>'+esc(coName())+'</b><br>'+esc(title)+(f&&t&&f.value&&t.value?' · період: з '+dmy(f.value)+' по '+dmy(t.value):'')+'<br><small>Сформовано '+esc(nowStr())+'</small>';
+    app.insertAdjacentElement('afterbegin',el);
+  }
+  window.addEventListener('beforeprint',()=>{printHead();autoOrientation()});
+  window.addEventListener('afterprint',()=>document.getElementById('printhead')?.remove());
   window.exPrint=function(){document.body.classList.remove('printing');autoOrientation();window.print()};
 })();

@@ -297,3 +297,8 @@ html,body{max-width:100%;overflow-x:clip}
 .rb-report-row:nth-child(even){background:var(--bg)}.rb-report-row[hidden]{display:none}.rb-report-row input{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px}.rb-code{font-weight:650;font-variant-numeric:tabular-nums}.rb-name{font-size:13px}.rb-name small{display:block;color:var(--mut);font-size:11px;margin-top:2px}
 .rb-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.rb-compare>div{min-width:0;overflow:auto}
 @media(max-width:750px){.rb-grid-head{display:none}.rb-map-row{grid-template-columns:repeat(2,minmax(0,1fr)) 38px}.rb-map-row input{min-width:0}.rb-map-row button{grid-column:3;grid-row:1/span 2;height:100%}.rb-report-row{grid-template-columns:48px minmax(0,1fr)}.rb-report-row input{grid-column:1/-1}.rb-compare{grid-template-columns:1fr}.rb-actions>*{width:100%}.rb-title h2{font-size:18px}}
+
+
+/* Шапка друку: підприємство, розділ, період (картки з фільтрами у друці приховані) */
+#printhead{display:none}
+@media print{#printhead{display:block;margin:0 0 8px;font-size:10pt;line-height:1.35;color:#000}#printhead small{color:#444}}

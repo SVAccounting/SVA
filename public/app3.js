@@ -46,7 +46,7 @@ Object.keys(DT).forEach(k=>views[k]=async()=>{
   <div id="ln"></div><datalist id="dl">${I.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist><p><button class="btn" onclick="lnRow()">+ рядок</button></p><p id="tot" class="mut"></p>
   ${d.wh&&!I.length?'<p class="err">Спочатку заповніть довідники «Номенклатура» та «Склади».</p>':''}`}
   <label>Підстава / примітка</label><input id="d_b"><p><button class="btn pri" onclick="docPost('${k}')">Провести</button> <span id="msg" class="err"></span></p>
-  ${d.lines&&!d.wh?'':''}${S().vat?'':'<p class="mut">Підприємство не є платником ПДВ — ПДВ не нараховується.</p>'}${k==='sale'||k==='wo'||k==='mv'?`<p class="mut">Собівартість списання розраховується автоматично: ${S().inv==='avg'?'середньозважена':S().inv==='spec'?'ідентифікована за партією':'FIFO'} (${S().inv_scope==='company'?'по підприємству':'за складом'}).</p>`:''}</div>`;
+  ${d.lines&&!d.wh?'':''}${S().vat?'':'<p class="mut">Підприємство не є платником ПДВ — ПДВ не нараховується.</p>'}${k==='wo'&&S().vat?'<label class="pay-check"><input id="d_vc" type="checkbox" checked> ПДВ при придбанні цих ТМЦ увійшов до податкового кредиту — нарахувати компенсуючі податкові зобов’язання (п. 198.5 ПКУ)</label><p class="mut">Нараховується за основною ставкою від вартості придбання (собівартості списання): Дт рахунка витрат — Кт 641. Зведену податкову накладну потрібно скласти й зареєструвати не пізніше останнього дня звітного періоду списання.</p>':''}${k==='sale'||k==='wo'||k==='mv'?`<p class="mut">Собівартість списання розраховується автоматично: ${S().inv==='avg'?'середньозважена':S().inv==='spec'?'ідентифікована за партією':'FIFO'} (${S().inv_scope==='company'?'по підприємству':'за складом'}).</p>`:''}</div>`;
   if(d.lines)lnRow();
 });
 function lnRow(){
@@ -88,7 +88,7 @@ function lnTot(){let s=0;document.querySelectorAll('.lr').forEach(r=>{const v=R2
 async function docPost(k){
   const g=i=>$('#'+i)?.value||'';
   const lines=[...document.querySelectorAll('.lr')].map(r=>{const n=r.querySelector('.ln_n').value,it=ITEMS.find(x=>x.name===n);return{item_id:it?.id,name:n,unit:r.querySelector('.ln_u').value,qty:r.querySelector('.ln_q').value,price:r.querySelector('.ln_p').value,lot_key:r.querySelector('.ln_lot')?.value||''}}).filter(l=>l.name&&Number(l.qty)>0);
-  try{const r=await api('docs',{method:'POST',body:{company_id:company.id,type:k,date:g('d_d'),number:g('d_n'),partner:g('d_p'),wh_id:Number(g('d_w'))||null,wh2_id:Number(g('d_w2'))||null,corr:g('d_c'),stock:g('d_st'),basis:g('d_b'),sum:g('d_s'),lines}});await go('docs');printDoc(r.id)}catch(e){$('#msg').textContent=e.message}
+  try{const r=await api('docs',{method:'POST',body:{company_id:company.id,type:k,date:g('d_d'),number:g('d_n'),partner:g('d_p'),wh_id:Number(g('d_w'))||null,wh2_id:Number(g('d_w2'))||null,corr:g('d_c'),stock:g('d_st'),vat_comp:$('#d_vc')?.checked===true,basis:g('d_b'),sum:g('d_s'),lines}});await go('docs');printDoc(r.id)}catch(e){$('#msg').textContent=e.message}
 }
 views.docs=async()=>{
   const D=await api('docs?company_id='+company.id),T=!canDo('corrections','create');
@@ -160,8 +160,8 @@ async function printDoc(id){
     sale:()=>`${H('ВИДАТКОВА НАКЛАДНА')}<p>Постачальник: ${my}</p><p>Одержувач: ${pp}</p><p>Склад: ${Z(X.wh)}</p>${tb()}${tot}${sig('Відпустив','Отримав')}`,
     inv:()=>`${H('РАХУНОК-ФАКТУРА')}<p>Постачальник: ${my}</p><p>Платник: ${pp}</p>${tb()}${tot}<p class="mut">Рахунок дійсний до оплати протягом 5 банківських днів.</p>${sig('Керівник','Головний бухгалтер')}`,
     act:()=>`${H('АКТ ВИКОНАНИХ РОБІТ (НАДАНИХ ПОСЛУГ)')}<p>Виконавець: ${my}</p><p>Замовник: ${pp}</p><p>Виконавець виконав, а Замовник прийняв наведені роботи (послуги). Претензій щодо обсягу, якості й строків немає.</p>${tb()}${tot}${sig('Від Виконавця','Від Замовника')}`,
-    wo:()=>`${H('АКТ СПИСАННЯ ТМЦ')}<p>${my}</p><p>Склад: ${Z(X.wh)}; рахунок витрат: ${Z(X.corr)}</p><p>Підстава: ${Z(X.basis)}</p>${tb(1)}<p>Всього списано на суму: <b>${fmt(X.total)} грн</b> (${sw(X.total)})</p>${sig('Голова комісії','Члени комісії','МВО')}`,
+    wo:()=>`${H('АКТ СПИСАННЯ ТМЦ')}<p>${my}</p><p>Склад: ${Z(X.wh)}; рахунок витрат: ${Z(X.corr)}</p><p>Підстава: ${Z(X.basis)}</p>${tb(1)}<p>Всього списано на суму: <b>${fmt(X.total)} грн</b> (${sw(X.total)})</p>${Number(X.vat_comp)>0?`<p>Компенсуючі податкові зобов’язання з ПДВ (п. 198.5 ПКУ): <b>${fmt(X.vat_comp)} грн</b> (Дт ${Z(X.corr||'947')} — Кт 641). Зведену податкову накладну скласти не пізніше останнього дня звітного періоду списання.</p>`:''}${sig('Голова комісії','Члени комісії','МВО')}`,
     mv:()=>`${H('НАКЛАДНА НА ВНУТРІШНЄ ПЕРЕМІЩЕННЯ')}<p>${my}</p><p>Зі складу: ${Z(X.wh)} → на склад: ${Z(X.wh2)}</p>${tb(1)}<p>Всього на суму: <b>${fmt(X.total)} грн</b></p>${sig('Відпустив','Прийняв')}`,
     ost:()=>`${H('ВВЕДЕННЯ ПОЧАТКОВИХ ЗАЛИШКІВ ТМЦ')}<p>${my}</p><p>Склад: ${Z(X.wh)}</p>${tb()}${tot}`};
-  showPrint(H2[d.type]());
+  showPrint(H2[d.type](),d.type+'_'+d.number);
 }

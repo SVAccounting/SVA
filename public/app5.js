@@ -1,5 +1,5 @@
 // ProOblik: брендинг, згортне меню, повідомлення, експорт (друк / Excel / PDF)
-const LS=localStorage,BR=n=>({'Головне':'🏠','Довідники':'📚','Каса':'💵','Банк':'🏦','Склад':'📦','Документи':'🧾','Операції':'✍️','Кадри':'👥','Виправлення':'↩️','Звіти':'📊'}[n]||'•');
+const LS=localStorage,BR=n=>({'Головне':'🏠','Довідники':'📚','Каса':'💵','Банк':'🏦','Склад':'📦','Документи':'🧾','Операції':'✍️','Кадри':'👥','Виправлення':'↩️','Звіти':'📊','Ціноутворення':'🏷️','Сервіс суперадміна':'🛠️'}[n]||'•');
 // ---- повідомлення ----
 function toast(msg,type){
   let box=$('#toasts');if(!box){document.body.insertAdjacentHTML('beforeend','<div id="toasts"></div>');box=$('#toasts')}
@@ -48,7 +48,7 @@ window.login=function login(){
   <p><button class="btn pri" onclick="auth('login')">Увійти</button> <button class="btn" onclick="auth('register')">Зареєструватись</button></p><p id="msg" class="err"></p></div>`;
 };
 // ---- перехід між розділами + панель експорту ----
-const EXP=['entries','docs','osv','chess','card','cashbook','bank','stock','scard','rep','corr','audit','plan','r_staff','r_customer','r_supplier','r_bank','r_wh','r_item','payroll','paystatement','taxnorm'],LAND=['entries','docs','osv','chess','card','cashbook','bank','corr','audit','stock','scard'];
+const EXP=['entries','docs','osv','chess','card','cashbook','bank','stock','scard','rep','corr','audit','plan','r_staff','r_customer','r_supplier','r_bank','r_wh','r_item','r_item_type','r_uom','r_price_type','prices','payroll','paystatement','taxnorm'],LAND=['entries','docs','osv','chess','card','cashbook','bank','corr','audit','stock','scard'];
 async function go(t){
   if(!NOCO.includes(t)&&!company){toast('Спочатку оберіть або створіть підприємство','err');t='company'}
   if(t==='members'&&!currentRights.manager&&me?.role!=='superadmin'){toast('Недостатньо прав','err');return}
@@ -101,9 +101,10 @@ async function exPdf(root,name,land){
   finally{document.body.classList.remove('pdfmode')}
 }
 // бланки документів: друк, PDF, Excel
-window.showPrint=function(html){
+window.showPrint=function(html,name){
+  window._prnName=name||'документ';
   let p=$('#prn');if(!p){document.body.insertAdjacentHTML('beforeend','<div id="prn"></div>');p=$('#prn')}
-  p.innerHTML=`<div class="noprint" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" onclick="window.print()">🖨 Друк</button><button class="btn" onclick="exPdf($('#prn .pdoc'),'документ',false)">📄 PDF</button><button class="btn" onclick="exXlsx($('#prn .pdoc'),'документ')">📊 Excel</button><button class="btn" onclick="closePrn()">Закрити</button></div><div class="pdoc">${html}</div>`;
+  p.innerHTML=`<div class="noprint" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" onclick="window.print()">🖨 Друк</button><button class="btn" onclick="exPdf($('#prn .pdoc'),window._prnName,false)">📄 PDF</button><button class="btn" onclick="exXlsx($('#prn .pdoc'),window._prnName)">📊 Excel</button><button class="btn" onclick="closePrn()">Закрити</button></div><div class="pdoc">${html}</div>`;
   p.style.display='block';document.body.classList.add('printing');
 };
 // журнал документів: редагування, друк/PDF/Excel, сторно
@@ -121,7 +122,7 @@ async function stornoDoc(id){
 let currentRights={manager:false,permissions:{}};
 const canDo=(module,action='read')=>me?.role==='superadmin'||currentRights.permissions?.[module]?.[action]===true;
 const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',prod:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',payroll:'entries',paystatement:'entries',taxnorm:'refs',r_item_type:'refs',r_uom:'refs',r_price_type:'refs',prices:'refs'};
-const visibleTab=k=>(k==='rulebook'||k==='ruleDiagnostics')?me?.role==='superadmin':k==='home'||k==='company'||k==='plan'||k==='tasks'||canDo(k.startsWith('r_')?'refs':TAB_MODULE[k]||'reports','read');
+const visibleTab=k=>(k==='rulebook'||k==='ruleDiagnostics'||k==='postingLogic')?me?.role==='superadmin':k==='home'||k==='company'||k==='plan'||k==='tasks'||canDo(k.startsWith('r_')?'refs':TAB_MODULE[k]||'reports','read');
 window.pick=async function(id){const selected=(await api('companies')).find(c=>c.id===id);if(!selected)throw new Error('Підприємство недоступне');saveCo(selected);await loadRights();nav();await go('home')};
 async function loadRights(){
   currentRights={manager:false,permissions:{}};

@@ -53,6 +53,39 @@ function outCost(moves, qty, method) {
   return r2(c);
 }
 
+// ПДВ нараховується від бази всього документа (а не окремо за кожним рядком). Щоб проводки збігалися із сумою
+// документа до копійки, різницю округлення відносимо на рядок із найбільшою базою.
+function splitVat(sums, rate) {
+  const total = r2(sums.reduce((s, x) => s + x, 0) * rate);
+  const parts = sums.map((x) => r2(x * rate));
+  const diff = r2(total - parts.reduce((s, x) => s + x, 0));
+  if (diff !== 0 && parts.length) {
+    let k = 0; sums.forEach((x, i) => { if (x > sums[k]) k = i; });
+    parts[k] = r2(parts[k] + diff);
+  }
+  return parts;
+}
+// ЄСВ роботодавця. Спершу ЄСВ на фактичний дохід (не вище граничної бази = capMw × мінімальна зарплата;
+// 20 МЗП у загальному випадку, 15 МЗП для окремих категорій), далі — за ознакою основного місця роботи й повного
+// місяця — ЄСВ на різницю між мінімальною зарплатою та доходом.
+function calcEsv({ gross, minWage, rate, capMw, fullMain }) {
+  const cap = r2(minWage * capMw);
+  const actualBase = Math.min(gross, cap);
+  const actual = r2(actualBase * rate / 100);
+  const topUpBase = fullMain && gross < minWage ? r2(minWage - gross) : 0;
+  const topUp = r2(topUpBase * rate / 100);
+  return { esv: r2(actual + topUp), base: r2(actualBase + topUpBase), actual, topUp, topUpBase, cap };
+}
+// Перед записом у журнал: рахунки мають існувати, пара Дт/Кт не може збігатися чи змішувати балансові та позабалансові рахунки.
+async function assertPostable(lines) {
+  const pairs = lines.map((l) => (Array.isArray(l) ? [l[0], l[1]] : [l.debit_acc, l.credit_acc]).map(String));
+  if (pairs.some(([d, k]) => d === k)) throw bad('Дебет і кредит проводки збігаються — оберіть іншу кореспонденцію');
+  const codes = [...new Set(pairs.flat())];
+  const found = await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
+  const kind = new Map(found.map((x) => [x.code, x.kind]));
+  if (codes.some((x) => !kind.has(x))) throw bad('У проводці використано рахунок, відсутній у плані рахунків');
+  if (pairs.some(([d, k]) => (kind.get(d) === 'O') !== (kind.get(k) === 'O'))) throw bad('Не можна змішувати позабалансовий і балансовий рахунки в одній проводці');
+}
 const lockCheck = (c, date) => {
   if (c.closed_until && String(date) <= c.closed_until) throw bad(`Період до ${c.closed_until} закрито: редагування неможливе. Оформіть виправлення поточною датою (сторно або додатковий запис).`);
 };
@@ -199,7 +232,8 @@ async function buildDoc(c, body, excl) {
     hist[key].push({qty:-l.qty,amount:-cost});l.cost=cost;return cost;
   };
   const ent=[],mv=[],W=Number(body.wh_id),W2=Number(body.wh2_id);
-  let total=r2(S+V),C=0;
+  let total=r2(S+V),C=0,vatComp=0;
+  const lineVat=splitVat(lines.map(l=>l.sum),['prod','ost','wo','mv'].includes(type)?0:r);
   if(type==='rcpt'&&lines.some(l=>profiles.get(l.item_id)?.type_data?.code==='finished'))throw bad('Готову продукцію власного виробництва оприбутковуйте документом «Випуск готової продукції» (Дт 26 Кт 23). Придбані для продажу вироби обліковуйте як товари.');
   if(type==='prod'&&lines.some(l=>profiles.get(l.item_id)?.type_data?.code!=='finished'))throw bad('У документі випуску можна використовувати лише номенклатуру виду «Готова продукція»');
   if(cash){
@@ -214,14 +248,17 @@ async function buildDoc(c, body, excl) {
   }else if(type==='ost'){
     total=S;for(const l of lines){l.lot_key=randomUUID();mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
   }else if(type==='sale'){
-    for(const l of lines){const x=profiles.get(l.item_id).type_data;
+    for(const [n,l] of lines.entries()){const x=profiles.get(l.item_id).type_data;
       C+=await out(l,W);mv.push({w:W,i:l.item_id,q:-l.qty,a:-l.cost,lot_key:method==='spec'?l.lot_key:null});
-      const vat=r2(l.sum*r);ent.push(['361',x.revenue_acc,r2(l.sum+vat)]);
+      const vat=lineVat[n];ent.push(['361',x.revenue_acc,r2(l.sum+vat)]);
       if(vat)ent.push([x.revenue_acc,'641',vat]);ent.push([x.cost_acc,x.stock_acc,l.cost]);}
   }else if(type==='wo'){
     for(const l of lines){const x=profiles.get(l.item_id).type_data;
       C+=await out(l,W);mv.push({w:W,i:l.item_id,q:-l.qty,a:-l.cost,lot_key:method==='spec'?l.lot_key:null});ent.push([corr||'947',x.stock_acc,l.cost]);}
     total=r2(C);
+    // П. 198.5 ПКУ: якщо ПДВ при придбанні ТМЦ потрапив до податкового кредиту, при списанні нараховуються компенсуючі
+    // податкові зобов'язання за основною ставкою від вартості придбання (собівартості). Одна зведена податкова накладна на документ.
+    if(body.vat_comp===true&&r>0){vatComp=r2(C*r);if(vatComp>0)ent.push([corr||'947','641',vatComp]);}
   }else if(type==='mv'){
     for(const l of lines){const k=await out(l,W);C+=k;
       const key=method==='spec'?l.lot_key:null;
@@ -232,11 +269,12 @@ async function buildDoc(c, body, excl) {
     }
     total=r2(C);
   }else if(type==='act'){
-    for(const l of lines){const x=profiles.get(l.item_id)?.type_data;const rate=r2(l.sum*r);ent.push(['361',x.revenue_acc,r2(l.sum+rate)]);if(rate)ent.push([x.revenue_acc,'641',rate]);}
+    for(const [n,l] of lines.entries()){const x=profiles.get(l.item_id)?.type_data;const rate=lineVat[n];ent.push(['361',x.revenue_acc,r2(l.sum+rate)]);if(rate)ent.push([x.revenue_acc,'641',rate]);}
   }
+  if(ent.some(([d,k])=>d===k))throw bad('Дебет і кредит проводки збігаються — оберіть іншу кореспонденцію');
   const number=String(body.number||'').trim()||type.toUpperCase()+'-'+Date.now();
   const desc=`${number}${body.partner?' · '+body.partner:''}${body.basis?' · '+body.basis:''}`;
-  const data={lines,sum:S,vat:V,rate:r*100,total,wh,wh2,corr,basis:body.basis||'',wh_id:W||null,wh2_id:W2||null,stock:body.stock||null,
+  const data={lines,sum:S,vat:V,vat_comp:vatComp,rate:r*100,total,wh,wh2,corr,basis:body.basis||'',wh_id:W||null,wh2_id:W2||null,stock:body.stock||null,
     inventory_method:method,inventory_scope:scope};
   return {type,number,desc,data,ent,mv};
 }
@@ -268,6 +306,10 @@ export default async (req) => {
 
     const me = readToken(req);
     if (!me) return fail('Потрібен вхід', 401);
+    // Роль беремо з бази: токен живе 7 днів і не має зберігати права користувача, якого понижено або видалено.
+    const stored = (await sql`SELECT role FROM users WHERE id=${me.id}`)[0];
+    if (!stored) return fail('Потрібен вхід', 401);
+    me.role = stored.role;
     // Existing teacher accounts become superadmins after the migration.
     const T = me.role === 'superadmin' || me.role === 'teacher';
     const MODULES = ['refs','entries','docs','reports','stock','corrections','settings','audit'];
@@ -614,13 +656,14 @@ export default async (req) => {
       if(!(esvRate>=0&&esvRate<=50))return fail('Некоректна ставка ЄСВ');
       // Minimum ESV basis only when user explicitly confirms full month/main employment.
       const fullMain=body.full_main_job===true;
-      const esvBase=Math.min(Math.max(gross,fullMain?minWage:0),20*minWage);
-      const esv=r2(esvBase*esvRate/100);
+      const capMw=Number(employee.data?.esv_cap_mw||20);
+      if(!(capMw>0&&capMw<=40))return fail('Некоректна гранична база ЄСВ у картці працівника (кількість МЗП від 1 до 40)');
+      const E=calcEsv({gross,minWage,rate:esvRate,capMw,fullMain}),esv=E.esv;
       const firstHalf=Number(body.first_half || 0);
       if(!Number.isFinite(firstHalf)||firstHalf<0||firstHalf>gross)return fail('Перша половина не може перевищувати місячне нарахування');
       const debit=String(employee.data?.payroll_debit||'92');
       if(!/^(23|91|92|93|94|15|20|26)$/.test(debit))return fail('Непідтримуваний рахунок витрат на оплату праці у персоналі');
-      const details={gross:r2(gross),first_half:r2(firstHalf),second_half:r2(gross-firstHalf),pit,military,pit_rate:pitRate,military_rate:militaryRate,psp,threshold,net,esv,esv_base:r2(esvBase),esv_rate:esvRate,payroll_debit:debit,extras,year,month,full_main_job:fullMain,staff_name:employee.name,psp_applied:psp>0};
+      const details={gross:r2(gross),first_half:r2(firstHalf),second_half:r2(gross-firstHalf),pit,military,pit_rate:pitRate,military_rate:militaryRate,psp,threshold,net,esv,esv_base:E.base,esv_actual:E.actual,esv_topup:E.topUp,esv_topup_base:E.topUpBase,esv_cap_mw:capMw,esv_rate:esvRate,payroll_debit:debit,extras,year,month,full_main_job:fullMain,staff_name:employee.name,psp_applied:psp>0};
       const row=(await sql`INSERT INTO payroll_calculations(company_id,staff_id,year,month,gross,details,created_by) VALUES (${cid},${staffId},${year},${month},${gross},${JSON.stringify(details)}::jsonb,${me.id}) ON CONFLICT(company_id,staff_id,year,month) DO UPDATE SET gross=EXCLUDED.gross,details=EXCLUDED.details,created_by=EXCLUDED.created_by,updated_at=now() WHERE payroll_calculations.posted_at IS NULL RETURNING id,details`)[0];
       if(!row)return fail('Проведений розрахунок не можна змінювати. Використайте механізм бухгалтерських коригувань.',409);
       await aud(c,'payroll-calculate','payroll',row.id,null,details,'Розрахунок без бухгалтерського проведення');
@@ -806,6 +849,7 @@ export default async (req) => {
         const B = await buildDoc(c, body, null);
         const mapped=await mapEntries('doc:'+B.type,body.date,B.ent);
         B.ent=mapped.lines;B.rule_version_id=mapped.id;
+        await assertPostable(B.ent.filter(([,,am])=>am>0));
         const docId = Number((await sql`SELECT nextval(pg_get_serial_sequence('docs','id')) AS id`)[0].id);
         await sql.transaction([
           ...(['rcpt','prod','ost','sale','wo','mv'].includes(B.type)?[inventoryClaim(c)]:[]),
@@ -897,6 +941,7 @@ export default async (req) => {
       const yearOk = (src) => { if (String(src).slice(0, 4) < String(body.date).slice(0, 4) && !['material', 'immaterial'].includes(body.nature)) throw bad('Помилка минулого року: вкажіть її характер (суттєва / несуттєва) за НП(С)БО 6'); };
       if (kind === 'storno' && docId) { // повне сторно документа з усіма проводками та складськими рухами
         lockCheck(c, body.date);
+        if (!validISODate(body.date)) throw bad('Вкажіть коректну дату сторно');
         const d = (await docSel(docId))[0];
         if (!d) return fail('Документ не знайдено', 404);
         if (d.storno) throw bad('Документ уже сторновано');
@@ -904,6 +949,14 @@ export default async (req) => {
         yearOk(d.date);
         if ((await sql`SELECT 1 FROM entries_a WHERE add_of IN (SELECT id FROM entries_a WHERE doc_id=${d.id}) LIMIT 1`).length) throw bad('Спершу сторнуйте додаткові записи до цього документа');
         const tot = Number(d.data.total || 0);
+        // Сторно надходження / випуску / переміщення забирає ТМЦ зі складу: товар уже міг бути проданий або списаний.
+        const added = await sql`SELECT m.wh_id, m.item_id, r.qty AS doc_qty, COALESCE(SUM(m.qty),0) AS total,
+            COALESCE(SUM(m.qty) FILTER (WHERE m.date <= ${body.date}::date),0) AS upto
+          FROM stock_moves m JOIN (SELECT wh_id,item_id,SUM(qty) AS qty FROM stock_moves WHERE doc_id=${d.id} GROUP BY wh_id,item_id HAVING SUM(qty) > 0) r
+            ON r.wh_id=m.wh_id AND r.item_id=m.item_id
+          WHERE m.company_id=${c.id} GROUP BY m.wh_id, m.item_id, r.qty`;
+        if (added.some((x) => Number(x.total) - Number(x.doc_qty) < -1e-9 || Number(x.upto) - Number(x.doc_qty) < -1e-9))
+          throw bad('Сторно неможливе: ТМЦ із цього документа вже продано, списано або переміщено. Спершу сторнуйте пізніші документи.');
         await sql.transaction([
           ...(['rcpt','prod','ost','sale','wo','mv'].includes(d.type)?[inventoryClaim(c)]:[]),
           sql`SELECT 1 / count(*) FROM (SELECT id FROM docs WHERE id=${d.id} AND NOT storno AND version=${d.version} FOR UPDATE) g`,
@@ -923,13 +976,14 @@ export default async (req) => {
         if (d.storno) throw bad('Документ сторновано — виправляти його не можна');
         if (Number(body.expected_version) !== d.version) return fail('Документ змінено іншим користувачем — оновіть сторінку', 409);
         const X = d.data, whId = async (name, id0) => id0 || (name ? (await sql`SELECT id FROM refs WHERE company_id=${c.id} AND kind='wh' AND name=${name}`)[0]?.id : null);
-        const base = { date: d.date, partner: d.partner, lines: X.lines, wh_id: await whId(X.wh, X.wh_id), wh2_id: await whId(X.wh2, X.wh2_id), corr: X.corr, stock: X.stock, basis: X.basis, sum: X.total };
+        const base = { date: d.date, partner: d.partner, lines: X.lines, wh_id: await whId(X.wh, X.wh_id), wh2_id: await whId(X.wh2, X.wh2_id), corr: X.corr, stock: X.stock, basis: X.basis, sum: X.total, vat_comp: Number(X.vat_comp || 0) > 0 };
         const ch = Object.fromEntries(Object.entries(body.changes || {}).filter(([k, v]) => ['date', 'partner', 'corr', 'basis', 'sum', 'lines'].includes(k) && v !== '' && v != null));
         const merged = { ...base, ...ch, company_id: c.id, type: d.type, number: d.number };
         lockCheck(c, d.date); lockCheck(c, merged.date);
         const B = await buildDoc(c, merged, d.id);
         const mapped=await mapEntries('doc:'+B.type,merged.date,B.ent);
         B.ent=mapped.lines;B.rule_version_id=mapped.id;
+        await assertPostable(B.ent.filter(([,,am])=>am>0));
         const oldE = await sql`SELECT debit_acc, credit_acc, amount FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL ORDER BY id`;
         const newE = B.ent.filter(([a1, k1, am]) => am > 0 && a1 !== k1).map(([a1, k1, am]) => ({ debit_acc: a1, credit_acc: k1, amount: am }));
         if (body.preview) return json({ old: oldE, new: newE });

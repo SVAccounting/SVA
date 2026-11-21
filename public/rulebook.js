@@ -161,5 +161,43 @@
     if(!roleCheck()){ $('#app').innerHTML='<div class="card err">Доступ лише для суперадміна</div>';return; }
     await refresh();selectConfig();paint();
   };
-  if(!MENU.some(([k])=>k==='Сервіс суперадміна'))MENU.push(['Сервіс суперадміна',[['rulebook','Конструктор бухгалтерської логіки'],['ruleDiagnostics','Діагностика обліку']]]);
+  // ---------- Діючі проводки за операціями (перегляд + перехід до редагування) ----------
+  const today0=()=>new Date().toISOString().slice(0,10);
+  const accName=c=>{try{return nameOf(c)||''}catch{return ''}};
+  const acc=c=>`${h(c)} <span class="mut">${h(accName(c))}</span>`;
+  window.rbOpen=async(key,dt,kt)=>{
+    state.scope='posting';state.key=key;await go('rulebook');
+    if(!dt||!kt)return;
+    const rows=[...document.querySelectorAll('.rb-map-row')];
+    if(rows.some(r=>r.querySelector('.rb-fd').value===dt&&r.querySelector('.rb-fc').value===kt))return;
+    rbAddMap();const r=[...document.querySelectorAll('.rb-map-row')].pop();
+    r.querySelector('.rb-fd').value=dt;r.querySelector('.rb-fc').value=kt;r.querySelector('.rb-td').value=dt;r.querySelector('.rb-tc').value=kt;
+    r.querySelector('.rb-td').focus();rbMessage('Вкажіть нові рахунки у правому блоці рядка, потім збережіть чернетку й активуйте її з наступного дня.');
+  };
+  views.postingLogic=async()=>{
+    if(!roleCheck()){$('#app').innerHTML='<div class="card err">Доступ лише для суперадміна</div>';return}
+    const all=await api('rulebook?scope=posting'),t=today0();
+    const act=all.filter(v=>v.status==='active').sort((a,b)=>(b.effective_from||'').localeCompare(a.effective_from||'')||b.id-a.id);
+    const current=k=>act.find(v=>v.rule_key===k&&(v.effective_from||'')<=t);
+    const planned=k=>act.filter(v=>v.rule_key===k&&(v.effective_from||'')>t);
+    const cat=window.POSTING_CATALOG||[];
+    const changed=cat.filter(b=>(current(b.key)?.config?.mappings||[]).length).length;
+    const block=b=>{
+      const v=current(b.key),maps=v?.config?.mappings||[],by=new Map(maps.map(m=>[m.from_debit+'|'+m.from_credit,m])),used=new Set(),pl=planned(b.key);
+      const rows=b.rows.map(r=>{const m=by.get(r.dt+'|'+r.kt);if(m)used.add(r.dt+'|'+r.kt);
+        return `<tr><td>${acc(r.dt)}</td><td>${acc(r.kt)}</td><td style="white-space:normal;min-width:160px">${h(r.txt)}</td><td>${m?`<b>Дт ${h(m.to_debit)} Кт ${h(m.to_credit)}</b> <span class="mut">версія #${v.id}</span>`:'<span class="mut">без змін</span>'}</td><td><button class="btn" onclick="rbOpen('${b.key}','${r.dt}','${r.kt}')">✎ Змінити</button></td></tr>`}).join('');
+      const extra=maps.filter(m=>!used.has(m.from_debit+'|'+m.from_credit));
+      return `<div class="card sc"><div class="rb-title"><h3>${h(b.title)}</h3><span class="rb-tag">${maps.length?'Є системні заміни: версія #'+v.id+' від '+h(v.effective_from):'Вбудована логіка'}</span></div>
+        <p class="mut">${h(b.where)} · <code>${h(b.key)}</code></p>
+        ${b.rows.length?`<table><thead><tr><th>Дебет</th><th>Кредит</th><th>Зміст</th><th>Діє зараз</th><th>Дії</th></tr></thead><tbody>${rows}</tbody></table>`:''}
+        ${extra.length?`<p><b>Інші активні заміни цієї операції:</b></p><table><thead><tr><th>Було</th><th>Стало</th></tr></thead><tbody>${extra.map(m=>`<tr><td>Дт ${h(m.from_debit)} Кт ${h(m.from_credit)}</td><td><b>Дт ${h(m.to_debit)} Кт ${h(m.to_credit)}</b></td></tr>`).join('')}</tbody></table>`:''}
+        ${pl.length?`<p class="err">Заплановано: ${pl.map(x=>'версія #'+x.id+' з '+h(x.effective_from)).join('; ')}</p>`:''}
+        ${b.note?`<p class="mut">${h(b.note)}</p>`:''}
+        <p><button class="btn" onclick="rbOpen('${b.key}')">Відкрити редактор правил цієї операції</button></p></div>`};
+    $('#app').innerHTML=`<div class="card rb-panel"><div class="rb-title"><h2>Діючі проводки за операціями</h2><span class="rb-tag">Суперадміністратор</span></div>
+      <p class="mut">Стан на ${h(t)}. Для кожної операції показано вбудовану кореспонденцію та системні заміни, які діють зараз. Операцій із замінами: <b>${changed}</b> з ${cat.length}. «Змінити» відкриває конструктор з уже підставленою парою; нова версія діє лише з наступного дня й не змінює проведені документи.</p></div>`+cat.map(block).join('');
+  };
+  if(!MENU.some(([k])=>k==='Сервіс суперадміна'))MENU.push(['Сервіс суперадміна',[['postingLogic','Діючі проводки за операціями'],['rulebook','Конструктор бухгалтерської логіки'],['ruleDiagnostics','Діагностика обліку']]]);
+  if(typeof NOCO!=='undefined')NOCO.push('postingLogic','rulebook');
+  if(typeof EXP!=='undefined')EXP.push('postingLogic');
 })();
