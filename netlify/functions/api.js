@@ -1,5 +1,8 @@
+import { POSTING_KEYS, REPORT_KEYS, validatePosting, validateReport, applyPosting, evaluateReport } from './rule-engine.js';
+import { REPORT_CODES } from './report-codes.js';
+import { REPORT_DEFAULTS } from './report-defaults.js';
 import { neon } from '@neondatabase/serverless';
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const sql = neon(process.env.DATABASE_URL);
 const SECRET = process.env.AUTH_SECRET || '';
@@ -33,7 +36,8 @@ const validISODate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(
 
 const r2 = (n) => Math.round(n * 100) / 100;
 const bad = (m) => Object.assign(new Error(m), { status: 400 });
-const DTYPES = ['pko', 'vko', 'bin', 'bout', 'rcpt', 'ost', 'sale', 'wo', 'mv', 'inv', 'act'];
+const INITIAL_INVENTORY_REFS = [{"kind": "item_type", "name": "Товари", "data": {"code": "goods", "stock_acc": "281", "cost_acc": "902", "revenue_acc": "702", "stockable": "yes"}}, {"kind": "item_type", "name": "Готова продукція", "data": {"code": "finished", "stock_acc": "26", "cost_acc": "901", "revenue_acc": "701", "stockable": "yes"}}, {"kind": "item_type", "name": "Сировина та матеріали", "data": {"code": "material", "stock_acc": "201", "cost_acc": "943", "revenue_acc": "712", "stockable": "yes"}}, {"kind": "item_type", "name": "МШП", "data": {"code": "mhsp", "stock_acc": "22", "cost_acc": "943", "revenue_acc": "712", "stockable": "yes"}}, {"kind": "item_type", "name": "Тара та тарні матеріали", "data": {"code": "packing_material", "stock_acc": "204", "cost_acc": "943", "revenue_acc": "712", "stockable": "yes"}}, {"kind": "item_type", "name": "Тара під товарами", "data": {"code": "packing_goods", "stock_acc": "284", "cost_acc": "902", "revenue_acc": "702", "stockable": "yes"}}, {"kind": "item_type", "name": "Роботи", "data": {"code": "work", "stock_acc": "", "cost_acc": "903", "revenue_acc": "703", "stockable": "no"}}, {"kind": "item_type", "name": "Послуги", "data": {"code": "service", "stock_acc": "", "cost_acc": "903", "revenue_acc": "703", "stockable": "no"}}, {"kind": "item_type", "name": "Набір (готовий товар без комплектування)", "data": {"code": "kit", "stock_acc": "281", "cost_acc": "902", "revenue_acc": "702", "stockable": "yes"}}, {"kind": "uom", "name": "Штука", "data": {"code": "шт"}}, {"kind": "uom", "name": "Кілограм", "data": {"code": "кг"}}, {"kind": "uom", "name": "Грам", "data": {"code": "г"}}, {"kind": "uom", "name": "Літр", "data": {"code": "л"}}, {"kind": "uom", "name": "Метр", "data": {"code": "м"}}, {"kind": "uom", "name": "Квадратний метр", "data": {"code": "м²"}}, {"kind": "uom", "name": "Кубічний метр", "data": {"code": "м³"}}, {"kind": "uom", "name": "Упаковка", "data": {"code": "уп"}}, {"kind": "uom", "name": "Послуга", "data": {"code": "посл"}}, {"kind": "uom", "name": "Година", "data": {"code": "год"}}, {"kind": "price_type", "name": "Роздрібна", "data": {"code": "retail"}}, {"kind": "price_type", "name": "Оптова", "data": {"code": "wholesale"}}, {"kind": "price_type", "name": "Дилерська", "data": {"code": "dealer"}}];
+const DTYPES = ['pko', 'vko', 'bin', 'bout', 'rcpt', 'prod', 'ost', 'sale', 'wo', 'mv', 'inv', 'act'];
 // собівартість вибуття: ФІФО (шари надходжень) або середньозважена; null — недостатньо залишку
 function outCost(moves, qty, method) {
   const have = moves.reduce((s, m) => s + m.qty, 0);
@@ -77,70 +81,164 @@ function planCorr(method, e, linked, p) {
   }
   throw bad('Невідомий метод');
 }
+// Only the current active version as of the transaction date applies.
+async function activeRule(scope, key, at) {
+  const rows=await sql`SELECT id,config FROM accounting_rule_versions
+    WHERE scope=${scope} AND rule_key=${key} AND status='active' AND effective_from <= ${at}::date
+    ORDER BY effective_from DESC,id DESC LIMIT 1`;
+  return rows[0] || null;
+}
+async function mapEntries(source, at, lines) {
+  const rule=await activeRule('posting',source,at);
+  const result=rule?applyPosting(rule.config,lines):lines;
+  if(rule){
+    // Protect the stock subledger even if an earlier version of the rule was published before this restriction.
+    if(/^doc:(rcpt|prod|sale|wo|ost|mv)$/.test(source)&&rule.config.mappings.some(m=>
+       [['from_debit','to_debit'],['from_credit','to_credit']].some(([f,t])=>m[f]!==m[t]&&[/^2\d{1,2}$/.test(m[f]),/^2\d{1,2}$/.test(m[t])].some(Boolean))))
+       throw bad('Опубліковане правило змінює рахунок запасів та може порушити складський облік. Проведення заблоковане.');
+    const codes=[...new Set(result.flatMap(l=>Array.isArray(l)?l.slice(0,2):[l.debit_acc,l.credit_acc]))];
+    const present=await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
+    const byCode=new Map(present.map(x=>[x.code,x.kind]));
+    if(codes.some(x=>!byCode.has(x)))throw bad('Активне правило бухгалтерської логіки містить відсутній у плані рахунків рахунок');
+    if(result.some(l=>{const [d,k]=Array.isArray(l)?l:[l.debit_acc,l.credit_acc];return d===k || (byCode.get(d)==='O') !== (byCode.get(k)==='O')}))
+      throw bad('Активне правило створює некоректну пару рахунків (однакові або змішані балансові/позабалансові)');
+  }
+  return {lines:result,id:rule?.id||null};
+}
 const entIns = (c, B, date, partner, docId, cid) => B.ent.filter(([d, k, am]) => am > 0 && d !== k).map(([d, k, am]) =>
-  sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,doc_id,corr_id)
-    VALUES (${c.id},${date},${B.number},${B.desc},${partner || ''},${d},${k},${am},${docId},${cid})`);
-const mvIns = (c, B, date, docId) => B.mv.map((m) => sql`INSERT INTO stock_moves(company_id,doc_id,date,wh_id,item_id,qty,amount) VALUES (${c.id},${docId},${date},${m.w},${m.i},${m.q},${m.a})`);
+  sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,doc_id,corr_id,posting_rule_version_id)
+    VALUES (${c.id},${date},${B.number},${B.desc},${partner || ''},${d},${k},${am},${docId},${cid},${B.rule_version_id||null})`);
+const inventoryClaim=(c)=>sql`WITH claimed AS (UPDATE companies SET inventory_revision=inventory_revision+1
+  WHERE id=${c.id} AND inventory_revision=${Number(c.inventory_revision)||0} RETURNING id)
+  SELECT 1/(SELECT count(*)::int FROM claimed) AS ok`;
+const mvIns = (c, B, date, docId) => B.mv.map((m) => sql`INSERT INTO stock_moves(company_id,doc_id,date,wh_id,item_id,qty,amount,lot_key) VALUES (${c.id},${docId},${date},${m.w},${m.i},${m.q},${m.a},${m.lot_key||null})`);
 
 async function buildDoc(c, body, excl) {
-        const type = body.type;
-        if (!DTYPES.includes(type) || !body.date) throw bad('Вкажіть вид документа та дату');
-        const st = c.settings || {}, r = st.vat === false ? 0 : Number(st.rate ?? 20) / 100, method = st.inv === 'avg' ? 'avg' : 'fifo';
-        const cash = ['pko', 'vko', 'bin', 'bout'].includes(type), stk = ['rcpt', 'ost', 'sale', 'wo', 'mv'].includes(type);
-        const lines = (body.lines || []).filter((l) => Number(l.qty) > 0).map((l) => ({
-          item_id: Number(l.item_id) || null, name: String(l.name || '').trim(), unit: String(l.unit || ''), qty: Number(l.qty), price: Number(l.price) || 0 }));
-        lines.forEach((l) => { l.sum = r2(l.qty * l.price); });
-        if (!cash && !lines.length) throw bad('Додайте хоча б один рядок');
-        if (['sale', 'inv', 'act', 'rcpt'].includes(type) && !body.partner) throw bad('Оберіть контрагента');
-        const nm = async (rid, kind) => rid ? (await sql`SELECT name FROM refs WHERE id=${rid} AND company_id=${c.id} AND kind=${kind}`)[0]?.name : null;
-        let wh = null, wh2 = null;
-        if (stk) {
-          const ids = [...new Set(lines.map((l) => l.item_id))];
-          if (ids.includes(null) || (await sql`SELECT id FROM refs WHERE company_id=${c.id} AND kind='item' AND id = ANY(${ids}::int[])`).length !== ids.length)
-            throw bad('Оберіть номенклатуру зі довідника «Номенклатура»');
-          wh = await nm(Number(body.wh_id), 'wh');
-          if (!wh) throw bad('Оберіть склад');
-          if (type === 'mv') { wh2 = await nm(Number(body.wh2_id), 'wh'); if (!wh2 || body.wh2_id === body.wh_id) throw bad('Оберіть інший склад-одержувач'); }
-        }
-        const S = r2(lines.reduce((s, l) => s + l.sum, 0)), V = r2(S * r), corr = String(body.corr || '');
-        const hist = {};
-        const out = async (l, w) => {
-          const key = w + '-' + l.item_id;
-          hist[key] ??= (await sql`SELECT qty, amount FROM stock_moves WHERE company_id=${c.id} AND wh_id=${w} AND item_id=${l.item_id} AND doc_id IS DISTINCT FROM ${excl}::int ORDER BY date, id`)
-            .map((m) => ({ qty: Number(m.qty), amount: Number(m.amount) }));
-          const cost = outCost(hist[key], l.qty, method);
-          if (cost === null) throw bad('Недостатньо залишку на складі: ' + l.name);
-          hist[key].push({ qty: -l.qty, amount: -cost });
-          l.cost = cost; return cost;
-        };
-        const ent = [], mv = [], W = Number(body.wh_id), W2 = Number(body.wh2_id);
-        let total = r2(S + V), C = 0;
-        if (cash) {
-          total = r2(Number(body.sum));
-          if (!(total > 0) || !corr) throw bad('Вкажіть суму та кореспондуючий рахунок');
-          ent.push(...[{ pko: ['301', corr], vko: [corr, '301'], bin: ['311', corr], bout: [corr, '311'] }[type]].map((p) => [...p, total]));
-        } else if (type === 'rcpt') {
-          ent.push([corr || '281', '631', S], ['644', '631', V]);
-          lines.forEach((l) => mv.push({ w: W, i: l.item_id, q: l.qty, a: l.sum }));
-        } else if (type === 'ost') {
-          total = S; lines.forEach((l) => mv.push({ w: W, i: l.item_id, q: l.qty, a: l.sum }));
-        } else if (type === 'sale') {
-          const rev = corr || '702';
-          for (const l of lines) { C += await out(l, W); mv.push({ w: W, i: l.item_id, q: -l.qty, a: -l.cost }); }
-          ent.push(['361', rev, r2(S + V)], [rev, '641', V], [rev === '701' ? '901' : '902', rev === '701' ? '26' : '281', r2(C)]);
-        } else if (type === 'wo') {
-          for (const l of lines) { C += await out(l, W); mv.push({ w: W, i: l.item_id, q: -l.qty, a: -l.cost }); }
-          total = r2(C); ent.push([corr || '947', String(body.stock || '281'), total]);
-        } else if (type === 'mv') {
-          for (const l of lines) { const k = await out(l, W); C += k; mv.push({ w: W, i: l.item_id, q: -l.qty, a: -k }, { w: W2, i: l.item_id, q: l.qty, a: k }); }
-          total = r2(C);
-        } else if (type === 'act') {
-          ent.push(['361', '703', r2(S + V)], ['703', '641', V]);
-        }
-        const number = String(body.number || '').trim() || type.toUpperCase() + '-' + Date.now();
-        const desc = `${number}${body.partner ? ' · ' + body.partner : ''}${body.basis ? ' · ' + body.basis : ''}`;
-  const data = { lines, sum: S, vat: V, rate: r * 100, total, wh, wh2, corr, basis: body.basis || '', wh_id: W || null, wh2_id: W2 || null, stock: body.stock || null };
-  return { type, number, desc, data, ent, mv };
+  const type=String(body.type||''),date=String(body.date||'');
+  if(!DTYPES.includes(type)||!validISODate(date))throw bad('Вкажіть вид документа та коректну дату');
+  const st=c.settings||{},r=st.vat===false?0:Number(st.rate??20)/100;
+  const method=st.inv==='spec'?'spec':st.inv==='avg'?'avg':'fifo';
+  const scope=st.inv_scope==='company'?'company':'wh';
+  const cash=['pko','vko','bin','bout'].includes(type),stk=['rcpt','prod','ost','sale','wo','mv'].includes(type);
+  const lines=(body.lines||[]).filter(l=>Number(l.qty)>0).map(l=>({
+    item_id:Number(l.item_id)||null,name:String(l.name||'').trim(),unit:String(l.unit||''),
+    qty:Number(l.qty),price:Number(l.price)||0,lot_key:String(l.lot_key||'')
+  }));
+  if(!cash&&!lines.length)throw bad('Додайте хоча б один рядок');
+  if(['sale','inv','act','rcpt'].includes(type)&&!body.partner)throw bad('Оберіть контрагента');
+  if(lines.some(l=>!Number.isFinite(l.qty)||l.qty<=0||!Number.isFinite(l.price)||l.price<0))throw bad('Некоректна кількість або ціна');
+  lines.forEach(l=>{l.sum=r2(l.qty*l.price)});
+  const nm=async(rid,kind)=>rid?(await sql`SELECT name FROM refs WHERE id=${rid} AND company_id=${c.id} AND kind=${kind}`)[0]?.name:null;
+  let wh=null,wh2=null,profiles=new Map();
+  if(stk) {
+    const ids=[...new Set(lines.map(l=>l.item_id))];
+    if(ids.includes(null))throw bad('Оберіть номенклатуру з довідника');
+    const rows=await sql`SELECT i.id,i.name,i.data AS item_data,t.data AS type_data,t.name AS type_name
+      FROM refs i LEFT JOIN refs t ON t.id=(i.data->>'item_type_id')::int AND t.company_id=i.company_id AND t.kind='item_type'
+      WHERE i.company_id=${c.id} AND i.kind='item' AND i.id=ANY(${ids}::int[])`;
+    if(rows.length!==ids.length)throw bad('Номенклатуру не знайдено');
+    rows.forEach(x=>profiles.set(Number(x.id),x));
+    for(const l of lines){
+      const p=profiles.get(l.item_id);if(!p.type_data||!p.item_data?.uom_id)throw bad('Для «'+p.name+'» оберіть вид номенклатури та одиницю виміру');
+      if(p.type_data.stockable!=='yes')throw bad('Роботи та послуги не є складськими запасами: оформіть акт без руху ТМЦ');
+      l.unit=p.item_data.unit||l.unit;
+    }
+    // Backdated stock moves affect already posted FIFO and average COGS. Do not silently revalue history.
+    const future=await sql`SELECT 1 FROM stock_moves WHERE company_id=${c.id} AND item_id=ANY(${ids}::int[]) AND date>${date}::date
+      AND (${excl}::int IS NULL OR doc_id IS DISTINCT FROM ${excl}::int) LIMIT 1`;
+    if(future.length)throw bad('Є пізніші складські рухи цього товару. Проведення заднім числом потребує перерахунку собівартості; оформіть коригування поточною датою.');
+    wh=await nm(Number(body.wh_id),'wh');if(!wh)throw bad('Оберіть склад');
+    if(type==='mv'){wh2=await nm(Number(body.wh2_id),'wh');if(!wh2||Number(body.wh2_id)===Number(body.wh_id))throw bad('Оберіть інший склад-одержувач');}
+  }
+  if(type==='act') {
+    const ids=[...new Set(lines.map(l=>l.item_id))];
+    if(ids.includes(null))throw bad('Для акта оберіть роботу або послугу з номенклатури');
+    const serviceRows=await sql`SELECT i.id,i.name,t.data AS type_data FROM refs i LEFT JOIN refs t ON t.id=(i.data->>'item_type_id')::int AND t.kind='item_type' AND t.company_id=i.company_id
+      WHERE i.company_id=${c.id} AND i.kind='item' AND i.id=ANY(${ids}::int[])`;
+    if(serviceRows.length!==ids.length||serviceRows.some(x=>x.type_data?.stockable!=='no'))
+      throw bad('Акт виконаних робіт призначено для видів «Роботи» і «Послуги». Товари оформлюйте видатковою накладною.');
+    serviceRows.forEach(x=>profiles.set(Number(x.id),x));
+  }
+  const S=r2(lines.reduce((s,l)=>s+l.sum,0)),V=r2(S*(['prod','ost','wo','mv'].includes(type)?0:r)),corr=String(body.corr||'');
+  const hist={},physical={},lotHist={};
+  const qtyAvailable=async(l,w)=>{
+    const key=w+'-'+l.item_id;
+    if(!(key in physical))physical[key]=Number((await sql`SELECT COALESCE(SUM(qty),0) AS qty FROM stock_moves
+      WHERE company_id=${c.id} AND item_id=${l.item_id} AND wh_id=${w} AND date<=${date}::date AND (${excl}::int IS NULL OR doc_id IS DISTINCT FROM ${excl}::int)`)[0].qty);
+    if(l.qty>physical[key]+1e-9)throw bad('Недостатньо фізичного залишку на складі: '+l.name);
+    physical[key]-=l.qty;
+  };
+  const out=async(l,w)=>{
+    await qtyAvailable(l,w);
+    if(method==='spec'){
+      if(!l.lot_key)throw bad('Оберіть конкретну партію для «'+l.name+'» (ідентифікована собівартість)');
+      const key=w+'|'+l.item_id+'|'+l.lot_key;
+      if(!(key in lotHist)){
+        const legacy=(await sql`SELECT 1 FROM stock_moves WHERE company_id=${c.id} AND wh_id=${w} AND item_id=${l.item_id}
+          AND qty<0 AND lot_key IS NULL AND date<=${date}::date AND (${excl}::int IS NULL OR doc_id IS DISTINCT FROM ${excl}::int) LIMIT 1`).length;
+        if(legacy)throw bad('Для «'+l.name+'» є старі списання без партій. Ідентифікована оцінка потребує звірки й перенесення початкових партій.');
+        const rows=await sql`SELECT qty,amount FROM stock_moves WHERE company_id=${c.id} AND wh_id=${w} AND item_id=${l.item_id}
+          AND lot_key=${l.lot_key} AND date<=${date}::date AND (${excl}::int IS NULL OR doc_id IS DISTINCT FROM ${excl}::int) ORDER BY date,id`;
+        lotHist[key]={q:rows.reduce((s,x)=>s+Number(x.qty),0),a:rows.reduce((s,x)=>s+Number(x.amount),0)};
+      }
+      const h=lotHist[key];if(h.q<l.qty-1e-9||h.q<=0)throw bad('Недостатньо товару у вибраній партії: '+l.name);
+      const cost=r2(h.a*l.qty/h.q);h.q-=l.qty;h.a=r2(h.a-cost);l.cost=cost;return cost;
+    }
+    const key=(scope==='company'?'co':'wh'+w)+'-'+l.item_id;
+    if(!hist[key]){
+      let rows;
+      if(scope==='company')rows=await sql`SELECT m.qty,m.amount FROM stock_moves m LEFT JOIN docs d ON d.id=m.doc_id
+         WHERE m.company_id=${c.id} AND m.item_id=${l.item_id} AND m.date<=${date}::date AND (${excl}::int IS NULL OR m.doc_id IS DISTINCT FROM ${excl}::int)
+          AND (d.type IS DISTINCT FROM 'mv') ORDER BY m.date,m.id`;
+      else rows=await sql`SELECT qty,amount FROM stock_moves WHERE company_id=${c.id} AND wh_id=${w} AND item_id=${l.item_id}
+         AND date<=${date}::date AND (${excl}::int IS NULL OR doc_id IS DISTINCT FROM ${excl}::int) ORDER BY date,id`;
+      hist[key]=rows.map(x=>({qty:Number(x.qty),amount:Number(x.amount)}));
+    }
+    const cost=outCost(hist[key],l.qty,method);
+    if(cost===null||!Number.isFinite(cost))throw bad('Помилка визначення собівартості: '+l.name);
+    hist[key].push({qty:-l.qty,amount:-cost});l.cost=cost;return cost;
+  };
+  const ent=[],mv=[],W=Number(body.wh_id),W2=Number(body.wh2_id);
+  let total=r2(S+V),C=0;
+  if(type==='rcpt'&&lines.some(l=>profiles.get(l.item_id)?.type_data?.code==='finished'))throw bad('Готову продукцію власного виробництва оприбутковуйте документом «Випуск готової продукції» (Дт 26 Кт 23). Придбані для продажу вироби обліковуйте як товари.');
+  if(type==='prod'&&lines.some(l=>profiles.get(l.item_id)?.type_data?.code!=='finished'))throw bad('У документі випуску можна використовувати лише номенклатуру виду «Готова продукція»');
+  if(cash){
+    total=r2(Number(body.sum));if(!(total>0)||!corr)throw bad('Вкажіть суму та кореспондуючий рахунок');
+    const p={pko:['301',corr],vko:[corr,'301'],bin:['311',corr],bout:[corr,'311']}[type];ent.push([...p,total]);
+  }else if(type==='rcpt'){
+    for(const l of lines){const x=profiles.get(l.item_id).type_data;
+      ent.push([x.stock_acc,'631',l.sum]);l.lot_key=randomUUID();mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
+    if(V)ent.push(['644','631',V]);
+  }else if(type==='prod'){
+    total=S;for(const l of lines){l.lot_key=randomUUID();ent.push(['26','23',l.sum]);mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
+  }else if(type==='ost'){
+    total=S;for(const l of lines){l.lot_key=randomUUID();mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
+  }else if(type==='sale'){
+    for(const l of lines){const x=profiles.get(l.item_id).type_data;
+      C+=await out(l,W);mv.push({w:W,i:l.item_id,q:-l.qty,a:-l.cost,lot_key:method==='spec'?l.lot_key:null});
+      const vat=r2(l.sum*r);ent.push(['361',x.revenue_acc,r2(l.sum+vat)]);
+      if(vat)ent.push([x.revenue_acc,'641',vat]);ent.push([x.cost_acc,x.stock_acc,l.cost]);}
+  }else if(type==='wo'){
+    for(const l of lines){const x=profiles.get(l.item_id).type_data;
+      C+=await out(l,W);mv.push({w:W,i:l.item_id,q:-l.qty,a:-l.cost,lot_key:method==='spec'?l.lot_key:null});ent.push([corr||'947',x.stock_acc,l.cost]);}
+    total=r2(C);
+  }else if(type==='mv'){
+    for(const l of lines){const k=await out(l,W);C+=k;
+      const key=method==='spec'?l.lot_key:null;
+      mv.push({w:W,i:l.item_id,q:-l.qty,a:-k,lot_key:key},{w:W2,i:l.item_id,q:l.qty,a:k,lot_key:key});
+      const destinationKey=W2+'-'+l.item_id;
+      if(destinationKey in physical)physical[destinationKey]+=l.qty;
+      if(scope==='wh'&&method!=='spec'){const hKey='wh'+W2+'-'+l.item_id;if(hist[hKey])hist[hKey].push({qty:l.qty,amount:k});}
+    }
+    total=r2(C);
+  }else if(type==='act'){
+    for(const l of lines){const x=profiles.get(l.item_id)?.type_data;const rate=r2(l.sum*r);ent.push(['361',x.revenue_acc,r2(l.sum+rate)]);if(rate)ent.push([x.revenue_acc,'641',rate]);}
+  }
+  const number=String(body.number||'').trim()||type.toUpperCase()+'-'+Date.now();
+  const desc=`${number}${body.partner?' · '+body.partner:''}${body.basis?' · '+body.basis:''}`;
+  const data={lines,sum:S,vat:V,rate:r*100,total,wh,wh2,corr,basis:body.basis||'',wh_id:W||null,wh2_id:W2||null,stock:body.stock||null,
+    inventory_method:method,inventory_scope:scope};
+  return {type,number,desc,data,ent,mv};
 }
 
 export default async (req) => {
@@ -196,6 +294,100 @@ export default async (req) => {
     const aud = (c, action, type, oid, oldd, newd, reason) => sql`INSERT INTO audit_log(company_id,user_id,user_name,action,object_type,object_id,old_data,new_data,reason)
       VALUES (${c.id},${me.id},${me.name},${action},${type},${String(oid)},${JSON.stringify(oldd ?? null)}::jsonb,${JSON.stringify(newd ?? null)}::jsonb,${reason || null})`;
     if (res === 'me') return json({ id: me.id, name: me.name, role: T ? 'superadmin' : me.role });
+    // Service catalog: ONLY the actual persisted superadmin role can manage system rules.
+    if (res === 'rulebook') {
+      if (id === 'active' && M === 'GET') {
+        const at=q.get('at') || new Date().toISOString().slice(0,10);
+        if(!validISODate(at))return fail('Невірна дата звітності');
+        const rows=await sql`SELECT DISTINCT ON (scope,rule_key) scope,rule_key,config,id,effective_from
+          FROM accounting_rule_versions WHERE scope='report' AND status='active' AND effective_from<=${at}::date
+          ORDER BY scope,rule_key,effective_from DESC,id DESC`;
+        return json(Object.fromEntries(rows.map(x=>[x.rule_key,{rows:x.config.rows,version_id:x.id,effective_from:x.effective_from}])));
+      }
+      const stored=(await sql`SELECT role FROM users WHERE id=${me.id}`)[0];
+      if(stored?.role!=='superadmin')return fail('Це може робити лише суперадміністратор',403);
+      if(M==='GET' && !id){
+        const scope=String(q.get('scope')||'');
+        if(scope && !['report','posting'].includes(scope))return fail('Невідомий тип правил');
+        return json(await sql`SELECT r.id,r.scope,r.rule_key,r.status,to_char(r.effective_from,'YYYY-MM-DD') AS effective_from,r.config,r.note,
+          r.created_at,r.validated_at,r.activated_at,u.name AS author
+          FROM accounting_rule_versions r JOIN users u ON u.id=r.created_by
+          WHERE (${scope}='' OR r.scope=${scope}) ORDER BY r.id DESC LIMIT 250`);
+      }
+      if(M==='POST' && ['save','preview','activate'].includes(id)){
+        if(id==='save'){
+          const scope=String(body.scope||''),key=String(body.rule_key||'');
+          if((scope==='posting'&&!POSTING_KEYS.includes(key))||(scope==='report'&&!REPORT_KEYS.includes(key)))return fail('Непідтримуваний тип господарської операції або звітної форми');
+          if(!['posting','report'].includes(scope))return fail('Невідомий розділ');
+          let cfg;
+          try{cfg=scope==='posting'?validatePosting(body.config):validateReport(body.config,REPORT_CODES[key]);}
+          catch(e){return fail(e.message)}
+          if(scope==='posting'&&cfg.mappings.length){
+            if(/^doc:(rcpt|prod|sale|wo|ost|mv)$/.test(key) && cfg.mappings.some(m=>
+              [ ['from_debit','to_debit'],['from_credit','to_credit'] ].some(([f,t])=>m[f]!==m[t]&&[/^2\d{1,2}$/.test(m[f]),/^2\d{1,2}$/.test(m[t])].some(Boolean))))
+              return fail('Не дозволено змінювати складський рахунок класу 2 через конструктор — це порушить звірку з партіями. Оберіть коректний вид номенклатури або виправте складський алгоритм.',409);
+            const codes=[...new Set(cfg.mappings.flatMap(x=>[x.from_debit,x.from_credit,x.to_debit,x.to_credit]))];
+            const acc=await sql`SELECT code FROM accounts WHERE code=ANY(${codes}::text[])`;
+            if(acc.length!==codes.length)return fail('Деякі рахунки у правилах відсутні в плані рахунків');
+          }
+          if(scope==='report'){
+            const used=[...new Set(Object.values(cfg.rows).flatMap(s=>[...s.matchAll(/[APDCKXE]:([0-9,]+)/g)].flatMap(m=>m[1].split(','))))];
+            if(used.length){const acc=await sql`SELECT code FROM accounts`;
+              if(used.some(prefix=>!acc.some(a=>a.code.startsWith(prefix))))return fail('У формулі вказано невідомий рахунок або префікс');}
+          }
+          const note=String(body.note||'').trim();
+          if(note.length<8||note.length>500)return fail('Опиши причину зміни (від 8 до 500 символів)');
+          const row=(await sql`INSERT INTO accounting_rule_versions(scope,rule_key,config,note,created_by)
+            VALUES (${scope},${key},${JSON.stringify(cfg)}::jsonb,${note},${me.id}) RETURNING id`)[0];
+          await aud({id:null},'rule-draft',scope,row.id,null,{key,config:cfg},note);
+          return json({id:row.id,status:'draft'},201);
+        }
+        const rid=Number(body.id);if(!Number.isSafeInteger(rid)||rid<=0)return fail('Вкажи ID версії');
+        const rule=(await sql`SELECT * FROM accounting_rule_versions WHERE id=${rid}`)[0];
+        if(!rule)return fail('Версію не знайдено',404);
+        if(id==='preview'){
+          if(rule.status!=='draft')return fail('Опубліковані версії не редагуються',409);
+          let result;
+          if(rule.scope==='posting'){
+            const sample=Array.isArray(body.sample)&&body.sample.length ? body.sample : rule.config.mappings.map(m=>({debit_acc:m.from_debit,credit_acc:m.from_credit,amount:100}));
+            if(sample.length>100||sample.some(l=>!/^\d{1,4}$/.test(l.debit_acc)||!/^\d{1,4}$/.test(l.credit_acc)||!Number.isFinite(Number(l.amount))||Number(l.amount)<=0))return fail('Невірний контрольний набір проводок');
+            result={before:sample,after:applyPosting(rule.config,sample)};
+          }else{
+            validateReport(rule.config,REPORT_CODES[rule.rule_key]);
+            const cid=Number(body.company_id),date=String(body.date||'');
+            if(!Number.isSafeInteger(cid)||cid<=0||!validISODate(date))return fail('Для контрольного розрахунку оберіть підприємство і дату');
+            if(!(await sql`SELECT id FROM companies WHERE id=${cid}`).length)return fail('Підприємство для перевірки не знайдено',404);
+            const yearStart=date.slice(0,4)+'-01-01';
+            const balances=rule.rule_key==='F2'?[]:await sql`WITH mv AS (
+               SELECT debit_acc AS acc,amount AS d,0::numeric AS c,date FROM entries_a WHERE company_id=${cid}
+               UNION ALL SELECT credit_acc,0::numeric,amount,date FROM entries_a WHERE company_id=${cid})
+              SELECT a.code,COALESCE(SUM(CASE WHEN mv.date <= ${date}::date THEN mv.d-mv.c END),0)::numeric AS closing
+              FROM accounts a LEFT JOIN mv ON mv.acc=a.code GROUP BY a.code`;
+            const pnl=rule.rule_key!=='F2'?[]:await sql`SELECT code,SUM(d) AS d,SUM(c) AS c FROM (
+              SELECT debit_acc AS code,amount AS d,0::numeric AS c FROM entries_a WHERE company_id=${cid} AND date BETWEEN ${yearStart}::date AND ${date}::date AND credit_acc NOT LIKE '79%'
+              UNION ALL SELECT credit_acc,0::numeric,amount FROM entries_a WHERE company_id=${cid} AND date BETWEEN ${yearStart}::date AND ${date}::date AND debit_acc NOT LIKE '79%') t
+              WHERE code ~ '^[789]' AND code NOT LIKE '79%' GROUP BY code`;
+            const old=await activeRule('report',rule.rule_key,date);
+            const dflt=REPORT_DEFAULTS[rule.rule_key];
+            const before=evaluateReport(dflt,old?.config.rows||{},balances,pnl),after=evaluateReport(dflt,rule.config.rows,balances,pnl);
+            const differences=Object.keys(dflt).filter(k=>Math.abs(before[k]-after[k])>0.005).map(k=>({code:k,before:Math.round(before[k]*100)/100,after:Math.round(after[k]*100)/100}));
+            result={validated:true,company_id:cid,date,differences,compared_to_version:old?.id||null};
+          }
+          await sql`UPDATE accounting_rule_versions SET validated_at=now() WHERE id=${rid} AND status='draft'`;
+          return json(result);
+        }
+        if(rule.status!=='draft'||!rule.validated_at)return fail('Спочатку протестуй чернетку перед активацією',409);
+        const eff=String(body.effective_from||'');if(!validISODate(eff))return fail('Вкажи дату початку дії');
+        const latest=(await sql`SELECT to_char(max(effective_from),'YYYY-MM-DD') AS last_day FROM accounting_rule_versions WHERE scope=${rule.scope} AND rule_key=${rule.rule_key} AND status='active'`)[0]?.last_day;
+        if(latest&&eff<=latest)return fail('Нова версія має діяти пізніше за попередню: '+latest,409);
+        const updated=(await sql`UPDATE accounting_rule_versions SET status='active',effective_from=${eff}::date,activated_by=${me.id},activated_at=now()
+          WHERE id=${rid} AND status='draft' AND validated_at IS NOT NULL AND ${eff}::date > CURRENT_DATE RETURNING id`)[0];
+        if(!updated)return fail('Опублікувати можна лише з наступного календарного дня. Перевір статус чернетки.',409);
+        await aud({id:null},'rule-activated',rule.scope,rid,null,{key:rule.rule_key,effective_from:eff},rule.note);
+        return json({ok:true,id:rid,effective_from:eff});
+      }
+      return fail('Невідомий маршрут конструктора',405);
+    }
     if (res === 'company-admin' && M === 'POST') {
       if (!T) return fail('Лише для суперадміністратора',403);
       const cid=Number(body.company_id),login=String(body.login||'').trim().toLowerCase();
@@ -293,6 +485,12 @@ export default async (req) => {
         if (id) {
           const c = await own(Number(id), true, 'settings', 'update');
           if (!c) return fail('Немає доступу', 403);
+          const oldPolicy=c.settings||{},nextPolicy=body.settings||{};
+          const oldMethod=oldPolicy.inv||'fifo',nextMethod=nextPolicy.inv||'fifo';
+          const oldScope=oldPolicy.inv_scope||'warehouse',nextScope=nextPolicy.inv_scope||'warehouse';
+          if((oldMethod!==nextMethod||oldScope!==nextScope)&&(await sql`SELECT 1 FROM stock_moves WHERE company_id=${c.id} LIMIT 1`).length)
+            return fail('Після складських проведень метод і рівень оцінки запасів не можна змінити без окремої процедури переходу й перерахунку.',409);
+          if(!['fifo','avg','spec'].includes(nextMethod)||!['warehouse','company'].includes(nextScope))return fail('Некоректні налаштування оцінки запасів');
           return json((await sql`UPDATE companies SET name=${name}, settings=${st}::jsonb WHERE id=${c.id} RETURNING id, name, settings`)[0]);
         }
         if (!T) {
@@ -302,6 +500,7 @@ export default async (req) => {
         }
         const created=(await sql`INSERT INTO companies(name, owner_id, settings) VALUES (${name}, ${me.id}, ${st}::jsonb) RETURNING id, name, settings`)[0];
         await sql`INSERT INTO company_members(company_id,user_id,company_role) VALUES (${created.id},${me.id},'admin') ON CONFLICT(company_id,user_id) DO UPDATE SET company_role='admin'`;
+        await sql.transaction(INITIAL_INVENTORY_REFS.map(r=>sql`INSERT INTO refs(company_id,kind,name,data) VALUES (${created.id},${r.kind},${r.name},${JSON.stringify(r.data)}::jsonb)`));
         return json(created,201);
       }
       return json(T
@@ -323,12 +522,14 @@ export default async (req) => {
         {debit_acc:'661',credit_acc:'642',amount:Number(d.military),description:'Утримано військовий збір'},
         {debit_acc:debit,credit_acc:'651',amount:Number(d.esv),description:'Нараховано ЄСВ роботодавця'},
         ...(d.extras||[]).map(x=>({debit_acc:'661',credit_acc:'685',amount:Number(x.amount),description:'Інше утримання: '+String(x.name||'')}))].filter(x=>x.amount>0);
+      const mapped=await mapEntries('payroll:accrual',date,lines);
+      lines.splice(0,lines.length,...mapped.lines);
       if(!validLines(lines))return fail('Проводки не пройшли перевірку');
       const known=await sql`SELECT code FROM accounts WHERE code=ANY(${[...new Set(lines.flatMap(x=>[x.debit_acc,x.credit_acc]))]}::text[])`;
       if(known.length!==new Set(lines.flatMap(x=>[x.debit_acc,x.credit_acc])).size)return fail('У плані рахунків відсутні необхідні рахунки');
       const result=(await sql`WITH claim AS (UPDATE payroll_calculations SET posted_at=now() WHERE id=${pid} AND company_id=${cid} AND posted_at IS NULL RETURNING id),
-        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount)
-        SELECT ${cid},${date}::date,${'ЗП-'+row.year+'-'+String(row.month).padStart(2,'0')+'-'+pid},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount
+        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id)
+        SELECT ${cid},${date}::date,${'ЗП-'+row.year+'-'+String(row.month).padStart(2,'0')+'-'+pid},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount,${mapped.id}
         FROM claim CROSS JOIN jsonb_to_recordset(${JSON.stringify(lines)}::jsonb) AS l(debit_acc text,credit_acc text,amount numeric,description text) RETURNING id)
         SELECT (SELECT count(*) FROM claim)::int AS updated,(SELECT count(*) FROM inserted)::int AS entries`)[0];
       if(!result?.updated)return fail('Розрахунок уже проведено. Повторна проводка заблокована',409);
@@ -352,9 +553,10 @@ export default async (req) => {
       const act=String(body.action||'prepare');
       if(!total)return fail('Нульова сума платежу — інструкція не потрібна');
       if(act==='prepare'){
-        const saved=(await sql`INSERT INTO payroll_payment_instructions(company_id,payroll_id,kind,date,amount,lines,created_by)
-          VALUES (${cid},${pid},${kind},${date},${total},${JSON.stringify(positive)}::jsonb,${me.id})
-          ON CONFLICT(payroll_id,kind) DO UPDATE SET date=EXCLUDED.date,amount=EXCLUDED.amount,lines=EXCLUDED.lines
+        const paymentMapped=await mapEntries('payroll:payment:'+kind,date,positive);
+        const saved=(await sql`INSERT INTO payroll_payment_instructions(company_id,payroll_id,kind,date,amount,lines,created_by,posting_rule_version_id)
+          VALUES (${cid},${pid},${kind},${date},${total},${JSON.stringify(paymentMapped.lines)}::jsonb,${me.id},${paymentMapped.id})
+          ON CONFLICT(payroll_id,kind) DO UPDATE SET date=EXCLUDED.date,amount=EXCLUDED.amount,lines=EXCLUDED.lines,posting_rule_version_id=EXCLUDED.posting_rule_version_id
           WHERE payroll_payment_instructions.status='prepared' RETURNING id,status`)[0];
         if(!saved)return fail('Платіж уже підтверджено; повторне створення заборонено',409);
         return json({ok:true,document_id:saved.id,status:'prepared',total});
@@ -363,9 +565,9 @@ export default async (req) => {
       const payment=(await sql`SELECT * FROM payroll_payment_instructions WHERE company_id=${cid} AND payroll_id=${pid} AND kind=${kind}`)[0];
       if(!payment)return fail('Спочатку сформуйте платіжну інструкцію',409);
       if(payment.status==='confirmed')return fail('Цей платіж уже відображено в обліку',409);
-      const posted=(await sql`WITH claim AS (UPDATE payroll_payment_instructions SET status='confirmed',confirmed_at=now(),date=${date}::date WHERE id=${payment.id} AND status='prepared' RETURNING id,lines),
-        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount)
-          SELECT ${cid},${date}::date,${'ПІ-'+payment.id},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount
+      const posted=(await sql`WITH claim AS (UPDATE payroll_payment_instructions SET status='confirmed',confirmed_at=now(),date=${date}::date WHERE id=${payment.id} AND status='prepared' RETURNING id,lines,posting_rule_version_id),
+        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id)
+          SELECT ${cid},${date}::date,${'ПІ-'+payment.id},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount,claim.posting_rule_version_id
           FROM claim CROSS JOIN LATERAL jsonb_to_recordset(claim.lines) AS l(debit_acc text,credit_acc text,amount numeric,description text) RETURNING id)
           SELECT (SELECT count(*) FROM claim)::int AS confirmed,(SELECT count(*) FROM inserted)::int AS entries`)[0];
       if(!posted?.confirmed)return fail('Платіж уже проведено',409);
@@ -425,19 +627,93 @@ export default async (req) => {
       return json(row);
     }
 
+    if (res === 'prices') {
+      const cid=Number(M==='POST'?body.company_id:q.get('company_id'));
+      const c=await own(cid,M==='POST','refs',M==='POST'?'create':'read');
+      if(!c)return fail('Немає доступу до цін',403);
+      if(M==='GET') {
+        const at=q.get('date')||'2999-12-31';if(!validISODate(at))return fail('Некоректна дата ціни');
+        const history=q.get('history')==='1';
+        if(history)return json(await sql`SELECT p.id,p.item_id,p.price_type_id,to_char(p.effective_from,'YYYY-MM-DD') AS effective_from,p.price,i.name AS item_name,t.name AS type_name
+          FROM item_prices p JOIN refs i ON i.id=p.item_id AND i.company_id=${cid} AND i.kind='item' JOIN refs t ON t.id=p.price_type_id AND t.company_id=${cid} AND t.kind='price_type'
+          WHERE p.company_id=${cid} ORDER BY p.effective_from DESC,p.id DESC`);
+        return json(await sql`SELECT DISTINCT ON (p.item_id,p.price_type_id) p.id,p.item_id,p.price_type_id,to_char(p.effective_from,'YYYY-MM-DD') AS effective_from,p.price,i.name AS item_name,t.name AS type_name
+          FROM item_prices p JOIN refs i ON i.id=p.item_id AND i.company_id=${cid} AND i.kind='item' JOIN refs t ON t.id=p.price_type_id AND t.company_id=${cid} AND t.kind='price_type'
+          WHERE p.company_id=${cid} AND p.effective_from<=${at}::date ORDER BY p.item_id,p.price_type_id,p.effective_from DESC,p.id DESC`);
+      }
+      if(M!=='POST')return fail('Метод не дозволено',405);
+      const itemId=Number(body.item_id),priceTypeId=Number(body.price_type_id),price=Number(body.price),date=body.effective_from;
+      if(!Number.isSafeInteger(itemId)||!Number.isSafeInteger(priceTypeId)||!validISODate(date)||!Number.isFinite(price)||price<0||price>9999999999999||Math.abs(price*100-Math.round(price*100))>1e-7)return fail('Перевірте товар, тип ціни, дату та суму');
+      const check=await sql`SELECT kind,id FROM refs WHERE company_id=${cid} AND id=ANY(${[itemId,priceTypeId]}::int[])`;
+      if(check.length!==2||!check.some(r=>r.id===itemId&&r.kind==='item')||!check.some(r=>r.id===priceTypeId&&r.kind==='price_type'))return fail('Товар або тип ціни не належить підприємству');
+      await sql.transaction([
+        sql`INSERT INTO item_prices(company_id,item_id,price_type_id,effective_from,price) VALUES (${cid},${itemId},${priceTypeId},${date},${price}) ON CONFLICT(company_id,item_id,price_type_id,effective_from) DO UPDATE SET price=EXCLUDED.price`,
+        aud(c,'price-set','price',itemId,null,{price_type_id:priceTypeId,effective_from:date,price},'Встановлення ціни')]);
+      return json({ok:true});
+    }
+    if (res === 'lots' && M === 'GET') {
+      const cid=Number(q.get('company_id')),wid=Number(q.get('wh_id')),itemId=Number(q.get('item_id'));
+      const c=await own(cid,false,'stock','read');if(!c)return fail('Немає доступу',403);
+      const at=q.get('date')||'2999-12-31';if(!validISODate(at))return fail('Некоректна дата');
+      return json(await sql`SELECT m.lot_key, SUM(m.qty)::numeric AS qty, SUM(m.amount)::numeric AS amount,
+        MIN(to_char(m.date,'YYYY-MM-DD')) AS first_date,MAX(d.number) FILTER (WHERE m.qty>0) AS document
+        FROM stock_moves m LEFT JOIN docs d ON d.id=m.doc_id
+        WHERE m.company_id=${cid} AND m.wh_id=${wid} AND m.item_id=${itemId} AND m.date<=${at}::date AND m.lot_key IS NOT NULL
+        GROUP BY m.lot_key HAVING SUM(m.qty)>0 ORDER BY MIN(m.date),m.lot_key`);
+    }
     if (res === 'refs') {
       if (M === 'POST') {
         const c = await access(Number(body.company_id), body.id ? 'update' : 'create');
         if (!c) return fail('Немає доступу', 403);
         const name = String(body.name || '').trim(), data = JSON.stringify(body.data || {});
         if (!name || !body.kind) return fail('Вкажіть назву');
-        if (body.id) await sql`UPDATE refs SET name=${name}, data=${data}::jsonb WHERE id=${Number(body.id)} AND company_id=${c.id} AND kind=${body.kind}`;
+        if(body.kind==='item') {
+          const typeId=Number(body.data?.item_type_id),uomId=Number(body.data?.uom_id);
+          const ty=(await sql`SELECT id,data FROM refs WHERE id=${typeId} AND company_id=${c.id} AND kind='item_type'`)[0];
+          const un=(await sql`SELECT id,data FROM refs WHERE id=${uomId} AND company_id=${c.id} AND kind='uom'`)[0];
+          if(!ty||!un)return fail('Оберіть вид номенклатури й одиницю виміру з довідників');
+          if(body.id) {
+            const old=(await sql`SELECT data FROM refs WHERE company_id=${c.id} AND id=${Number(body.id)} AND kind='item'`)[0];
+            if(old&&(String(old.data?.item_type_id||'')!==String(typeId)||String(old.data?.uom_id||'')!==String(uomId)) &&
+                (await sql`SELECT 1 FROM stock_moves WHERE company_id=${c.id} AND item_id=${Number(body.id)} LIMIT 1`).length){
+              const wasClassified=Boolean(old.data?.item_type_id&&old.data?.uom_id);
+              if(wasClassified) return fail('Вид та базову одиницю номенклатури зі складською історією змінювати не можна.',409);
+              if(body.legacy_classify!==true)return fail('Це стара позиція з рухами без виду номенклатури. Перед першою класифікацією звірте історичні рахунки й підтвердьте дію в картці. Історичні проводки автоматично не змінюються.',409);
+            }
+          }
+        }
+        if(body.kind==='item_type') {
+          const x=body.data||{},stockable=x.stockable==='yes';
+          if(!/^[a-z0-9_]{2,32}$/.test(String(x.code||''))||!['yes','no'].includes(x.stockable))return fail('Вкажіть код виду й ознаку складського обліку');
+          const ac=[x.revenue_acc,x.cost_acc,...(stockable?[x.stock_acc]:[])].map(String);
+          const known=await sql`SELECT code,kind FROM accounts WHERE code=ANY(${ac}::text[])`;
+          if(ac.some(code=>!known.some(k=>k.code===code&&k.kind!=='O')))return fail('Вкажіть наявні балансові рахунки для виду номенклатури');
+          if(stockable&&!/^2\d{1,2}$/.test(String(x.stock_acc||'')))return fail('Рахунок складського обліку має належати класу 2 (запаси)');
+          if(!/^9\d{1,2}$/.test(String(x.cost_acc||''))||!/^7\d{1,2}$/.test(String(x.revenue_acc||'')))return fail('Рахунок собівартості — клас 9, доходу — клас 7');
+          if(body.id) {
+            const old=(await sql`SELECT data FROM refs WHERE id=${Number(body.id)} AND company_id=${c.id} AND kind='item_type'`)[0]?.data;
+            if(old&&['stock_acc','revenue_acc','cost_acc','stockable'].some(k=>old[k]!==x[k])&&
+              (await sql`SELECT 1 FROM stock_moves m JOIN refs i ON i.id=m.item_id WHERE m.company_id=${c.id} AND i.data->>'item_type_id'=${String(body.id)} LIMIT 1`).length)
+              return fail('Вид використовується в складському обліку. Зміна рахунків змінить логіку нових документів — створіть новий вид.',409);
+          }
+        }
+        if(body.kind==='uom'&&!String(body.data?.code||'').trim())return fail('Вкажіть скорочення одиниці виміру');
+        if (body.id) {
+          await sql`UPDATE refs SET name=${name}, data=${data}::jsonb WHERE id=${Number(body.id)} AND company_id=${c.id} AND kind=${body.kind}`;
+          if(body.kind==='item'&&body.legacy_classify===true)await aud(c,'legacy-item-classification','item',Number(body.id),null,{type_id:body.data?.item_type_id,uom_id:body.data?.uom_id},'Класифікація старої номенклатури без зміни попередніх проводок');
+        }
         else await sql`INSERT INTO refs(company_id,kind,name,data) VALUES (${c.id},${body.kind},${name},${data}::jsonb)`;
         return json({ ok: true });
       }
       const c = await access(Number(q.get('company_id')), M === 'DELETE' ? 'delete' : 'read');
       if (!c) return fail('Немає доступу', 403);
-      if (M === 'DELETE') { await sql`DELETE FROM refs WHERE id=${Number(id)} AND company_id=${c.id}`; return json({ ok: true }); }
+      if (M === 'DELETE') {
+        const r=(await sql`SELECT kind FROM refs WHERE id=${Number(id)} AND company_id=${c.id}`)[0];
+        if(r?.kind==='item_type'&&(await sql`SELECT 1 FROM refs WHERE company_id=${c.id} AND kind='item' AND data->>'item_type_id'=${String(id)} LIMIT 1`).length)
+          return fail('Вид номенклатури використовується в картках товарів',409);
+        if(r?.kind==='uom'&&(await sql`SELECT 1 FROM refs WHERE company_id=${c.id} AND kind='item' AND data->>'uom_id'=${String(id)} LIMIT 1`).length)
+          return fail('Одиниця виміру використовується в картках товарів',409);
+        await sql`DELETE FROM refs WHERE id=${Number(id)} AND company_id=${c.id}`;return json({ok:true}); }
       return json(await sql`SELECT id, kind, name, data FROM refs WHERE company_id=${c.id} AND kind=${q.get('kind')} ORDER BY name`);
     }
 
@@ -446,7 +722,11 @@ export default async (req) => {
         const c = await access(Number(body.company_id), body.id ? 'update' : 'create');
         if (!c) return fail('Немає доступу', 403);
         lockCheck(c, body.date);
-        const lines = body.lines || [{ debit_acc: body.debit_acc, credit_acc: body.credit_acc, amount: body.amount }];
+        let lines = body.lines || [{ debit_acc: body.debit_acc, credit_acc: body.credit_acc, amount: body.amount }];
+        const financialClose=body.doc==='Закриття фінансових результатів';
+        if(financialClose&&!validISODate(body.date))return fail('Некоректна дата закриття');
+        const closingRule=financialClose?await mapEntries('financial:close',body.date,lines):{lines,id:null};
+        lines=closingRule.lines;
         if (!validISODate(body.date) || !validLines(lines)) return fail('Перевірте дату (РРРР-ММ-ДД), Дт/Кт та суми: додатні числа з точністю до 2 знаків');
         const codes=[...new Set(lines.flatMap(l=>[l.debit_acc,l.credit_acc]))];
         const known=await sql`SELECT code,kind FROM accounts WHERE code = ANY(${codes}::text[])`;
@@ -455,8 +735,8 @@ export default async (req) => {
         if(lines.some(l=> (kindByCode.get(l.debit_acc)==='O') !== (kindByCode.get(l.credit_acc)==='O') && l.debit_acc!=='000' && l.credit_acc!=='000'))
           return fail('Не можна змішувати позабалансовий і балансовий рахунки в одній проводці');
         // усі проводки операції — в одній транзакції: або всі, або жодної
-        await sql.transaction(lines.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount)
-          VALUES (${c.id},${body.date},${body.doc || ''},${body.description || ''},${body.partner || ''},${l.debit_acc},${l.credit_acc},${Number(l.amount)})`));
+        await sql.transaction(lines.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id)
+          VALUES (${c.id},${body.date},${body.doc || ''},${body.description || ''},${body.partner || ''},${l.debit_acc},${l.credit_acc},${Number(l.amount)},${closingRule.id})`));
         return json({ ok: true }, 201);
       }
       const c = await access(Number(q.get('company_id')), M === 'DELETE' ? 'delete' : 'read');
@@ -524,8 +804,11 @@ export default async (req) => {
         if (!c) return fail('Немає доступу', 403);
         lockCheck(c, body.date);
         const B = await buildDoc(c, body, null);
+        const mapped=await mapEntries('doc:'+B.type,body.date,B.ent);
+        B.ent=mapped.lines;B.rule_version_id=mapped.id;
         const docId = Number((await sql`SELECT nextval(pg_get_serial_sequence('docs','id')) AS id`)[0].id);
         await sql.transaction([
+          ...(['rcpt','prod','ost','sale','wo','mv'].includes(B.type)?[inventoryClaim(c)]:[]),
           sql`INSERT INTO docs(id,company_id,type,number,date,partner,data) VALUES (${docId},${c.id},${B.type},${B.number},${body.date},${body.partner || ''},${JSON.stringify(B.data)}::jsonb)`,
           ...entIns(c, B, body.date, body.partner, docId, null),
           ...mvIns(c, B, body.date, docId)]);
@@ -622,13 +905,14 @@ export default async (req) => {
         if ((await sql`SELECT 1 FROM entries_a WHERE add_of IN (SELECT id FROM entries_a WHERE doc_id=${d.id}) LIMIT 1`).length) throw bad('Спершу сторнуйте додаткові записи до цього документа');
         const tot = Number(d.data.total || 0);
         await sql.transaction([
+          ...(['rcpt','prod','ost','sale','wo','mv'].includes(d.type)?[inventoryClaim(c)]:[]),
           sql`SELECT 1 / count(*) FROM (SELECT id FROM docs WHERE id=${d.id} AND NOT storno AND version=${d.version} FOR UPDATE) g`,
           ins('storno', d.id, null, tot, -tot, 0),
           sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,storno_of,doc_id,corr_id)
             SELECT company_id, ${body.date}::date, ${number}, 'Сторно: ' || COALESCE(description,''), partner, debit_acc, credit_acc, -amount, id, doc_id, ${cid}
             FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL AND amount > 0`,
-          sql`INSERT INTO stock_moves(company_id,doc_id,date,wh_id,item_id,qty,amount)
-            SELECT company_id, doc_id, ${body.date}::date, wh_id, item_id, -qty, -amount FROM stock_moves WHERE doc_id=${d.id}`,
+          sql`INSERT INTO stock_moves(company_id,doc_id,date,wh_id,item_id,qty,amount,lot_key)
+            SELECT company_id, doc_id, ${body.date}::date, wh_id, item_id, -qty, -amount, lot_key FROM stock_moves WHERE doc_id=${d.id}`,
           sql`UPDATE docs SET storno=true, version=version+1 WHERE id=${d.id}`,
           aud(c, 'storno', 'doc', d.id, { total: tot, storno: false }, { total: 0, storno: true, correction: number }, reason)]);
         return json({ id: cid, number }, 201);
@@ -644,14 +928,17 @@ export default async (req) => {
         const merged = { ...base, ...ch, company_id: c.id, type: d.type, number: d.number };
         lockCheck(c, d.date); lockCheck(c, merged.date);
         const B = await buildDoc(c, merged, d.id);
+        const mapped=await mapEntries('doc:'+B.type,merged.date,B.ent);
+        B.ent=mapped.lines;B.rule_version_id=mapped.id;
         const oldE = await sql`SELECT debit_acc, credit_acc, amount FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL ORDER BY id`;
         const newE = B.ent.filter(([a1, k1, am]) => am > 0 && a1 !== k1).map(([a1, k1, am]) => ({ debit_acc: a1, credit_acc: k1, amount: am }));
         if (body.preview) return json({ old: oldE, new: newE });
         if (reason.length < 3) throw bad('Вкажіть причину виправлення');
         yearOk(d.date);
-        const oldMoves = await sql`SELECT wh_id, item_id, qty, amount FROM stock_moves WHERE doc_id=${d.id}`;
+        const oldMoves = await sql`SELECT wh_id, item_id, qty, amount,lot_key FROM stock_moves WHERE doc_id=${d.id}`;
         const oldT = Number(X.total || 0), newT = Number(B.data.total || 0);
         await sql.transaction([
+          ...(['rcpt','prod','ost','sale','wo','mv'].includes(d.type)?[inventoryClaim(c)]:[]),
           sql`SELECT 1 / count(*) FROM (SELECT id FROM docs WHERE id=${d.id} AND NOT storno AND version=${d.version} FOR UPDATE) g`,
           sql`INSERT INTO doc_versions(doc_id,version,snapshot,user_name,reason) VALUES (${d.id},${d.version},${JSON.stringify({ doc: { date: d.date, partner: d.partner, data: X }, entries: oldE, moves: oldMoves })}::jsonb,${me.name},${reason})`,
           ins('fix', d.id, null, oldT, r2(newT - oldT), newT),

@@ -3,7 +3,7 @@
  const FREQ=180000;
  const KEY='prooblik:autosave:v1';
  let enabled=localStorage.getItem(KEY)!=='off';
- const editableTabs=new Set(['add','tpl','set','open','pko','vko','bin','bout','inv','act','rcpt','sale','wo','mv','ost']);
+ const editableTabs=new Set(['add','tpl','set','open','pko','vko','bin','bout','inv','act','rcpt','prod','sale','wo','mv','ost']);
  const draftKey=id=>`prooblik:draft:v1:${me?.id||'guest'}:${company?.id||'none'}:${id}`;
  const fields=()=>[...document.querySelectorAll('#app input,#app textarea,#app select')].filter(e=>!e.disabled&&!e.readOnly&&!['password','hidden','file','submit','button'].includes(e.type)&&!e.closest('.desk,.desk-option')&&e.id!=='');
  window.updateDraftToggle=()=>{let b=document.querySelector('#draft-toggle');if(b){b.textContent=enabled?'⏱ Автозбереження: увімк.':'⏱ Автозбереження: вимк.';b.setAttribute('aria-pressed',String(enabled));}};

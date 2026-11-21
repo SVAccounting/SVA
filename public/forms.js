@@ -60,7 +60,7 @@ const F1P=parse(`
 1411|  Емісійний дохід|P:421
 1412|  Накопичені курсові різниці|P:422
 1415|Резервний капітал|P:43
-1420|Нерозподілений прибуток (непокритий збиток)|P:44,79;R
+1420|Нерозподілений прибуток (непокритий збиток)|P:44
 1425|Неоплачений капітал|A:46
 1430|Вилучений капітал|A:45
 1495|Усього за розділом I|=1400+1401+1405+1410+1415+1420-1425-1430
@@ -148,33 +148,43 @@ const F2=parse(`
 const BR1=new Set(['1002','1012','1017','1022','1425','1430']);
 const BR2=new Set(['2050','2095','2130','2150','2180','2181','2182','2195','2250','2255','2270','2295','2300','2355']);
 
-function calc(rows,o,p){
-  const v={},get=c=>v[c]||0;
+// The formula engine also accepts a versioned per-line override from Neon.
+// Sources: A/P/D/C = balances, K/X/E = turnovers, R = unclosed current result;
+// semicolon = sum of terms, optional +/- sign; =/>/< = other line calculations.
+function calc(rows,o,p,override={}){
+  const values={},definitions=new Map(rows.filter(r=>r[0]).map(([code,,spec])=>[code,override[code]??spec]));
   const pick=(src,pf)=>src.filter(x=>pf.some(q=>x.code.startsWith(q)));
   const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
   const term=s=>{
-    const [m,l]=s.split(':'),pf=l?l.split(','):[];
-    if(m==='A')return sum(pick(o,pf),x=>x.closing);
-    if(m==='P')return -sum(pick(o,pf),x=>x.closing);
-    if(m==='D')return sum(pick(o,pf),x=>Math.max(x.closing,0));
-    if(m==='C')return sum(pick(o,pf),x=>-Math.min(x.closing,0));
-    if(m==='R')return -sum(o.filter(x=>/^[789]/.test(x.code)&&!x.code.startsWith('79')),x=>x.closing);
-    if(m==='K')return sum(pick(p,pf),x=>x.c-x.d);
-    if(m==='X')return sum(pick(p,pf),x=>x.d-x.c);
-    if(m==='E')return sum(pick(p,pf),x=>x.d);
-    return 0;
+    const sign=s.startsWith('-')?-1:1;
+    const str=s.replace(/^[+-]/,''),[m,l]=str.split(':'),pf=l?l.split(','):[];
+    let n=0;
+    if(m==='A')n=sum(pick(o,pf),x=>x.closing);
+    else if(m==='P')n=-sum(pick(o,pf),x=>x.closing);
+    else if(m==='D')n=sum(pick(o,pf),x=>Math.max(x.closing,0));
+    else if(m==='C')n=sum(pick(o,pf),x=>-Math.min(x.closing,0));
+    else if(m==='R')n=-sum(o.filter(x=>/^[789]/.test(x.code)&&!x.code.startsWith('79')),x=>x.closing);
+    else if(m==='K')n=sum(pick(p,pf),x=>x.c-x.d);
+    else if(m==='X')n=sum(pick(p,pf),x=>x.d-x.c);
+    else if(m==='E')n=sum(pick(p,pf),x=>x.d);
+    return sign*n;
   };
-  const isF=sp=>sp&&'=<>'.includes(sp[0]);
-  for(const [code,,spec] of rows){ // 1-й прохід: рядки з даних (рахунків)
-    if(!code||isF(spec))continue;
-    v[code]=spec&&spec!=='Z'?spec.split(';').reduce((a,s)=>a+term(s),0):0;
-  }
-  for(const [code,,spec] of rows){ // 2-й прохід: формули за кодами рядків (у порядку форми)
-    if(!code||!isF(spec))continue;
-    const f=[...spec.slice(1).matchAll(/([+-]?)(\d{4})/g)].reduce((a,m)=>a+(m[1]==='-'?-1:1)*get(m[2]),0);
-    v[code]=spec[0]==='='?f:spec[0]==='>'?Math.max(f,0):Math.max(-f,0);
-  }
-  return v;
+  const visiting=new Set();
+  const evalRow=code=>{
+    if(Object.prototype.hasOwnProperty.call(values,code))return values[code];
+    if(visiting.has(code))throw new Error('Циклічна формула звіту: '+code);
+    visiting.add(code);
+    const spec=(definitions.get(code)||'Z').replace(/\s/g,'');
+    let val=0;
+    if(spec[0]==='='||spec[0]==='>'||spec[0]==='<'){
+      val=[...spec.slice(1).matchAll(/([+-]?)(\d{4})/g)].reduce((a,m)=>a+(m[1]==='-'?-1:1)*evalRow(m[2]),0);
+      if(spec[0]==='>')val=Math.max(val,0);
+      if(spec[0]==='<')val=Math.max(-val,0);
+    }else if(spec!=='Z'&&spec!=='h')val=spec.split(';').reduce((a,x)=>a+term(x),0);
+    visiting.delete(code);values[code]=val;return val;
+  };
+  rows.forEach(([code])=>{if(code)evalRow(code)});
+  return values;
 }
 function tbl(rows,vs,BR,first,h1,h2,official=true){
   const K=window.FORM_UNIT!=='u'; // 'k' — тис. грн (за замовчуванням), 'u' — грн з копійками
@@ -188,8 +198,11 @@ function tbl(rows,vs,BR,first,h1,h2,official=true){
     const b=/^(Усього|БАЛАНС|Валовий|Чистий фінансовий|Фінансовий результат)/.test(n.trim());
     return `<tr${b?' style="font-weight:700"':''}><td style="padding-left:${8+n.search(/\S/)*8}px">${esc(n.trim())}</td><td>${c}</td><td class="n">${cell(vs[0],c)}</td><td class="n">${cell(vs[1],c)}</td></tr>`}).join('')}</tbody></table>`;
 }
-function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null){
-  const a=[calc(F1A,o0,[]),calc(F1A,o1,[])],l=[calc(F1P,o0,[]),calc(F1P,o1,[])],r=[calc(F2,[],pCur),calc(F2,[],pPrev)];
+function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null,overrides={}){
+  const first=overrides.first||{},last=overrides.last||{},prior=overrides.prior||{};
+  const a=[calc(F1A,o0,[],first.F1A?.rows||{}),calc(F1A,o1,[],last.F1A?.rows||{})],
+    l=[calc(F1P,o0,[],first.F1P?.rows||{}),calc(F1P,o1,[],last.F1P?.rows||{})],
+    r=[calc(F2,[],pCur,last.F2?.rows||{}),calc(F2,[],pPrev,prior.F2?.rows||{})];
   const ok=Math.abs(a[1][1300]-l[1][1900])<0.005&&Math.abs(a[0][1300]-l[0][1900])<0.005;
   const info=companyData||{};const st=info.settings||{};
   const field=(key)=>esc(String(st[key]??''));
@@ -210,7 +223,7 @@ function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null){
   const fmtA=n=>fmt(Math.abs(n));
   const neg=o1.filter(x=>/^(30|31|33|351)/.test(x.code)&&x.closing<-0.005);
   const open=o1.filter(x=>/^[789]/.test(x.code)&&!x.code.startsWith('79')&&Math.abs(x.closing)>0.005);
-  const notes=`${neg.length?`<div class="card noprint err"><b>Від’ємні залишки коштів:</b> ${neg.map(x=>esc(x.code+' '+x.name)+' — кредитове сальдо '+fmtA(x.closing)).join('; ')}. У балансі таке сальдо показано в пасиві (овердрафт — рядок 1600, інші кошти — рядок 1690), а не в активі зі знаком «мінус». Перевірте, чи не пропущено надходження або початкові залишки.</div>`:''}${open.length?`<div class="card noprint mut">Фінансові результати за рахунками класів 7–9 ще не закриті на рахунок 79/44: у балансі (рядок 1420) вони враховані розрахунково. Щоб сформувати проводки закриття — <a href="#" onclick="go('closefin');return false">Операції → Закриття фінрезультатів</a>.</div>`:''}`;
+  const notes=`${neg.length?`<div class="card noprint err"><b>Від’ємні залишки коштів:</b> ${neg.map(x=>esc(x.code+' '+x.name)+' — кредитове сальдо '+fmtA(x.closing)).join('; ')}. У балансі таке сальдо показано в пасиві (овердрафт — рядок 1600, інші кошти — рядок 1690), а не в активі зі знаком «мінус». Перевірте, чи не пропущено надходження або початкові залишки.</div>`:''}${open.length?`<div class="card noprint mut">Рахунки доходів і витрат ще не закриті. Рядок 1420 відображає рахунок 44 без штучного додавання незакритих доходів; сформуйте проводки закриття перед підготовкою офіційної звітності. Щоб сформувати проводки закриття — <a href="#" onclick="go('closefin');return false">Операції → Закриття фінрезультатів</a>.</div>`:''}`;
   const unitSel=`<p class="noprint"><label style="display:inline">Одиниця виміру:</label> <select onchange="setFormUnit(this.value)" style="width:auto"><option value="k"${window.FORM_UNIT!=='u'?' selected':''}>тис. грн (як у офіційній формі)</option><option value="u"${window.FORM_UNIT==='u'?' selected':''}>грн з копійками</option></select></p>`;
   return `${unitSel}${notes}<div class="card sc financial-form official-financial">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
   ${tbl(F1A,a,BR1,'АКТИВ','На початок звітного періоду','На кінець звітного періоду',official)}

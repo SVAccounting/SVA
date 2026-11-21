@@ -273,3 +273,27 @@ html,body{max-width:100%;overflow-x:clip}
   .financial-form .financial-table{table-layout:fixed}
   .recent-navigation,.navx,#nav,aside,header,#toasts,.toast{display:none!important}
 }
+
+/* Номенклатура, типи цін, партійні рядки: зручність смартфонів */
+.inventory-lot-field{grid-column:1 / -1;min-width:0}
+.inventory-lot-field label{margin-top:0}
+.inventory-lot-field select{min-width:0;width:100%}
+@media(max-width:760px){
+ #ln .lr{grid-template-columns:minmax(0,2fr) minmax(64px,1fr)!important;gap:8px!important;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+ #ln .lr .ln_n{grid-column:1/-1}
+ #ln .lr .ln_p,#ln .lr .ln_s{min-width:0}
+ #ln .lr .inventory-lot-field{grid-column:1/-1}
+}
+
+
+/* Rulebook - dedicated superadmin editor */
+.rb-panel{max-width:1300px}.rb-title{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.rb-title h2{margin:0;font-size:21px;font-weight:600}
+.rb-tag{border:1px solid var(--bd);border-radius:999px;padding:5px 11px;font-size:12px;color:var(--mut)}
+.rb-grid-head,.rb-map-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 42px;gap:8px;align-items:center;margin:8px 0}
+.rb-grid-head{color:var(--mut);font-size:12px;font-weight:600}.rb-map-row input{min-width:0}
+.rb-map-row button{height:40px;padding:4px}.rb-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:17px}.rb-actions .rb-wide{flex:1 1 260px}.rb-actions>div:not(.rb-wide){min-width:155px}
+.rb-help{font-size:12px;background:var(--bg);border:1px solid var(--bd);border-radius:11px;padding:10px 13px;margin:10px 0}.rb-help span{display:inline-block;margin:4px 12px 4px 0}.rb-help p{margin:7px 0 0}
+.rb-lines{max-height:520px;overflow:auto;border:1px solid var(--bd);border-radius:10px}.rb-report-row{display:grid;grid-template-columns:54px minmax(180px,1fr) minmax(160px,32%);gap:8px;align-items:center;border-bottom:1px solid var(--bd);padding:7px 9px}
+.rb-report-row:nth-child(even){background:var(--bg)}.rb-report-row[hidden]{display:none}.rb-report-row input{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px}.rb-code{font-weight:650;font-variant-numeric:tabular-nums}.rb-name{font-size:13px}.rb-name small{display:block;color:var(--mut);font-size:11px;margin-top:2px}
+.rb-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.rb-compare>div{min-width:0;overflow:auto}
+@media(max-width:750px){.rb-grid-head{display:none}.rb-map-row{grid-template-columns:repeat(2,minmax(0,1fr)) 38px}.rb-map-row input{min-width:0}.rb-map-row button{grid-column:3;grid-row:1/span 2;height:100%}.rb-report-row{grid-template-columns:48px minmax(0,1fr)}.rb-report-row input{grid-column:1/-1}.rb-compare{grid-template-columns:1fr}.rb-actions>*{width:100%}.rb-title h2{font-size:18px}}

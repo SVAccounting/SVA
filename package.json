@@ -1,2 +1,3 @@
 { "name": "navchalna-buhgalteriya", "version": "0.1.0", "type": "module",
+  "scripts": {"test:rules":"node tests/rule_engine.test.mjs", "test:inventory":"node --test tests/inventory*.cjs", "test:all":"node --test tests/inventory*.cjs && node tests/rule_engine.test.mjs && node tests/merge_integration.test.mjs"},
   "dependencies": { "@neondatabase/serverless": "^0.10.4" } }

@@ -120,8 +120,8 @@ async function stornoDoc(id){
 // Company-level permissions are loaded after each company selection.
 let currentRights={manager:false,permissions:{}};
 const canDo=(module,action='read')=>me?.role==='superadmin'||currentRights.permissions?.[module]?.[action]===true;
-const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',payroll:'entries',paystatement:'entries',taxnorm:'refs'};
-const visibleTab=k=>k==='home'||k==='company'||k==='plan'||k==='tasks'||canDo(k.startsWith('r_')?'refs':TAB_MODULE[k]||'reports','read');
+const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',prod:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',payroll:'entries',paystatement:'entries',taxnorm:'refs',r_item_type:'refs',r_uom:'refs',r_price_type:'refs',prices:'refs'};
+const visibleTab=k=>(k==='rulebook'||k==='ruleDiagnostics')?me?.role==='superadmin':k==='home'||k==='company'||k==='plan'||k==='tasks'||canDo(k.startsWith('r_')?'refs':TAB_MODULE[k]||'reports','read');
 window.pick=async function(id){const selected=(await api('companies')).find(c=>c.id===id);if(!selected)throw new Error('Підприємство недоступне');saveCo(selected);await loadRights();nav();await go('home')};
 async function loadRights(){
   currentRights={manager:false,permissions:{}};

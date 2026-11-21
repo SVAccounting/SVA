@@ -6,44 +6,88 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 @media print{aside,header,.noprint{display:none!important}.lay{display:block}body.printing>*:not(#prn){display:none!important}body.printing #prn{position:static;padding:0}}
 </style>`);
 const fq=n=>Number(n).toLocaleString('uk-UA',{maximumFractionDigits:3}),dfmt=d=>d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4);
-let ITEMS=[];
+let ITEMS=[],CURRENT_PRICES=[],PRICE_TYPES=[];
 const CASHC={pko:['361','311','372','703','702','40','685'],vko:['631','661','372','311','641','685'],bin:['361','301','60','50','681','40','685'],bout:['631','661','641','651','60','301','685']};
 const DT={
 pko:{h:'Прибутковий касовий ордер (ПКО)',p:'ПКО',cash:1,pk:'customer'},vko:{h:'Видатковий касовий ордер (ВКО)',p:'ВКО',cash:1,pk:'supplier'},
 bin:{h:'Банківська виписка: надходження на р/р',p:'БВ-Н',cash:1,pk:'customer'},bout:{h:'Банківська виписка: списання з р/р',p:'БВ-С',cash:1,pk:'supplier'},
-rcpt:{h:'Прибуткова накладна (надходження ТМЦ)',p:'ПН',lines:1,pk:'supplier',wh:1,c:['281','201','203','207','209','22'],cl:'Рахунок обліку (дебет)'},
+prod:{h:'Випуск готової продукції (Дт 26 Кт 23)',p:'ВГП',lines:1,wh:1},
+rcpt:{h:'Прибуткова накладна (надходження ТМЦ)',p:'ПН',lines:1,pk:'supplier',wh:1,cl:'Рахунок запасів визначається видом номенклатури'},
 ost:{h:'Початкові залишки ТМЦ (кількісні, без проводок)',p:'ОЗТ',lines:1,wh:1},
-sale:{h:'Видаткова накладна',p:'ВН',lines:1,pk:'customer',wh:1,c:['702','701'],cl:'Рахунок доходу'},
+sale:{h:'Видаткова накладна',p:'ВН',lines:1,pk:'customer',wh:1,cl:'Рахунок доходу визначається видом номенклатури'},
 wo:{h:'Акт списання ТМЦ',p:'АС',lines:1,wh:1,c:['947','91','92','93','949'],cl:'Рахунок витрат (дебет)',st:1},
 mv:{h:'Переміщення між складами',p:'ПМ',lines:1,wh:1,wh2:1},
 inv:{h:'Рахунок-фактура (рахунок на оплату)',p:'РФ',lines:1,pk:'customer'},
 act:{h:'Акт виконаних робіт (наданих послуг)',p:'АВР',lines:1,pk:'customer'}};
-MENU[4][1].splice(0,2,['stock','Залишки ТМЦ'],['scard','Картка складського обліку'],['rcpt','Прибуткова накладна'],['sale','Видаткова накладна'],['wo','Акт списання'],['mv','Переміщення'],['ost','Початкові залишки ТМЦ']);
-MENU[3][1].push(['bank','Виписка з банку']);
-MENU.splice(5,0,['Документи',[['inv','Рахунок-фактура'],['act','Акт виконаних робіт'],['docs','Журнал документів і друк']]]);
-HIDE_T.push('wo','mv','ost','inv','act');
+// Знаходимо розділи за назвою, а не за індексом: нові меню не повинні ламати навігацію.
+const inventoryMenu=MENU.find(m=>m[0]==='Склад');
+const bankMenu=MENU.find(m=>m[0]==='Банк');
+if(inventoryMenu) inventoryMenu[1].splice(0,inventoryMenu[1].length,
+ ['stock','Залишки ТМЦ'],['scard','Картка складського обліку'],['rcpt','Прибуткова накладна'],
+ ['prod','Випуск готової продукції'],['sale','Видаткова накладна'],['wo','Акт списання'],
+ ['mv','Переміщення'],['ost','Початкові залишки ТМЦ']);
+if(bankMenu && !bankMenu[1].some(x=>x[0]==='bank')) bankMenu[1].push(['bank','Виписка з банку']);
+if(!MENU.some(m=>m[0]==='Документи')) {
+ const ix=MENU.findIndex(m=>m[0]==='Операції');
+ MENU.splice(ix>=0?ix:MENU.length,0,['Документи',[['inv','Рахунок-фактура'],['act','Акт виконаних робіт'],['docs','Журнал документів і друк']]]);
+}
+HIDE_T.push('wo','mv','ost','inv','act','prod');
 const jbtn=(x,st)=>actionsMenu(x);
 // ---------- форми документів ----------
 Object.keys(DT).forEach(k=>views[k]=async()=>{
   const d=DT[k],ref=x=>api(`refs?company_id=${company.id}&kind=${x}`);
-  const [D,P,W,I]=await Promise.all([api('docs?company_id='+company.id),d.pk?ref(d.pk):[],d.wh?ref('wh'):[],d.lines?ref('item'):[]]);
-  ITEMS=I;const n=D.filter(x=>x.type===k).length+1,op=a=>a.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+  const [D,P,W,I,PT,PR]=await Promise.all([api('docs?company_id='+company.id),d.pk?ref(d.pk):[],d.wh?ref('wh'):[],d.lines?ref('item'):[],k==='sale'?ref('price_type'):[],k==='sale'?api(`prices?company_id=${company.id}&date=${today}`):[]]);
+  ITEMS=I;PRICE_TYPES=PT;CURRENT_PRICES=PR;const n=D.filter(x=>x.type===k).length+1,op=a=>a.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
   const co=a=>a.map(c=>`<option value="${c}">${c} — ${esc(nameOf(c))}</option>`).join('');
-  $('#app').innerHTML=`<div class="card"><h3>${d.h}</h3><div class="row"><div><label>Дата</label><input id="d_d" type="date" value="${today}"></div><div><label>Номер</label><input id="d_n" value="${d.p}-${n}"></div>${d.pk?`<div><label>Контрагент</label><select id="d_p"><option value="">—</option>${P.map(x=>`<option>${esc(x.name)}</option>`).join('')}</select></div>`:''}</div>
-  ${d.wh?`<div class="row"><div><label>Склад${d.wh2?' (звідки)':''}</label><select id="d_w">${op(W)}</select></div>${d.wh2?`<div><label>Склад (куди)</label><select id="d_w2">${op(W)}</select></div>`:''}</div>`:''}
+  $('#app').innerHTML=`<div class="card"><h3>${d.h}</h3><div class="row"><div><label>Дата</label><input id="d_d" type="date" value="${today}" ${k==='sale'?'onchange="refreshSalePrices()"':''}></div><div><label>Номер</label><input id="d_n" value="${d.p}-${n}"></div>${d.pk?`<div><label>Контрагент</label><select id="d_p"><option value="">—</option>${P.map(x=>`<option>${esc(x.name)}</option>`).join('')}</select></div>`:''}</div>
+  ${d.wh?`<div class="row"><div><label>Склад${d.wh2?' (звідки)':''}</label><select id="d_w" onchange="refreshAllInventoryLots()">${op(W)}</select></div>${d.wh2?`<div><label>Склад (куди)</label><select id="d_w2">${op(W)}</select></div>`:''}</div>`:''}
+  ${k==='sale'?`<div class="row"><div><label>Вид ціни продажу</label><select id="d_price_type" onchange="refreshRowsPrices()">${PT.map(x=>`<option value="${x.id}" ${x.data?.code==='retail'?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div></div>`:''}
   ${d.cash?`<div class="row"><div><label>Сума, грн</label><input id="d_s" type="number" step="0.01"></div><div><label>Кореспондуючий рахунок</label><select id="d_c">${co(CASHC[k])}</select></div></div>`:`${d.c?`<div class="row"><div><label>${d.cl}</label><select id="d_c">${co(d.c)}</select></div>${d.st?`<div><label>Списується зі складського рахунку</label><select id="d_st">${co(['281','201','203','207','209','22','26'])}</select></div>`:''}</div>`:''}
   <div id="ln"></div><datalist id="dl">${I.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist><p><button class="btn" onclick="lnRow()">+ рядок</button></p><p id="tot" class="mut"></p>
   ${d.wh&&!I.length?'<p class="err">Спочатку заповніть довідники «Номенклатура» та «Склади».</p>':''}`}
   <label>Підстава / примітка</label><input id="d_b"><p><button class="btn pri" onclick="docPost('${k}')">Провести</button> <span id="msg" class="err"></span></p>
-  ${d.lines&&!d.wh?'':''}${S().vat?'':'<p class="mut">Підприємство не є платником ПДВ — ПДВ не нараховується.</p>'}${k==='sale'||k==='wo'||k==='mv'?`<p class="mut">Собівартість списання розраховується автоматично: ${S().inv==='avg'?'середньозважена':'ФІФО'} (за обліковою політикою${S().inv==='spec'?'; ідентифікована собівартість наразі розраховується як ФІФО':''}).</p>`:''}</div>`;
+  ${d.lines&&!d.wh?'':''}${S().vat?'':'<p class="mut">Підприємство не є платником ПДВ — ПДВ не нараховується.</p>'}${k==='sale'||k==='wo'||k==='mv'?`<p class="mut">Собівартість списання розраховується автоматично: ${S().inv==='avg'?'середньозважена':S().inv==='spec'?'ідентифікована за партією':'FIFO'} (${S().inv_scope==='company'?'по підприємству':'за складом'}).</p>`:''}</div>`;
   if(d.lines)lnRow();
 });
-function lnRow(){$('#ln').insertAdjacentHTML('beforeend',`<div class="row lr" style="grid-template-columns:3fr 70px 90px 110px 110px;margin-bottom:6px"><input class="ln_n" list="dl" placeholder="Найменування" onchange="lnFill(this)"><input class="ln_u" placeholder="од." readonly><input class="ln_q" type="number" step="0.001" placeholder="К-сть" oninput="lnTot()"><input class="ln_p" type="number" step="0.01" placeholder="Ціна" oninput="lnTot()"><input class="ln_s" readonly placeholder="Сума"></div>`)}
-function lnFill(el){const r=el.closest('.lr'),it=ITEMS.find(x=>x.name===el.value);if(it){r.querySelector('.ln_u').value=it.data.unit||'';if(!r.querySelector('.ln_p').value)r.querySelector('.ln_p').value=it.data.price||''}lnTot()}
+function lnRow(){
+ const kind=tab,lot=S().inv==='spec'&&['sale','wo','mv'].includes(kind);
+ $('#ln').insertAdjacentHTML('beforeend',`<div class="row lr" style="grid-template-columns: minmax(130px,3fr) 70px 90px 110px 110px; margin-bottom:8px">
+ <input class="ln_n" list="dl" placeholder="Найменування" onchange="lnFill(this)">
+ <input class="ln_u" placeholder="од." readonly>
+ <input class="ln_q" type="number" step="0.001" min="0.001" placeholder="К-сть" oninput="lnTot()">
+ <input class="ln_p" type="number" min="0" step="0.01" placeholder="${['rcpt','ost','prod'].includes(kind)?'Собівартість':kind==='sale'?'Ціна продажу':'Авто'}" ${['wo','mv'].includes(kind)?'readonly':''} oninput="lnTot()">
+ <input class="ln_s" readonly placeholder="Сума">
+ ${lot?'<div class="inventory-lot-field"><label>Партія для списання</label><select class="ln_lot"><option value="">Спочатку оберіть товар і склад</option></select></div>':''}</div>`)
+}
+async function fillInventoryLots(row,item){
+ const select=row.querySelector('.ln_lot');if(!select||!item)return;
+ const warehouse=Number($('#d_w')?.value),date=$('#d_d')?.value||today;
+ if(!warehouse)return;
+ try{const rows=await api(`lots?company_id=${company.id}&item_id=${item.id}&wh_id=${warehouse}&date=${date}`);
+ select.innerHTML='<option value="">Оберіть партію (залишок)</option>'+rows.map(r=>`<option value="${esc(r.lot_key)}">${esc(r.document||r.lot_key.slice(0,12))} · ${fq(r.qty)} ${esc(item.data.unit||'')} · ${fmt(r.amount)} грн</option>`).join('');
+ }catch(e){select.innerHTML=`<option value="">${esc(e.message)}</option>`}
+}
+async function lnFill(el){
+ const row=el.closest('.lr'),item=ITEMS.find(x=>x.name===el.value);
+ if(item){row.querySelector('.ln_u').value=item.data.unit||'';
+  if(tab==='sale')fillLineSalePrice(row,item);
+  else if(!['rcpt','ost','prod'].includes(tab))row.querySelector('.ln_p').value='';
+  await fillInventoryLots(row,item);
+ }
+ lnTot();
+}
+function fillLineSalePrice(row,item){
+ const type=Number($('#d_price_type')?.value);
+ const match=CURRENT_PRICES.find(x=>Number(x.item_id)===Number(item.id)&&Number(x.price_type_id)===type);
+ row.querySelector('.ln_p').value=match===undefined?'':Number(match.price).toFixed(2);
+}
+function refreshRowsPrices(){document.querySelectorAll('.lr').forEach(r=>{const item=ITEMS.find(i=>i.name===r.querySelector('.ln_n').value);if(item&&tab==='sale')fillLineSalePrice(r,item)});lnTot()}
+async function refreshSalePrices(){CURRENT_PRICES=await api(`prices?company_id=${company.id}&date=${$('#d_d').value}`);refreshRowsPrices();refreshAllInventoryLots()}
+function refreshAllInventoryLots(){document.querySelectorAll('.lr').forEach(r=>{const item=ITEMS.find(i=>i.name===r.querySelector('.ln_n').value);if(item)fillInventoryLots(r,item)})}
 function lnTot(){let s=0;document.querySelectorAll('.lr').forEach(r=>{const v=R2((Number(r.querySelector('.ln_q').value)||0)*(Number(r.querySelector('.ln_p').value)||0));r.querySelector('.ln_s').value=v||'';s+=v});const vr=S().vat?S().rate/100:0;$('#tot').textContent=`Разом без ПДВ: ${fmt(s)} · ПДВ${S().vat?' '+S().rate+'%':''}: ${fmt(R2(s*vr))} · Всього: ${fmt(R2(s*(1+vr)))}`}
 async function docPost(k){
   const g=i=>$('#'+i)?.value||'';
-  const lines=[...document.querySelectorAll('.lr')].map(r=>{const n=r.querySelector('.ln_n').value,it=ITEMS.find(x=>x.name===n);return{item_id:it?.id,name:n,unit:r.querySelector('.ln_u').value,qty:r.querySelector('.ln_q').value,price:r.querySelector('.ln_p').value}}).filter(l=>l.name&&Number(l.qty)>0);
+  const lines=[...document.querySelectorAll('.lr')].map(r=>{const n=r.querySelector('.ln_n').value,it=ITEMS.find(x=>x.name===n);return{item_id:it?.id,name:n,unit:r.querySelector('.ln_u').value,qty:r.querySelector('.ln_q').value,price:r.querySelector('.ln_p').value,lot_key:r.querySelector('.ln_lot')?.value||''}}).filter(l=>l.name&&Number(l.qty)>0);
   try{const r=await api('docs',{method:'POST',body:{company_id:company.id,type:k,date:g('d_d'),number:g('d_n'),partner:g('d_p'),wh_id:Number(g('d_w'))||null,wh2_id:Number(g('d_w2'))||null,corr:g('d_c'),stock:g('d_st'),basis:g('d_b'),sum:g('d_s'),lines}});await go('docs');printDoc(r.id)}catch(e){$('#msg').textContent=e.message}
 }
 views.docs=async()=>{
@@ -111,6 +155,7 @@ async function printDoc(id){
     vko:()=>`${cash('ВИДАТКОВИЙ КАСОВИЙ ОРДЕР','Видати',X.corr,'301')}${sig('Керівник','Головний бухгалтер','Одержав')}<p>Документ, що посвідчує особу: ______________</p>`,
     bin:()=>`${cash('БАНКІВСЬКА ВИПИСКА: НАДХОДЖЕННЯ НА Р/Р','Платник','311',X.corr)}`,
     bout:()=>`${cash('БАНКІВСЬКА ВИПИСКА: СПИСАННЯ З Р/Р','Одержувач',X.corr,'311')}`,
+    prod:()=>`${H('НАКЛАДНА НА ВИПУСК ГОТОВОЇ ПРОДУКЦІЇ')}<p>${my}</p><p>Приймальний склад: ${Z(X.wh)}</p><p>Облік: Дт 26 — Кт 23</p>${tb()}<p>Виробнича собівартість випуску: <b>${fmt(X.total)} грн</b></p>${sig('Майстер виробництва','Матеріально відповідальна особа')}`,
     rcpt:()=>`${H('ПРИБУТКОВА НАКЛАДНА')}<p>Постачальник: ${pp}</p><p>Одержувач: ${my}</p><p>Склад: ${Z(X.wh)}</p>${tb()}${tot}${sig('Відпустив','Прийняв')}`,
     sale:()=>`${H('ВИДАТКОВА НАКЛАДНА')}<p>Постачальник: ${my}</p><p>Одержувач: ${pp}</p><p>Склад: ${Z(X.wh)}</p>${tb()}${tot}${sig('Відпустив','Отримав')}`,
     inv:()=>`${H('РАХУНОК-ФАКТУРА')}<p>Постачальник: ${my}</p><p>Платник: ${pp}</p>${tb()}${tot}<p class="mut">Рахунок дійсний до оплати протягом 5 банківських днів.</p>${sig('Керівник','Головний бухгалтер')}`,

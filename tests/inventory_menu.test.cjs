@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const base=fs.readFileSync(__dirname+'/../public/app2.js','utf8');
+const ext=fs.readFileSync(__dirname+'/../public/app3.js','utf8');
+const menuSource=base.slice(0,base.indexOf('function nav()'));
+const additions=ext.slice(ext.indexOf('// Знаходимо розділи за назвою'),ext.indexOf('const jbtn='));
+const m=vm.runInNewContext(menuSource+'\n'+additions+'\nMENU');
+const section=s=>m.find(([name])=>name===s)?.[1].map(([id])=>id)||[];
+assert(section('Склад').includes('prod'),'production doc must be in Склад');
+assert(section('Склад').includes('sale'),'sale must be in Склад');
+assert(section('Банк').includes('bank'),'bank history should be in Банк');
+assert(!section('Банк').includes('sale'),'sale must not move to Банк');
+assert(section('Документи').includes('docs'),'documents must show in Документи');
+assert(section('Ціноутворення').includes('prices'),'price history must be in Ціноутворення');
+assert(section('Довідники').includes('r_item_type'));
+assert(section('Довідники').includes('r_uom'));
+console.log('PASS dynamic menu groups',m.map(([x])=>x).join(', '));
