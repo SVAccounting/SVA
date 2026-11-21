@@ -62,43 +62,19 @@ async function go(t){
 // ---- експорт ----
 const loadJS=(u,g)=>window[g]?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error('Не вдалося завантажити бібліотеку експорту (перевірте інтернет)'));document.head.appendChild(s)});
 const fname=(n,ext)=>`ProOblik_${(n||tab).replace(/[^\wа-яіїєґ-]+/gi,'_')}_${today}.${ext}`;
-function exPrint(){document.body.classList.remove('printing');window.print()}
 async function exXlsx(root,name){
-  if(tab==='rep' && (root||$('#app')).querySelector('.financial-form'))return exportFinancialXlsx(root||$('#app'));
-  const t=toast('Формується Excel…','wait');
-  try{await loadJS('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','XLSX');
-    const tabs=[...(root||$('#app')).querySelectorAll('table')].filter(x=>!x.closest('.tb'));if(!tabs.length)throw new Error('Немає даних для експорту');
-    const wb=XLSX.utils.book_new();
-    tabs.forEach((tb,i)=>{
-      const aoa=[...tb.rows].map(r=>[...r.cells].map(c=>{const v=c.innerText.trim().replace(/[\u00a0\u202f]/g,' ');return /^[−-]?\d[\d ]*(,\d+)?$/.test(v)&&!/^0\d/.test(v)?Number(v.replace(/ /g,'').replace(',','.').replace('−','-')):v}));
-      const h=(tb.closest('.card')?.querySelector('h3')?.textContent||'Аркуш').replace(/[\\\/?*\[\]:]/g,'');
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),`${i+1}. ${h}`.slice(0,31));
-    });
-    XLSX.writeFile(wb,fname(name,'xlsx'));t.done('Файл Excel збережено','ok');
-  }catch(e){t.done(e.message,'err')}
+ const t=toast('Формується Excel з межами комірок…','wait');
+ try{await ProExport.exportExcel(root||$('#app'),name||tab,tab==='rep');t.done('Excel сформовано з форматуванням','ok')}
+ catch(e){t.done('Помилка Excel: '+e.message,'err')}
 }
 async function exPdf(root,name,land){
-  if(tab==='rep' && (root||$('#app')).querySelector('.financial-form'))return exportFinancialPdf(root||$('#app'));
-  const t=toast('Формується PDF…','wait');
-  try{await loadJS('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js','html2pdf');
-    document.body.classList.add('pdfmode');
-    const source=root||$('#app');
-    const isFinancial=tab==='rep' && !!source.querySelector('.financial-form');
-    let exportRoot=source;
-    if(isFinancial){
-      exportRoot=document.createElement('div');
-      exportRoot.style.cssText='width:720px;max-width:720px;background:#fff;color:#222;font-family:Arial,sans-serif';
-      source.querySelectorAll('.financial-form').forEach((form,i)=>{
-        const copy=form.cloneNode(true);
-        copy.style.cssText='width:720px;max-width:720px;padding:0;margin:0 0 12px;border:0;border-radius:0;background:#fff;overflow:visible';
-        if(i)copy.style.breakBefore='page';
-        exportRoot.appendChild(copy);
-      });
-    }
-    await html2pdf().set({margin:isFinancial?8:8,filename:fname(name,'pdf'),image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#fff',windowWidth:isFinancial?760:undefined},jsPDF:{unit:'mm',format:'a4',orientation:isFinancial?'portrait':((land??LAND.includes(tab))?'landscape':'portrait')},pagebreak:{mode:['css','legacy'],before:isFinancial?'.financial-form + .financial-form':undefined}}).from(exportRoot).save();
-    t.done('PDF збережено','ok');
-  }catch(e){t.done('Не вдалося створити PDF: '+e.message+'. Скористайтеся «Друк» → «Зберегти як PDF».','err')}
-  finally{document.body.classList.remove('pdfmode')}
+ const t=toast('Формується PDF…','wait');
+ try{const res=await ProExport.exportPdf(root||$('#app'),name||tab,tab==='rep');t.done(res==='pdf'?'PDF створено':'Виберіть «Зберегти як PDF» у діалозі друку','ok')}
+ catch(e){t.done('Не вдалося відкрити PDF: '+e.message,'err')}
+}
+function exPrint(){
+ try{ProExport.printOnly($('#app'),tab==='rep')}
+ catch(e){toast(e.message,'err')}
 }
 // бланки документів: друк, PDF, Excel
 window.showPrint=function(html){
@@ -120,7 +96,7 @@ async function stornoDoc(id){
 // Company-level permissions are loaded after each company selection.
 let currentRights={manager:false,permissions:{}};
 const canDo=(module,action='read')=>me?.role==='superadmin'||currentRights.permissions?.[module]?.[action]===true;
-const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',payroll:'entries',paystatement:'entries',taxnorm:'refs'};
+const TAB_MODULE={set:'settings',members:'settings',period:'settings',open:'entries',entries:'entries',finclose:'entries',add:'entries',tpl:'entries',pko:'docs',vko:'docs',bin:'docs',bout:'docs',inv:'docs',act:'docs',docs:'docs',rcpt:'stock',sale:'stock',wo:'stock',mv:'stock',ost:'stock',stock:'stock',scard:'stock',corr:'corrections',trainer:'corrections',audit:'audit',cashbook:'reports',bank:'reports',osv:'reports',chess:'reports',card:'reports',rep:'reports',payroll:'entries',paystatement:'entries',taxnorm:'refs'};
 const visibleTab=k=>k==='home'||k==='company'||k==='plan'||k==='tasks'||canDo(k.startsWith('r_')?'refs':TAB_MODULE[k]||'reports','read');
 window.pick=async function(id){const selected=(await api('companies')).find(c=>c.id===id);if(!selected)throw new Error('Підприємство недоступне');saveCo(selected);await loadRights();nav();await go('home')};
 async function loadRights(){

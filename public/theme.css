@@ -258,3 +258,8 @@ html,body{max-width:100%;overflow-x:clip}
  .mobile-card-table td.record-actions .btn{min-height:40px;min-width:52px}
  .card.sc:has(.mobile-card-table) table{min-width:0!important}
 }
+
+/* Audit and finance-close feedback. */
+.report-warning{padding:12px 15px;margin:10px 0 14px;border:1px solid #dec69f;border-radius:10px;background:#fff9eb;color:#5b442b;line-height:1.5;font-size:14px}
+@media(max-width:700px){.report-warning{font-size:13px}.official-financial .financial-table{font-size:10px}}
+@media print{.report-warning,.noprint{display:none!important}}

@@ -1,6 +1,6 @@
 // Форма №1 «Баланс (Звіт про фінансовий стан)» і Форма №2 «Звіт про фінансові результати» — НП(С)БО 1.
 // Рядок: код|назва|джерело. Джерела: A:рахунки (сальдо Дт), P:(сальдо Кт), D:/C: (лише дебетові/кредитові сальдо),
-// R (непокритий результат рахунків 7–9), K:/X:/E: (обороти Кт-Дт / Дт-Кт / Дт за період), «;» — сума джерел,
+// K:/X:/E: (обороти Кт-Дт / Дт-Кт / Дт за період), «;» — сума джерел,
 // =формула за кодами рядків, >формула / <формула (прибуток / збиток), Z — немає даних у навчальному плані, h — заголовок.
 const parse=s=>s.trim().split('\n').map(l=>l.split('|'));
 const F1A=parse(`
@@ -60,7 +60,7 @@ const F1P=parse(`
 1411|  Емісійний дохід|P:421
 1412|  Накопичені курсові різниці|P:422
 1415|Резервний капітал|P:43
-1420|Нерозподілений прибуток (непокритий збиток)|P:44,79;R
+1420|Нерозподілений прибуток (непокритий збиток)|P:44
 1425|Неоплачений капітал|A:46
 1430|Вилучений капітал|A:45
 1495|Усього за розділом I|=1400+1401+1405+1410+1415+1420-1425-1430
@@ -158,7 +158,6 @@ function calc(rows,o,p){
     if(m==='P')return -sum(pick(o,pf),x=>x.closing);
     if(m==='D')return sum(pick(o,pf),x=>Math.max(x.closing,0));
     if(m==='C')return sum(pick(o,pf),x=>-Math.min(x.closing,0));
-    if(m==='R')return -sum(o.filter(x=>/^[789]/.test(x.code)&&!x.code.startsWith('79')),x=>x.closing);
     if(m==='K')return sum(pick(p,pf),x=>x.c-x.d);
     if(m==='X')return sum(pick(p,pf),x=>x.d-x.c);
     if(m==='E')return sum(pick(p,pf),x=>x.d);
@@ -177,7 +176,7 @@ function calc(rows,o,p){
   return v;
 }
 function tbl(rows,vs,BR,first,h1,h2,official=false){
-  const cell=(v,c)=>{const raw=v[c]||0;const rounded=Math.round(Math.abs(raw)/1000)*(raw<0?-1:1);const z=official?rounded===0:Math.abs(raw)<0.005;const t=z?'–':official?String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g,' '):fmt(raw);return BR.has(c)&&!z?`(${t})`:t};
+  const cell=(v,c)=>{const raw=v[c]||0;const rounded=Math.round(Math.abs(raw)/1000)*(raw<0?-1:1);const z=official?rounded===0:Math.abs(raw)<0.005;const t=z?'–':official?String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g,' '):fmt(raw);return (BR.has(c)||raw<0)&&!z?`(${t})`:t};
   return `<table class="financial-table"><colgroup><col style="width:49%"><col style="width:11%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr><th>${first}</th><th>Код рядка</th><th class="n">${h1}</th><th class="n">${h2}</th></tr><tr class="financial-colnumbers"><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead><tbody>${rows.map(([c,n,s])=>{
     if(s==='h')return `<tr><td colspan="4" style="font-weight:700;background:var(--bg)">${esc(n)}</td></tr>`;
     const b=/^(Усього|БАЛАНС|Валовий|Чистий фінансовий|Фінансовий результат)/.test(n.trim());
@@ -186,6 +185,10 @@ function tbl(rows,vs,BR,first,h1,h2,official=false){
 function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null){
   const a=[calc(F1A,o0,[]),calc(F1A,o1,[])],l=[calc(F1P,o0,[]),calc(F1P,o1,[])],r=[calc(F2,[],pCur),calc(F2,[],pPrev)];
   const ok=Math.abs(a[1][1300]-l[1][1900])<0.005&&Math.abs(a[0][1300]-l[0][1900])<0.005;
+  const unsettled=o1.filter(x=>/^(7|9)/.test(x.code)&&!/^79/.test(x.code)&&Math.abs(Number(x.closing||0))>0.005);
+  const pending79=o1.filter(x=>/^79/.test(x.code)&&Math.abs(Number(x.closing||0))>0.005);
+  const unclosedWarning=(unsettled.length||pending79.length)?`<p class="noprint report-warning"><b>Не закрито фінансовий результат:</b> є залишки на рахунках ${esc([...unsettled,...pending79].map(x=>x.code).join(', '))}. Рядок 1420 враховує тільки рахунок 44, без умовного додавання оборотів 7–9. Для звітності після закриття виконайте «Операції → Закриття фінансових результатів», а потім переформуйте звіт.</p>`:'';
+  const balanceWarning=!ok?`<p class="noprint report-warning">Баланс не збігається: на кінець актив ${fmt(a[1][1300])} грн, пасив ${fmt(l[1][1900])} грн. Перевірте закриття 7–9 класів, початкові залишки та рядки, позначені як неавтоматизовані.</p>`:'';
   const info=companyData||{};const st=info.settings||{};
   const field=(key)=>esc(String(st[key]??''));
   const companyName=esc(info.name||'Не зазначено');
@@ -202,7 +205,7 @@ function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null){
     <div>Складено: ☑ за НП(С)БО &nbsp; ☐ за МСФЗ</div></div>`;
   const hd=(n,k,d)=>`${meta()}<div class="financial-form-heading"><h3>${n}</h3><div>${k} · Код за ДКУД <b>${d}</b></div></div>`;
   const signatures=`<div class="financial-signatures"><div>Керівник: ${esc(st.head_name||"____________________")} ____________________ <span>(підпис, ім’я та прізвище)</span></div><div>Головний бухгалтер: ${esc(st.chief_accountant_name||"____________________")} ____________________ <span>(підпис, ім’я та прізвище)</span></div></div>`;
-  return `<div class="card sc financial-form official-financial">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
+  return `${unclosedWarning}${balanceWarning}<div class="card sc financial-form official-financial">${hd('Баланс (Звіт про фінансовий стан) на '+t,'Форма №1','1801001')}
   ${tbl(F1A,a,BR1,'АКТИВ','На початок звітного періоду','На кінець звітного періоду',official)}
   ${tbl(F1P,l,BR1,'ПАСИВ','На початок звітного періоду','На кінець звітного періоду',official)}
   ${signatures}<p class="noprint ${ok?'mut':'err'}">${ok?'✓ Актив дорівнює пасиву':'УВАГА: Актив ≠ пасив — перевірте проводки'}</p></div>
