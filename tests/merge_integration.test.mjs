@@ -57,4 +57,9 @@ assert.match(panels['#app'].innerHTML,/Отримано кредит/,'типо�
 assert.match(panels['#app'].innerHTML,/Фінансова звітність/);
 await views.ruleDiagnostics();
 assert.match(panels['#app'].innerHTML,/Діагностика бухгалтерської логіки/);
+await views.postingLogic();
+assert.match(panels['#app'].innerHTML,/Отримано оплату від покупця за товари/);
+assert.match(panels['#app'].innerHTML,/Отримано короткостроковий банківський кредит/);
+assert.doesNotMatch(panels['#app'].innerHTML,/<code>doc:bin<\/code>/);
+assert.match(panels['#app'].innerHTML,/Суть операції/);
 console.log('PASS inventory compatibility, production document, rulebook server wiring, financial formula, menu mounting');

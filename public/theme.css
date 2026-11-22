@@ -338,3 +338,21 @@ html,body{max-width:100%;overflow-x:clip}
 @media(max-width:900px){.rb-shell{grid-template-columns:1fr}.rb-nav{position:static;max-height:320px}.rb-map-row{grid-template-columns:1fr}.rb-arrow{transform:rotate(90deg)}}
 .rb-panel table{width:100%}.rb-panel td,.rb-panel th{white-space:normal;vertical-align:top}
 .rb-panel .rb-tbl{overflow-x:auto}
+
+/* 2026-11-22: compact posting-rule views and semantic description editor */
+.rb-logic-list{display:grid;gap:14px}.rb-logic-list>h2{font-size:20px;margin:3px 0 0}
+.rb-logic-block{padding:16px 18px}.rb-logic-block .rb-title h3{font-size:17px;margin:0 0 12px}
+.rb-meaning{white-space:normal;min-width:230px;line-height:1.45}
+.rb-tbl{max-width:100%;overflow-x:auto}.rb-logic-list table{width:100%}
+.rb-logic-list td,.rb-logic-list th{white-space:normal;vertical-align:top}
+.rb-edit-list{display:grid;gap:8px;margin-bottom:12px}.rb-editline{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 12px;border:1px solid var(--bd);border-radius:11px}
+.rb-editline .rb-edit-desc{margin-top:4px}.rb-edit-actions{display:flex;gap:7px;flex:none}
+.rb-publish{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:8px}.rb-publish>div:first-child{flex:1 1 240px}.rb-publish>div:not(:first-child){flex:0 0 140px}.rb-publish input{width:100%}
+.rb-edit-dialog{position:fixed;inset:0;margin:auto;width:min(620px,calc(100vw - 30px));max-height:calc(100dvh - 35px);overflow-y:auto;border:1px solid var(--bd);border-radius:16px;padding:20px;background:var(--card);color:var(--tx);box-shadow:0 22px 75px #0005;box-sizing:border-box}
+.rb-edit-dialog::backdrop{background:rgba(0,0,0,.45)}.rb-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.rb-dialog-head h3{margin:0;font-size:20px}
+.rb-dialog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:15px}.rb-dialog-field{min-width:0}.rb-dialog-field input{width:100%;box-sizing:border-box}
+.rb-edit-dialog label{display:block;margin:0 0 5px;font-weight:600;font-size:13px}.rb-edit-dialog textarea{display:block;box-sizing:border-box;width:100%;min-height:94px;resize:vertical}
+.rb-dialog-buttons{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.rb-edit-dialog #rb_modal_err:not(:empty){padding-top:8px}
+@media(max-width:700px){.rb-dialog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rb-editline{align-items:start;flex-direction:column}.rb-edit-actions{align-self:flex-end}.rb-publish>div,.rb-publish>button{flex:1 1 100%!important}}
+
+.rb-page-title{font-size:19px;margin:0 0 14px}

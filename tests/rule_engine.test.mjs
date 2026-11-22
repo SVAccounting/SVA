@@ -10,6 +10,16 @@ assert.equal(changed[1].credit_acc,'281');assert.equal(original[0].credit_acc,'7
 const arrayChanged=applyPosting(p,[['361','702',150]]);assert.deepEqual(arrayChanged,[['361','701',150]]);
 assert.throws(()=>validatePosting({mappings:[p.mappings[0],p.mappings[0]]}),/двічі/);
 assert.throws(()=>validatePosting({mappings:[{from_debit:'361',from_credit:'702',to_debit:'702',to_credit:'702'}]}),/однакові/);
+// Користувацький зміст проводки має проходити перевірку та застосовуватися
+// до нових об'єктних записів, не змінюючи суму та вихідний масив.
+const named=validatePosting({mappings:[{from_debit:'311',from_credit:'361',to_debit:'311',to_credit:'361',description:'Отримано оплату від покупця'}]});
+const payment={debit_acc:'311',credit_acc:'361',amount:125.25,description:'Банківська виписка'};
+const namedResult=applyPosting(named,[payment]);
+assert.equal(namedResult[0].description,'Отримано оплату від покупця');
+assert.equal(payment.description,'Банківська виписка');
+assert.equal(namedResult[0].amount,125.25);
+assert.deepEqual(applyPosting(named,[['311','361',125.25]]),[['311','361',125.25]]);
+assert.throws(()=>validatePosting({mappings:[{...named.mappings[0],description:'x'.repeat(501)}]}),/зміст/);
 const rep=validateReport({rows:{'1165':'A:301,311;-P:285','1300':'=1095+1195+1200'}},REPORT_CODES.F1A);
 assert.equal(rep.rows['1165'],'A:301,311;-P:285');
 assert.throws(()=>validateReport({rows:{'1165':'A:30,301'}},REPORT_CODES.F1A),/Перекриття/);

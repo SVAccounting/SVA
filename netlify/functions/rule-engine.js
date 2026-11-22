@@ -13,14 +13,15 @@ export function validatePosting(config) {
   const seen = new Set();
   for (let i=0;i<rows.length;i++) {
     const r=rows[i];
-    if(!r || Object.keys(r).some(k=>!['from_debit','from_credit','to_debit','to_credit'].includes(k)) ||
+    if(!r || Object.keys(r).some(k=>!['from_debit','from_credit','to_debit','to_credit','description'].includes(k)) ||
        ![r.from_debit,r.from_credit,r.to_debit,r.to_credit].every(account)) problem(`Неправильні рахунки у правилі ${i+1}`);
+    if(r.description!==undefined && (typeof r.description!=='string' || !r.description.trim() || r.description.trim().length>500)) problem(`Некоректний зміст операції у правилі ${i+1}`);
     if(r.to_debit===r.to_credit) problem(`У правилі ${i+1} дебет і кредит однакові`);
     const key=r.from_debit+'|'+r.from_credit;
     if(seen.has(key)) problem('Одна початкова кореспонденція вказана двічі: '+key);
     seen.add(key);
   }
-  return {mappings:rows.map(x=>({...x}))};
+  return {mappings:rows.map(x=>({...x,...(x.description!==undefined?{description:x.description.trim()}: {})}))};
 }
 
 export function applyPosting(config, lines) {
@@ -31,7 +32,7 @@ export function applyPosting(config, lines) {
     const map=byOriginal.get(debit+'|'+credit);
     if(!map) return arr?[...l]:{...l};
     if(arr)return [map.to_debit,map.to_credit,...l.slice(2)];
-    return {...l,debit_acc:map.to_debit,credit_acc:map.to_credit};
+    return {...l,debit_acc:map.to_debit,credit_acc:map.to_credit,...(map.description?{description:map.description}:{})};
   });
 }
 

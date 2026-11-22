@@ -168,6 +168,12 @@ async function activeRule(scope, key, at) {
 async function mapEntries(source, at, lines) {
   const rule=await activeRule('posting',source,at);
   const result=rule?applyPosting(rule.config,lines):lines;
+  // Персональний зміст зберігається у версії правила та застосовується лише
+  // до нових проведень відповідної кореспонденції.
+  const descriptions=lines.map(l=>{
+    const d=Array.isArray(l)?l[0]:l.debit_acc,k=Array.isArray(l)?l[1]:l.credit_acc;
+    return rule?.config?.mappings?.find(m=>m.from_debit===d&&m.from_credit===k)?.description||null;
+  });
   if(rule){
     // Protect the stock subledger even if an earlier version of the rule was published before this restriction.
     if(/^doc:(rcpt|prod|sale|wo|ost|mv)$/.test(source)&&rule.config.mappings.some(m=>
@@ -180,11 +186,12 @@ async function mapEntries(source, at, lines) {
     if(result.some(l=>{const [d,k]=Array.isArray(l)?l:[l.debit_acc,l.credit_acc];return d===k || (byCode.get(d)==='O') !== (byCode.get(k)==='O')}))
       throw bad('Активне правило створює некоректну пару рахунків (однакові або змішані балансові/позабалансові)');
   }
-  return {lines:result,id:rule?.id||null};
+  return {lines:result,id:rule?.id||null,descriptions};
 }
-const entIns = (c, B, date, partner, docId, cid) => B.ent.filter(([d, k, am]) => am > 0 && d !== k).map(([d, k, am]) =>
+const entIns = (c, B, date, partner, docId, cid) => B.ent
+  .map(([d,k,am],i)=>({d,k,am,i})).filter(({d,k,am})=>am>0&&d!==k).map(({d,k,am,i})=>
   sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,doc_id,corr_id,posting_rule_version_id)
-    VALUES (${c.id},${date},${B.number},${B.desc},${partner || ''},${d},${k},${am},${docId},${cid},${B.rule_version_id||null})`);
+    VALUES (${c.id},${date},${B.number},${B.rule_descriptions?.[i]||B.desc},${partner || ''},${d},${k},${am},${docId},${cid},${B.rule_version_id||null})`);
 const inventoryClaim=(c)=>sql`WITH claimed AS (UPDATE companies SET inventory_revision=inventory_revision+1
   WHERE id=${c.id} AND inventory_revision=${Number(c.inventory_revision)||0} RETURNING id)
   SELECT 1/(SELECT count(*)::int FROM claimed) AS ok`;
@@ -972,7 +979,7 @@ export default async (req) => {
         lockCheck(c, body.date);
         const B = await buildDoc(c, body, null);
         const mapped=await mapEntries('doc:'+B.type,body.date,B.ent);
-        B.ent=mapped.lines;B.rule_version_id=mapped.id;
+        B.ent=mapped.lines;B.rule_version_id=mapped.id;B.rule_descriptions=mapped.descriptions;
         await assertPostable(B.ent.filter(([,,am])=>am>0));
         const docId = Number((await sql`SELECT nextval(pg_get_serial_sequence('docs','id')) AS id`)[0].id);
         await sql.transaction([
@@ -1115,7 +1122,7 @@ export default async (req) => {
         lockCheck(c, d.date); lockCheck(c, merged.date);
         const B = await buildDoc(c, merged, d.id);
         const mapped=await mapEntries('doc:'+B.type,merged.date,B.ent);
-        B.ent=mapped.lines;B.rule_version_id=mapped.id;
+        B.ent=mapped.lines;B.rule_version_id=mapped.id;B.rule_descriptions=mapped.descriptions;
         await assertPostable(B.ent.filter(([,,am])=>am>0));
         const oldE = await sql`SELECT debit_acc, credit_acc, amount FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL ORDER BY id`;
         const newE = B.ent.filter(([a1, k1, am]) => am > 0 && a1 !== k1).map(([a1, k1, am]) => ({ debit_acc: a1, credit_acc: k1, amount: am }));
