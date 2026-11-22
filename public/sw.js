@@ -1,6 +1,6 @@
 // ProOblik: мінімальний service worker для встановлення як застосунку.
 // Бухгалтерські дані (/api/*) НІКОЛИ не кешуються. Статика: «спершу мережа», офлайн — з кешу.
-const VERSION = 'problik-20261122-local-versions-v8';
+const VERSION = 'problik-20261122-accounts-modal-v8-1';
 const SHELL = ['./', 'manifest.webmanifest', 'favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -425,3 +425,67 @@ html,body{max-width:100%;overflow-x:clip}
 .pb-primary-action{font-weight:700;min-height:42px}.pb-feedback:not(:empty){padding:10px 14px;background:rgba(46,130,78,.1);border-left:3px solid #398254;border-radius:5px}
 .pb-history-table td{vertical-align:top}.pb-history-table td small{display:block;color:var(--mut);font-size:11px;margin-top:4px}
 @media(max-width:720px){.pb-row-actions{flex-direction:column;align-items:stretch}.pb-v8-modal .rb-dialog-grid{grid-template-columns:1fr}}
+
+/* v8.1 — responsive account plan with horizontal scroll and an editable account dialog */
+.plan-page{min-width:0;width:100%;max-width:100%}
+.plan-page .plan-new-details{padding:0;overflow:hidden;border:1px solid var(--bd)}
+.plan-new-details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;cursor:pointer;font-size:16px;font-weight:700;color:var(--ac)}
+.plan-new-details>summary::-webkit-details-marker{display:none}
+.plan-new-details[open]>summary{border-bottom:1px solid var(--bd)}
+.plan-collapse-indicator{font-size:22px;line-height:1;transform:rotate(0);transition:transform .15s}
+.plan-new-details[open] .plan-collapse-indicator{transform:rotate(180deg)}
+.plan-new-body{padding:15px 20px 18px}
+.plan-new-body .mut{font-size:12px;line-height:1.5;margin:10px 0}
+.plan-add-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.plan-fields-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.plan-fields-grid label{display:block;min-width:0;font-size:13px;color:var(--mut);font-weight:600}
+.plan-fields-grid input,.plan-fields-grid select{display:block;width:100%;min-width:0;margin-top:5px;box-sizing:border-box;font-size:14px;color:var(--tx)}
+.plan-fields-grid.plan-wide-fields{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+#app .plan-table-card{min-width:0;max-width:100%;overflow:hidden;box-sizing:border-box}
+.plan-toolbar{display:flex;align-items:end;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;margin-bottom:10px}
+.plan-toolbar h3{font-size:18px;margin:0 0 4px}.plan-count{font-weight:500;color:var(--mut);font-size:13px}
+.plan-scope-note{font-size:12px;line-height:1.4}
+.plan-search-box{flex:0 1 390px;min-width:min(100%,240px);font-size:12px;font-weight:600;color:var(--mut)}
+.plan-search-controls{display:flex;gap:6px;align-items:center;margin-top:5px}
+.plan-search-controls input{flex:1;min-width:0;width:100%;box-sizing:border-box}
+.plan-search-controls .btn{flex:none;padding:9px 10px;font-size:12px}
+.plan-scroll-help{font-size:12px;margin:7px 0 9px;line-height:1.4}
+#app .plan-scroll{overflow-x:auto!important;overflow-y:auto;max-width:100%;width:100%;box-sizing:border-box;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-color:#a3afbc #eeeef0;scrollbar-width:auto;border:1px solid var(--bd);border-radius:10px}
+#app .plan-accounts-table{table-layout:fixed!important;border-collapse:collapse;width:1160px!important;min-width:1160px!important;max-width:none!important}
+#app .plan-accounts-table th,#app .plan-accounts-table td{white-space:normal!important;overflow-wrap:break-word;vertical-align:middle;padding:11px 10px;font-size:13px;line-height:1.4}
+.plan-accounts-table th:nth-child(1){width:70px}.plan-accounts-table th:nth-child(2){width:250px}.plan-accounts-table th:nth-child(3){width:145px}.plan-accounts-table th:nth-child(4){width:240px}.plan-accounts-table th:nth-child(5){width:155px}.plan-accounts-table th:nth-child(6){width:200px}.plan-accounts-table th:nth-child(7){width:100px}
+.plan-accounts-table thead{position:sticky;top:0;z-index:1}
+.plan-row{cursor:pointer}.plan-row:hover,.plan-row:focus-visible{background:#e8f2f9!important;outline:2px solid #8bbce0;outline-offset:-2px}
+.plan-row[hidden]{display:none!important}
+.plan-account-name{font-weight:600}.plan-code{color:var(--ac);font-weight:750}
+.plan-accounts-table td small{display:block;color:var(--mut);font-size:12px;line-height:1.35;margin-top:4px}
+.plan-subchip{display:inline-block;font-size:11px;margin:2px 3px 2px 0;padding:3px 7px;border:1px solid #d3e2ee;border-radius:20px;background:#edf5fa;color:#2b586f}
+.plan-open-btn{font-size:12px;padding:7px 10px;white-space:nowrap}
+.plan-result-count{font-size:12px;margin:10px 0 0}
+.plan-account-dialog{position:fixed;margin:auto;inset:0;width:min(820px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;border:1px solid var(--bd);border-radius:18px;background:var(--card);color:var(--tx);box-shadow:0 22px 65px #0005;overflow-y:auto;box-sizing:border-box}
+.plan-account-dialog::backdrop{background:rgba(15,23,36,.49)}
+.plan-dialog-head{position:sticky;top:0;background:var(--card);z-index:3;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--bd)}
+.plan-dialog-head h2{font-size:19px;margin:4px 0 0;line-height:1.35;overflow-wrap:anywhere}
+.plan-overline{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ac)}
+.plan-dialog-close{flex:none;min-width:40px;min-height:40px}
+.plan-dialog-content{padding:15px 22px 8px;display:grid;gap:14px}
+.plan-detail-section{border:1px solid var(--bd);border-radius:12px;background:#fdfdfb;padding:15px}
+.plan-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.plan-detail-heading h3{margin:0;font-size:16px}
+.plan-scope-badge{border-radius:16px;background:#eef0ee;color:#59625e;padding:5px 9px;font-size:11px;font-weight:600}
+.plan-scope-badge.local{background:#e8f2fa;color:#27618a}
+.plan-detail-section .subconto-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
+.plan-detail-section .subconto-slot{min-width:0;background:#fff}
+.plan-detail-section .subconto-slot label{display:block;font-size:12px;color:var(--mut);margin:8px 0 4px}
+.plan-detail-section .subconto-slot input,.plan-detail-section .subconto-slot select{box-sizing:border-box;width:100%;min-width:0}
+.plan-note{font-size:12px;color:var(--mut);line-height:1.5;margin:12px 0 0}
+.plan-dialog-footer{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--bd);padding:12px 22px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;z-index:3}
+.plan-dialog-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.plan-delete-btn{margin-right:auto;color:#9c3930;border-color:#ebcbc8}
+.plan-dialog-footer #plan_modal_error{font-size:12px;max-width:100%;line-height:1.35}
+@media(max-width:800px){.plan-fields-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.plan-detail-section .subconto-slots{grid-template-columns:1fr}.plan-search-box{flex-basis:100%}.plan-dialog-head{padding:14px 15px}.plan-dialog-content{padding:12px}.plan-dialog-footer{padding:12px}}
+@media(max-width:540px){.plan-fields-grid,.plan-fields-grid.plan-wide-fields{grid-template-columns:1fr}.plan-page .card{padding:13px}.plan-account-dialog{width:calc(100vw - 14px);max-height:calc(100dvh - 14px)}.plan-dialog-head h2{font-size:17px}.plan-dialog-actions{width:100%}.plan-dialog-actions button{flex:1}.plan-delete-btn{flex:0 0 auto!important}.plan-scroll-help{font-size:11px}}
+@media print{#app .plan-scroll{overflow:visible!important;border:0}#app .plan-accounts-table{width:100%!important;min-width:0!important;table-layout:auto!important}}
+/* Keep both scrollbars reachable without scrolling through hundreds of accounts first. */
+#app .plan-scroll{max-height:min(620px,calc(100dvh - 270px));min-height:min(260px,45dvh);scrollbar-gutter:stable}
+@media(max-height:570px){#app .plan-scroll{max-height:310px;min-height:160px}}

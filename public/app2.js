@@ -98,29 +98,91 @@ function drawRef(){
 function filterRefRows(){const g=$('#ref_group_filter')?.value||'',q=($('#ref_search')?.value||'').trim().toLowerCase();let n=0;document.querySelectorAll('.ref-table tbody tr[data-search]').forEach(tr=>{const on=(!g||g===tr.dataset.group)&&(inventoryBarcodeSearchExact?tr.dataset.barcode===inventoryBarcodeSearchExact:(!q||tr.dataset.search.includes(q)));tr.hidden=!on;if(on)n++});if($('#ref_result_count'))$('#ref_result_count').textContent=inventoryBarcodeSearchExact&&n===0?`Товар зі штрихкодом ${inventoryBarcodeSearchExact} не знайдено. Показано: 0 із ${RL.length}`:`Показано: ${n} із ${RL.length}`}
 async function saveRef(){const data={...((RE?RL.find(x=>x.id===RE):null)?.data||{})};REF[RK][1].forEach(([f])=>{if(f!=='name')data[f]=$('#rf_'+f).value});if(RK==='item'){const selected=INV_UNITS.find(x=>x.id===Number(data.uom_id));data.unit=selected?.data?.code||selected?.name||'';const duplicated=RL.find(x=>x.id!==RE&&data.barcode&&x.data?.barcode===data.barcode);if(duplicated)return $('#msg').textContent='Штрихкод уже використовується в іншому товарі'}try{await api('refs',{method:'POST',body:{company_id:company.id,kind:RK,id:RE,name:$('#rf_name').value,data,legacy_classify:Boolean($('#rf_legacy')?.checked)}});views['r_'+RK]()}catch(e){$('#msg').textContent=e.message}}
 async function delRef(id){if(confirm('Видалити запис?')){await api(`refs/${id}?company_id=${company.id}`,{method:'DELETE'});views['r_'+RK]()}}
-// Субконто налаштовуються окремо для кожного підприємства; план рахунків залишається спільним.
+// План рахунків: глобальні реквізити та три субконто поточного підприємства.
 const SUBCONTO_CHOICES=[['','— Не використовується —'],['counterparty','Контрагент'],['contract','Договір'],['warehouse','Склад'],['item','Номенклатура'],['lot','Партія'],['bank','Банківський рахунок'],['staff','Працівник'],['cost_center','Центр витрат'],['project','Проєкт'],['document','Документ'],['free','Інше значення']];
-let ACCOUNT_SUBCONTO=[];
-const subcontoForm=()=>`<fieldset class="subconto-fieldset"><legend>Субконто рахунку (для обраного підприємства)</legend>
-  <div class="subconto-slots">${[0,1,2].map(i=>`<div class="subconto-slot"><b>Субконто ${i+1}</b><label>Тип аналітики</label>
-    <select id="psc_${i}" onchange="planSubcontoLabel(${i})">${SUBCONTO_CHOICES.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select>
-    <label>Назва в обліку</label><input id="psl_${i}" maxlength="80" placeholder="Назва аналітичного розрізу"></div>`).join('')}</div>
-  <p class="mut">Налаштування діють лише для підприємства ${esc(company?.name||'—')}. Старі проводки зберігають свої значення субконто.</p></fieldset>`;
-function planSubcontoLabel(i){const type=$('#psc_'+i)?.value,el=$('#psl_'+i);if(type)el.value=(SUBCONTO_CHOICES.find(x=>x[0]===type)||[])[1]||type;else el.value=''}
-const planSubcontoRead=()=>[0,1,2].map(i=>({kind:$('#psc_'+i)?.value||'',label:$('#psl_'+i)?.value.trim()||''})).filter(x=>x.kind);
-// ---------- план рахунків (редагує викладач) ----------
+const PLAN_ACCOUNT_KINDS={A:'Активний',P:'Пасивний',AP:'Активно-пасивний',O:'Позабалансовий'};
+const PLAN_TRI_OPTIONS=[['','Не визначено'],['1','Так'],['0','Ні']];
+const planTriValue=x=>x===true?'1':x===false?'0':'';
+const planReadTri=x=>x==='1'?true:x==='0'?false:null;
+const planTriText=x=>x===true?'Так':x===false?'Ні':'Не визначено';
+let ACCOUNT_SUBCONTO=[], PLAN_SEARCH_QUERY='';
+const planAccountSlots=c=>ACCOUNT_SUBCONTO.find(x=>x.account_code===c)?.slots||[];
+const planSlotFields=(prefix,slots,readonly=false)=>`<div class="subconto-slots">${[0,1,2].map(i=>`<div class="subconto-slot"><b>Субконто ${i+1}</b><label for="${prefix}type_${i}">Тип аналітики</label><select id="${prefix}type_${i}" ${readonly?'disabled':''}>${SUBCONTO_CHOICES.map(([v,n])=>`<option value="${v}" ${v===(slots[i]?.kind||'')?'selected':''}>${n}</option>`).join('')}</select><label for="${prefix}label_${i}">Назва в обліку</label><input id="${prefix}label_${i}" value="${esc(slots[i]?.label||'')}" maxlength="80" placeholder="Наприклад, Контрагент" ${readonly?'readonly':''}></div>`).join('')}</div>`;
+const planReadSlots=prefix=>[0,1,2].map(i=>({kind:document.getElementById(prefix+'type_'+i)?.value||'',label:document.getElementById(prefix+'label_'+i)?.value.trim()||''})).filter(x=>x.kind).map(x=>({kind:x.kind,label:x.label||(SUBCONTO_CHOICES.find(c=>c[0]===x.kind)||[])[1]||x.kind}));
+const planPropertySelect=(id,value)=>`<select id="${id}">${OPT(PLAN_TRI_OPTIONS,planTriValue(value))}</select>`;
+// Існуючі рахунки редагують у вікні; форма додавання згорнута за замовчуванням.
 views.plan=async()=>{
   ACCOUNT_SUBCONTO=company?await api('account-subconto?company_id='+company.id):[];
-  const T=me.role==='superadmin',KN={A:'Активний',P:'Пасивний',AP:'Активно-пасивний',O:'Позабалансовий'};
-  const tri=x=>x===true?'Так':x===false?'Ні':'Не визначено';
-  $('#app').innerHTML=(T?`<div class="card"><h3>Додати або змінити рахунок (для всіх підприємств)</h3><div class="row"><div><label>Код</label><input id="pc"></div><div><label>Назва</label><input id="pn"></div><div><label>Тип</label><select id="pk">${OPT(Object.entries(KN),'A')}</select></div></div>
-  <div class="row"><div><label>Аналітичний облік</label><select id="pa"><option value="">Не визначено</option><option value="1">Так</option><option value="0">Ні</option></select></div><div><label>Кількісний облік</label><select id="pq"><option value="">Не визначено</option><option value="1">Так</option><option value="0">Ні</option></select></div></div><label>Розрізи аналітичного обліку</label><input id="pad"><label>Правило кількісного обліку</label><input id="pqp">${company?subcontoForm():'<p class="mut">Щоб налаштувати субконто, спочатку оберіть підприємство.</p>'}<p><button class="btn pri" onclick="saveAcc()">Зберегти</button> <span id="msg" class="err"></span></p></div>`:'')+
-  `<div class="card sc"><h3>План рахунків · ${accounts.length} позицій</h3><input id="plan_find" placeholder="Пошук за кодом, назвою або аналітикою" oninput="planSearch(this.value)"><table class="account-table mobile-card-table"><thead><tr><th>Код</th><th>Назва</th><th>Тип</th><th>Аналітика</th><th>Кількість</th><th>Субконто</th><th>Дії</th></tr></thead><tbody>${accounts.map(a=>`<tr class="plan-row" data-search="${esc((a.code+' '+a.name+' '+(a.analytic_dimensions||'')).toLowerCase())}"><td data-label="Код">${esc(a.code)}</td><td class="record-title" data-label="Назва">${esc(a.name)}</td><td data-label="Тип">${KN[a.kind]}</td><td data-label="Аналітика" title="${esc(a.analytic_dimensions||'')}">${tri(a.analytic_enabled)}${a.analytic_dimensions?' · '+esc(a.analytic_dimensions):''}</td><td data-label="Кількість" title="${esc(a.quantity_policy||'')}">${tri(a.quantity_enabled)}</td><td data-label="Субконто">${esc((ACCOUNT_SUBCONTO.find(x=>x.account_code===a.code)?.slots||[]).map(x=>x.label).join(' · ')||'—')}</td><td class="record-actions" data-label="Дії">${T?`<button class="btn" onclick="editAcc('${a.code}')">✎</button> <button class="btn" onclick="delAcc('${a.code}')">✕</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  const T=me.role==='superadmin',lookup=new Map(ACCOUNT_SUBCONTO.map(x=>[x.account_code,x.slots]));
+  $('#app').innerHTML=`<div class="plan-page">
+    ${T?`<details class="card plan-new-details" id="plan_new_details"><summary><span>＋ Додати новий рахунок</span><span class="plan-collapse-indicator" aria-hidden="true">⌄</span></summary><div class="plan-new-body"><div class="plan-fields-grid"><label>Код рахунку<input id="plan_new_code" autocomplete="off" maxlength="4" inputmode="numeric" placeholder="Наприклад, 281"></label><label>Назва<input id="plan_new_name" maxlength="240" placeholder="Назва рахунку"></label><label>Тип<select id="plan_new_kind">${OPT(Object.entries(PLAN_ACCOUNT_KINDS),'A')}</select></label></div><p class="mut">Створення рахунку діє для всіх підприємств. Після створення відкриється його картка для налаштування властивостей і субконто.</p><div class="plan-add-actions"><button type="button" class="btn pri" onclick="createPlanAccount()">Створити рахунок</button><span id="plan_new_error" class="err" role="alert"></span></div></div></details>`:''}
+    <section class="card plan-table-card"><div class="plan-toolbar"><div><h3>План рахунків <span class="plan-count">${accounts.length} позицій</span></h3><div class="mut plan-scope-note">Загальні властивості · ${company?'Субконто: '+esc(company.name):'Оберіть підприємство для налаштування субконто'}</div></div><label class="plan-search-box" for="plan_find"><span>Пошук рахунку</span><div class="plan-search-controls"><input id="plan_find" type="search" autocomplete="off" value="${esc(PLAN_SEARCH_QUERY)}" placeholder="Код, назва, тип, аналітика, субконто" oninput="planSearch(this.value)"><button type="button" class="btn" onclick="planClearSearch()" title="Очистити пошук">Очистити</button></div></label></div>
+    <div class="plan-scroll-help mut">Прокручуйте таблицю горизонтально, щоб переглянути всі стовпці. Натисніть на рахунок для відкриття його картки.</div>
+    <div class="plan-scroll" tabindex="0" role="region" aria-label="План рахунків з горизонтальним прокручуванням"><table class="account-table plan-accounts-table"><thead><tr><th>Код</th><th>Назва рахунку</th><th>Тип</th><th>Аналітичний облік</th><th>Кількісний облік</th><th>Субконто підприємства</th><th>Дія</th></tr></thead><tbody>${accounts.map(a=>{
+      const slots=lookup.get(a.code)||[],search=[a.code,a.name,PLAN_ACCOUNT_KINDS[a.kind]||'',a.analytic_dimensions||'',a.quantity_policy||'',planTriText(a.analytic_enabled),planTriText(a.quantity_enabled),...slots.map(x=>x.label+' '+x.kind)].join(' ').toLocaleLowerCase('uk');
+      return `<tr class="plan-row" data-search="${esc(search)}" data-code="${esc(a.code)}" role="button" tabindex="0" aria-label="Відкрити картку рахунку ${esc(a.code)} ${esc(a.name)}" onclick="openPlanAccount(this.dataset.code)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPlanAccount(this.dataset.code)}"><td><b class="plan-code">${esc(a.code)}</b></td><td class="plan-account-name">${esc(a.name)}</td><td>${esc(PLAN_ACCOUNT_KINDS[a.kind]||a.kind)}</td><td title="${esc(a.analytic_dimensions||'')}">${planTriText(a.analytic_enabled)}${a.analytic_dimensions?`<small>${esc(a.analytic_dimensions)}</small>`:''}</td><td>${planTriText(a.quantity_enabled)}${a.quantity_policy?`<small>${esc(a.quantity_policy)}</small>`:''}</td><td>${slots.length?slots.map(x=>`<span class="plan-subchip">${esc(x.label)}</span>`).join(''):'<span class="mut">—</span>'}</td><td><button type="button" class="btn plan-open-btn" onclick="event.stopPropagation();openPlanAccount('${a.code}')">Відкрити</button></td></tr>`;
+    }).join('')}</tbody></table></div><p id="plan_result_count" class="plan-result-count mut" aria-live="polite"></p></section><div id="plan_dialog_host"></div></div>`;
+  planSearch(PLAN_SEARCH_QUERY);
 };
-function planSearch(q){const s=q.toLowerCase().trim();document.querySelectorAll('.plan-row').forEach(r=>r.style.display=r.dataset.search.includes(s)?'':'none')}
-function editAcc(c){const a=accounts.find(x=>x.code===c);$('#pc').value=a.code;$('#pn').value=a.name;$('#pk').value=a.kind;$('#pa').value=a.analytic_enabled===null?'':a.analytic_enabled?'1':'0';$('#pq').value=a.quantity_enabled===null?'':a.quantity_enabled?'1':'0';$('#pad').value=a.analytic_dimensions||'';$('#pqp').value=a.quantity_policy||'';const slots=ACCOUNT_SUBCONTO.find(x=>x.account_code===c)?.slots||[];[0,1,2].forEach(i=>{if($('#psc_'+i)){$('#psc_'+i).value=slots[i]?.kind||'';$('#psl_'+i).value=slots[i]?.label||''}});scrollTo(0,0)}
-async function saveAcc(){try{const tri=x=>x===''?null:x==='1';await api('accounts',{method:'POST',body:{code:$('#pc').value.trim(),name:$('#pn').value,kind:$('#pk').value,analytic_enabled:tri($('#pa').value),analytic_dimensions:$('#pad').value,quantity_enabled:tri($('#pq').value),quantity_policy:$('#pqp').value}});if(company)await api('account-subconto',{method:'POST',body:{company_id:company.id,account_code:$('#pc').value.trim(),slots:planSubcontoRead()}});accounts=await api('accounts');views.plan()}catch(e){$('#msg').textContent=e.message}}
-async function delAcc(c){if(confirm('Видалити рахунок '+c+'?'))try{await api('accounts/'+c,{method:'DELETE'});accounts=await api('accounts');views.plan()}catch(e){alert(e.message)}}
+function planSearch(q){
+  PLAN_SEARCH_QUERY=String(q||'');const s=PLAN_SEARCH_QUERY.trim().toLocaleLowerCase('uk');let n=0;
+  document.querySelectorAll('.plan-row').forEach(r=>{const matched=!s||r.dataset.search.includes(s);r.hidden=!matched;if(matched)n++});
+  const counter=$('#plan_result_count');if(counter)counter.textContent=`Знайдено: ${n} із ${accounts.length}`;
+}
+function planClearSearch(){PLAN_SEARCH_QUERY='';const input=$('#plan_find');if(input){input.value='';input.focus()}planSearch('')}
+async function createPlanAccount(){
+  const code=$('#plan_new_code')?.value.trim()||'',name=$('#plan_new_name')?.value.trim()||'',msg=$('#plan_new_error');
+  if(!/^\d{1,4}$/.test(code)||!name){msg.textContent='Вкажіть цифровий код (1–4 цифри) та назву рахунку.';return}
+  if(accounts.some(x=>x.code===code)){msg.textContent='Такий рахунок уже існує. Відкрийте його картку для редагування.';return}
+  const button=document.querySelector('.plan-add-actions button');if(button)button.disabled=true;
+  try{
+    await api('accounts',{method:'POST',body:{code,name,kind:$('#plan_new_kind').value,analytic_enabled:null,analytic_dimensions:'',quantity_enabled:null,quantity_policy:''}});
+    accounts=await api('accounts');await views.plan();openPlanAccount(code);if(typeof toast==='function')toast('Рахунок створено','ok');
+  }catch(e){msg.textContent=e.message;if(button)button.disabled=false}
+}
+function openPlanAccount(code){
+  const a=accounts.find(x=>x.code===code);if(!a)return;
+  const T=me.role==='superadmin',local=Boolean(company&&(T||currentRights.manager));
+  const slots=planAccountSlots(code);const host=$('#plan_dialog_host');if(!host)return;
+  host.innerHTML=`<dialog class="plan-account-dialog" id="plan_account_dialog" aria-labelledby="plan_dialog_title"><div class="plan-dialog-head"><div><span class="plan-overline">КАРТКА РАХУНКУ</span><h2 id="plan_dialog_title">${esc(a.code)} · ${esc(a.name)}</h2></div><button type="button" class="btn plan-dialog-close" onclick="closePlanAccount()" aria-label="Закрити">✕</button></div>
+    <div class="plan-dialog-content"><section class="plan-detail-section"><div class="plan-detail-heading"><h3>Властивості рахунку</h3><span class="plan-scope-badge">Для всіх підприємств</span></div><div class="plan-fields-grid"><label>Код<input id="plan_edit_code" value="${esc(a.code)}" readonly aria-readonly="true" title="Код наявного рахунку не змінюється"></label><label>Назва<input id="plan_edit_name" value="${esc(a.name)}" maxlength="240" ${T?'':'readonly'}></label><label>Тип<select id="plan_edit_kind" ${T?'':'disabled'}>${OPT(Object.entries(PLAN_ACCOUNT_KINDS),a.kind)}</select></label><label>Аналітичний облік${planPropertySelect('plan_edit_analytic',a.analytic_enabled)}</label><label>Кількісний облік${planPropertySelect('plan_edit_quantity',a.quantity_enabled)}</label></div>
+    <div class="plan-fields-grid plan-wide-fields"><label>Розрізи аналітичного обліку<input id="plan_edit_dimensions" value="${esc(a.analytic_dimensions||'')}" ${T?'':'readonly'}></label><label>Правило кількісного обліку<input id="plan_edit_policy" value="${esc(a.quantity_policy||'')}" ${T?'':'readonly'}></label></div>
+    ${T?'<p class="plan-note">Зміна назви, типу й загальних ознак рахунку вплине на всі підприємства. Код існуючого рахунку збережено, щоб не порушити посилання у проводках.</p>':'<p class="plan-note">Загальні властивості доступні для редагування лише суперадміністратору.</p>'}</section>
+    <section class="plan-detail-section"><div class="plan-detail-heading"><h3>Субконто (до трьох)</h3><span class="plan-scope-badge local">${company?esc(company.name):'Підприємство не вибране'}</span></div>
+    ${company?`${planSlotFields('plan_modal_',slots,!local)}<p class="plan-note">Субконто змінюються лише для цього підприємства. Заповнюйте розрізи послідовно; існуючі проведення не перераховуються.</p>`:'<p class="plan-note">Для налаштування субконто спершу виберіть підприємство.</p>'}</section></div>
+    <div class="plan-dialog-footer"><span id="plan_modal_error" class="err" role="alert"></span><div class="plan-dialog-actions">${T?`<button type="button" class="btn plan-delete-btn" onclick="deletePlanAccount('${a.code}')">Видалити</button>`:''}<button type="button" class="btn" onclick="closePlanAccount()">Закрити</button>${(T||local)?'<button type="button" class="btn pri" id="plan_modal_save" onclick="savePlanAccount()">Зберегти зміни</button>':''}</div></div></dialog>`;
+  if(!T){['plan_edit_analytic','plan_edit_quantity'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=true})}
+  host.querySelector('dialog').showModal();
+}
+function closePlanAccount(){document.getElementById('plan_account_dialog')?.close()}
+async function savePlanAccount(){
+  const code=$('#plan_edit_code')?.value,a=accounts.find(x=>x.code===code);if(!a)return;
+  const T=me.role==='superadmin',local=Boolean(company&&(T||currentRights.manager));const msg=$('#plan_modal_error'),btn=$('#plan_modal_save');
+  const next={code,name:$('#plan_edit_name').value.trim(),kind:$('#plan_edit_kind').value,analytic_enabled:planReadTri($('#plan_edit_analytic').value),analytic_dimensions:$('#plan_edit_dimensions').value.trim(),quantity_enabled:planReadTri($('#plan_edit_quantity').value),quantity_policy:$('#plan_edit_policy').value.trim()};
+  const changedGlobal=T&&['name','kind','analytic_enabled','analytic_dimensions','quantity_enabled','quantity_policy'].some(k=>(a[k]??'')!==(next[k]??''));
+  const oldSlots=planAccountSlots(code),nextSlots=local?planReadSlots('plan_modal_'):oldSlots;
+  const changedLocal=local&&JSON.stringify(nextSlots)!==JSON.stringify(oldSlots);
+  if(!changedGlobal&&!changedLocal){msg.textContent='Змін немає.';return}
+  if(changedGlobal&&!next.name){msg.textContent='Назва рахунку не може бути порожньою.';return}
+  if(changedLocal&&new Set(nextSlots.map(s=>s.kind)).size!==nextSlots.length){msg.textContent='Типи субконто не повинні повторюватися.';return}
+  if(changedGlobal&&!confirm('Змінити загальні властивості рахунку '+code+' для всіх підприємств?'))return;
+  btn.disabled=true;msg.textContent='';let globalSaved=false;
+  try{
+    if(changedGlobal){await api('accounts',{method:'POST',body:next});globalSaved=true}
+    if(changedLocal)await api('account-subconto',{method:'POST',body:{company_id:company.id,account_code:code,slots:nextSlots}});
+    if(changedGlobal)accounts=await api('accounts');
+    const savedSearch=PLAN_SEARCH_QUERY;await views.plan();PLAN_SEARCH_QUERY=savedSearch;
+    if(typeof toast==='function')toast('Зміни рахунку '+code+' збережено','ok');
+  }catch(e){
+    msg.textContent=(globalSaved?'Загальні властивості збережено, але зміни субконто не вдалося зберегти. ':'')+e.message;
+    if(globalSaved)accounts=await api('accounts').catch(()=>accounts);
+    btn.disabled=false;
+  }
+}
+async function deletePlanAccount(code){
+  if(!confirm('Видалити рахунок '+code+'? Рахунки, використані в проводках, видалити не можна.'))return;
+  const msg=$('#plan_modal_error');try{await api('accounts/'+code,{method:'DELETE'});accounts=await api('accounts');await views.plan();if(typeof toast==='function')toast('Рахунок видалено','ok')}catch(e){msg.textContent=e.message}
+}
 // ---------- документи: каса, банк, склад ----------
 const COST={'702':['902','281'],'701':['901','26'],'703':['903','23']};
 const DOCS={
