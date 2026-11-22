@@ -1,6 +1,8 @@
-import { POSTING_KEYS, REPORT_KEYS, validatePosting, validateReport, applyPosting, evaluateReport } from './rule-engine.js';
+import { POSTING_KEYS, REPORT_KEYS, validatePosting, validateReport, applyPosting, calculateAddedPostings, evaluateReport } from './rule-engine.js';
+import { cleanSlots,valuesForSlots } from './subconto.js';
 import { REPORT_CODES } from './report-codes.js';
 import { REPORT_DEFAULTS } from './report-defaults.js';
+import { kyivToday, activationScheduleError, verifySuperadminPassword } from './rulebook-activation-policy.js';
 import { neon } from '@neondatabase/serverless';
 import { createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
 
@@ -115,7 +117,8 @@ async function assertTypicalAccounts(lines,family='balanced') {
 // Правильна проводка, яку вводять у тому ж вікні одразу після сторно (необов'язкова).
 function cleanCorrect(rows) {
   const L = (Array.isArray(rows) ? rows : []).filter((l) => l && (String(l.debit_acc || '').trim() || String(l.credit_acc || '').trim() || Number(l.amount) > 0))
-    .map((l) => ({ debit_acc: String(l.debit_acc || '').trim(), credit_acc: String(l.credit_acc || '').trim(), amount: r2(Number(l.amount)) }));
+    .map((l) => ({ debit_acc: String(l.debit_acc || '').trim(), credit_acc: String(l.credit_acc || '').trim(), amount: r2(Number(l.amount)),
+      debit_subconto:Array.isArray(l.debit_subconto)?l.debit_subconto:[],credit_subconto:Array.isArray(l.credit_subconto)?l.credit_subconto:[] }));
   if (!L.length) return [];
   if (!validLines(L)) throw bad('Правильна проводка: вкажіть різні Дт і Кт та суму більше нуля (до 2 знаків)');
   return L;
@@ -165,33 +168,85 @@ async function activeRule(scope, key, at) {
     ORDER BY effective_from DESC,id DESC LIMIT 1`;
   return rows[0] || null;
 }
-async function mapEntries(source, at, lines) {
-  const rule=await activeRule('posting',source,at);
-  const result=rule?applyPosting(rule.config,lines):lines;
-  // Персональний зміст зберігається у версії правила та застосовується лише
-  // до нових проведень відповідної кореспонденції.
+// Explicit analytic dimensions. Values are snapshotted on each entry, never looked up from current settings in reports.
+async function companySubcontoSettings(cid,codes){
+  if(!cid)return new Map();
+  const unique=[...new Set(codes.map(String))];
+  if(!unique.length)return new Map();
+  const rows=await sql`SELECT account_code,slots FROM account_subconto_settings WHERE company_id=${cid} AND account_code=ANY(${unique}::text[])`;
+  return new Map(rows.map(x=>[x.account_code,cleanSlots(x.slots)]));
+}
+async function fillSubcontoForLines(cid,lines,context={}){
+  const codes=lines.flatMap(l=>Array.isArray(l)?l.slice(0,2):[l.debit_acc,l.credit_acc]);
+  const defs=await companySubcontoSettings(cid,codes);
+  return lines.map(l=>{
+    const isArray=Array.isArray(l),d=isArray?l[0]:l.debit_acc,k=isArray?l[1]:l.credit_acc;
+    const perLine=isArray?(l[3]||{}):(l.subconto_context||{});
+    const ctx={...context,...perLine};
+    return {debit_subconto:valuesForSlots(defs.get(d)||[],isArray?(l[3]?.debit_subconto||[]):(l.debit_subconto||[]),ctx),
+      credit_subconto:valuesForSlots(defs.get(k)||[],isArray?(l[3]?.credit_subconto||[]):(l.credit_subconto||[]),ctx)};
+  });
+}
+// Local company versions always take priority over legacy global mappings.
+// Dates are Ukrainian operating dates; a new local version applies to documents dated
+// from the specified day and never mutates existing entries.
+async function localCompanyPostings(cid,source,at){
+  if(!cid)return [];
+  return await sql`SELECT DISTINCT ON (from_debit,from_credit)
+    id,from_debit,from_credit,to_debit,to_credit,description,effective_from
+    FROM company_posting_versions
+    WHERE company_id=${cid} AND source=${source} AND effective_from<=${at}::date
+    ORDER BY from_debit,from_credit,effective_from DESC,id DESC`;
+}
+async function mapEntries(source, at, lines, cid=null, context={}) {
+  const [rule,local]=await Promise.all([activeRule('posting',source,at),localCompanyPostings(cid,source,at)]);
+  const localBy=new Map(local.map(m=>[m.from_debit+'|'+m.from_credit,m]));
+  const overrides=cid?await sql`SELECT from_debit,from_credit,to_debit,to_credit,description FROM company_posting_baseline
+    WHERE company_id=${cid} AND source=${source}`:[];
+  const globalBy=new Map((rule?.config?.mappings||[]).map(m=>[m.from_debit+'|'+m.from_credit,m]));
+  const baseBy=new Map(overrides.map(m=>[m.from_debit+'|'+m.from_credit,m]));
+  const localVersionIds=[];
+  const original=lines.map(l=>{
+    const row=Array.isArray(l)?l:{...l};
+    const d=Array.isArray(row)?row[0]:row.debit_acc,k=Array.isArray(row)?row[1]:row.credit_acc;
+    const key=d+'|'+k,m=localBy.get(key)||globalBy.get(key)||baseBy.get(key);
+    localVersionIds.push(localBy.get(key)?.id||null);
+    return m?applyPosting({mappings:[m]},[row])[0]:(Array.isArray(row)?[...row]:{...row});
+  });
   const descriptions=lines.map(l=>{
     const d=Array.isArray(l)?l[0]:l.debit_acc,k=Array.isArray(l)?l[1]:l.credit_acc;
-    return rule?.config?.mappings?.find(m=>m.from_debit===d&&m.from_credit===k)?.description||null;
+    return (localBy.get(d+'|'+k)||globalBy.get(d+'|'+k)||baseBy.get(d+'|'+k))?.description||null;
   });
+  let result=original;
+  if(rule?.config?.additions?.length){
+    if(['doc:inv','doc:ost','doc:mv'].includes(source))throw bad('У цьому документі заборонено додаткові подвійні проводки');
+    const net=Number(context.net??0),total=Number(context.total??0),vat=Number(context.vat??0),cost=Number(context.cost??0);
+    const lines_total=lines.reduce((n,l)=>n+Number(Array.isArray(l)?l[2]:l.amount),0);
+    const extra=calculateAddedPostings(rule.config,{net,total,vat,cost,lines_total});
+    if(lines.length+extra.length>100)throw bad('Забагато рядків у документі після застосування правила');
+    result=[...original,...extra.map(x=>Array.isArray(lines[0])?[x.debit_acc,x.credit_acc,x.amount,{...context,
+      debit_subconto:x.debit_subconto,credit_subconto:x.credit_subconto}]:x)];
+    descriptions.push(...extra.map(x=>x.description));
+    localVersionIds.push(...extra.map(()=>null));
+  }
   if(rule){
-    // Protect the stock subledger even if an earlier version of the rule was published before this restriction.
     if(/^doc:(rcpt|prod|sale|wo|ost|mv)$/.test(source)&&rule.config.mappings.some(m=>
        [['from_debit','to_debit'],['from_credit','to_credit']].some(([f,t])=>m[f]!==m[t]&&[/^2\d{1,2}$/.test(m[f]),/^2\d{1,2}$/.test(m[t])].some(Boolean))))
        throw bad('Опубліковане правило змінює рахунок запасів та може порушити складський облік. Проведення заблоковане.');
-    const codes=[...new Set(result.flatMap(l=>Array.isArray(l)?l.slice(0,2):[l.debit_acc,l.credit_acc]))];
-    const present=await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
-    const byCode=new Map(present.map(x=>[x.code,x.kind]));
-    if(codes.some(x=>!byCode.has(x)))throw bad('Активне правило бухгалтерської логіки містить відсутній у плані рахунків рахунок');
-    if(result.some(l=>{const [d,k]=Array.isArray(l)?l:[l.debit_acc,l.credit_acc];return d===k || (byCode.get(d)==='O') !== (byCode.get(k)==='O')}))
-      throw bad('Активне правило створює некоректну пару рахунків (однакові або змішані балансові/позабалансові)');
   }
-  return {lines:result,id:rule?.id||null,descriptions};
+  const codes=[...new Set(result.flatMap(l=>Array.isArray(l)?l.slice(0,2):[l.debit_acc,l.credit_acc]))];
+  const present=await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
+  const byCode=new Map(present.map(x=>[x.code,x.kind]));
+  if(codes.some(x=>!byCode.has(x)))throw bad('Правило бухгалтерської логіки містить відсутній у плані рахунків рахунок');
+  if(result.some(l=>{const [d,k]=Array.isArray(l)?l:[l.debit_acc,l.credit_acc];return d===k || byCode.get(d)==='O'||byCode.get(k)==='O';}))
+    throw bad('Правило створює некоректну пару балансових рахунків');
+  return {lines:result,id:rule?.id||null,descriptions,localVersionIds};
 }
+
 const entIns = (c, B, date, partner, docId, cid) => B.ent
   .map(([d,k,am],i)=>({d,k,am,i})).filter(({d,k,am})=>am>0&&d!==k).map(({d,k,am,i})=>
-  sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,doc_id,corr_id,posting_rule_version_id)
-    VALUES (${c.id},${date},${B.number},${B.rule_descriptions?.[i]||B.desc},${partner || ''},${d},${k},${am},${docId},${cid},${B.rule_version_id||null})`);
+  sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,doc_id,corr_id,posting_rule_version_id,company_posting_version_id,debit_subconto,credit_subconto)
+    VALUES (${c.id},${date},${B.number},${B.rule_descriptions?.[i]||B.desc},${partner || ''},${d},${k},${am},${docId},${cid},${B.rule_version_id||null},${B.rule_local_version_ids?.[i]||null},${JSON.stringify(B.subcontos?.[i]?.debit_subconto||[])}::jsonb,${JSON.stringify(B.subcontos?.[i]?.credit_subconto||[])}::jsonb)`);
 const inventoryClaim=(c)=>sql`WITH claimed AS (UPDATE companies SET inventory_revision=inventory_revision+1
   WHERE id=${c.id} AND inventory_revision=${Number(c.inventory_revision)||0} RETURNING id)
   SELECT 1/(SELECT count(*)::int FROM claimed) AS ok`;
@@ -292,20 +347,20 @@ async function buildDoc(c, body, excl) {
     const p={pko:['301',corr],vko:[corr,'301'],bin:['311',corr],bout:[corr,'311']}[type];ent.push([...p,total]);
   }else if(type==='rcpt'){
     for(const l of lines){const x=profiles.get(l.item_id).type_data;
-      ent.push([x.stock_acc,'631',l.sum]);l.lot_key=randomUUID();mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
+      l.lot_key=randomUUID();ent.push([x.stock_acc,'631',l.sum,{item:l.name,warehouse:wh,item_id:l.item_id,lot:l.lot_key}]);mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
     if(V)ent.push(['644','631',V]);
   }else if(type==='prod'){
-    total=S;for(const l of lines){l.lot_key=randomUUID();ent.push(['26','23',l.sum]);mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
+    total=S;for(const l of lines){l.lot_key=randomUUID();ent.push(['26','23',l.sum,{item:l.name,warehouse:wh,item_id:l.item_id,lot:l.lot_key}]);mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
   }else if(type==='ost'){
     total=S;for(const l of lines){l.lot_key=randomUUID();mv.push({w:W,i:l.item_id,q:l.qty,a:l.sum,lot_key:l.lot_key});}
   }else if(type==='sale'){
     for(const [n,l] of lines.entries()){const x=profiles.get(l.item_id).type_data;
       C+=await out(l,W);mv.push({w:W,i:l.item_id,q:-l.qty,a:-l.cost,lot_key:method==='spec'?l.lot_key:null});
-      const vat=lineVat[n];ent.push(['361',x.revenue_acc,r2(l.sum+vat)]);
-      if(vat)ent.push([x.revenue_acc,'641',vat]);ent.push([x.cost_acc,x.stock_acc,l.cost]);}
+      const vat=lineVat[n];ent.push(['361',x.revenue_acc,r2(l.sum+vat),{item:l.name,warehouse:wh,item_id:l.item_id,lot:l.lot_key}]);
+      if(vat)ent.push([x.revenue_acc,'641',vat]);ent.push([x.cost_acc,x.stock_acc,l.cost,{item:l.name,warehouse:wh,item_id:l.item_id,lot:l.lot_key}]);}
   }else if(type==='wo'){
     for(const l of lines){const x=profiles.get(l.item_id).type_data;
-      C+=await out(l,W);mv.push({w:W,i:l.item_id,q:-l.qty,a:-l.cost,lot_key:method==='spec'?l.lot_key:null});ent.push([corr||'947',x.stock_acc,l.cost]);}
+      C+=await out(l,W);mv.push({w:W,i:l.item_id,q:-l.qty,a:-l.cost,lot_key:method==='spec'?l.lot_key:null});ent.push([corr||'947',x.stock_acc,l.cost,{item:l.name,warehouse:wh,item_id:l.item_id,lot:l.lot_key}]);}
     total=r2(C);
     // П. 198.5 ПКУ: якщо ПДВ при придбанні ТМЦ потрапив до податкового кредиту, при списанні нараховуються компенсуючі
     // податкові зобов'язання за основною ставкою від вартості придбання (собівартості). Одна зведена податкова накладна на документ.
@@ -320,14 +375,14 @@ async function buildDoc(c, body, excl) {
     }
     total=r2(C);
   }else if(type==='act'){
-    for(const [n,l] of lines.entries()){const x=profiles.get(l.item_id)?.type_data;const rate=lineVat[n];ent.push(['361',x.revenue_acc,r2(l.sum+rate)]);if(rate)ent.push([x.revenue_acc,'641',rate]);}
+    for(const [n,l] of lines.entries()){const x=profiles.get(l.item_id)?.type_data;const rate=lineVat[n];ent.push(['361',x.revenue_acc,r2(l.sum+rate),{item:l.name,item_id:l.item_id}]);if(rate)ent.push([x.revenue_acc,'641',rate]);}
   }
   if(ent.some(([d,k])=>d===k))throw bad('Дебет і кредит проводки збігаються — оберіть іншу кореспонденцію');
   const number=String(body.number||'').trim()||type.toUpperCase()+'-'+Date.now();
   const desc=`${number}${body.partner?' · '+body.partner:''}${body.basis?' · '+body.basis:''}`;
-  const data={lines,sum:S,vat:V,vat_comp:vatComp,rate:r*100,total,wh,wh2,corr,basis:body.basis||'',wh_id:W||null,wh2_id:W2||null,stock:body.stock||null,
+  const data={lines,sum:cash?total:S,vat:V,vat_comp:vatComp,rate:r*100,total,wh,wh2,corr,basis:body.basis||'',wh_id:W||null,wh2_id:W2||null,stock:body.stock||null,
     inventory_method:method,inventory_scope:scope};
-  return {type,number,desc,data,ent,mv};
+  return {type,number,desc,data:{...data,cost:C},ent,mv};
 }
 
 export default async (req) => {
@@ -460,6 +515,76 @@ export default async (req) => {
       }
       return fail('Метод не підтримується',405);
     }
+    // Single editor for the CURRENT enterprise's document posting rows.
+    // Publishing inserts an immutable version; the selected company's rows use it from tomorrow.
+    if(res==='company-posting-versions'){
+      const dbRole=(await sql`SELECT role FROM users WHERE id=${me.id}`)[0]?.role;
+      if(dbRole!=='superadmin')return fail('Лише суперадміністратор може змінювати проводки',403);
+      const cid=Number(M==='POST'?body.company_id:q.get('company_id'));
+      if(!Number.isSafeInteger(cid)||cid<=0)return fail('Оберіть поточне підприємство');
+      const c=(await sql`SELECT id,name FROM companies WHERE id=${cid}`)[0];
+      if(!c)return fail('Підприємство не знайдено',404);
+      if(M==='GET'){
+        const source=String(q.get('source')||'');
+        const dt=String(q.get('from_debit')||''),kt=String(q.get('from_credit')||'');
+        if(source && !POSTING_KEYS.includes(source))return fail('Невідомий документ');
+        if((dt||kt)&&(!source||!/^\d{1,4}$/.test(dt)||!/^\d{1,4}$/.test(kt)))return fail('Вкажіть початкову пару Дт/Кт');
+        return json(await sql`SELECT v.id,v.company_id,v.source,v.from_debit,v.from_credit,v.to_debit,v.to_credit,
+          v.description,v.reason,to_char(v.effective_from,'YYYY-MM-DD') AS effective_from,v.created_at,u.name AS author
+          FROM company_posting_versions v JOIN users u ON u.id=v.created_by
+          WHERE v.company_id=${cid} AND (${source}='' OR v.source=${source})
+            AND (${dt}='' OR (v.from_debit=${dt} AND v.from_credit=${kt}))
+          ORDER BY v.effective_from DESC,v.id DESC LIMIT 2000`);
+      }
+      if(M!=='POST')return fail('Метод не підтримується',405);
+      const source=String(body.source||''),m={
+        from_debit:String(body.from_debit||'').trim(),from_credit:String(body.from_credit||'').trim(),
+        to_debit:String(body.to_debit||'').trim(),to_credit:String(body.to_credit||'').trim(),
+        description:String(body.description||'').trim()
+      };
+      if(!POSTING_KEYS.includes(source))return fail('Невідомий документ або тип проводки');
+      try{validatePosting({mappings:[m]});}catch(e){return fail(e.message)}
+      if(m.description.length<3||m.description.length>500)return fail('Вкажіть суть операції (3–500 символів)');
+      const reason=String(body.reason||'').trim();
+      if(reason.length<8||reason.length>500)return fail('Вкажіть причину зміни (8–500 символів)');
+      const start=String(body.effective_from||'');
+      const now=kyivToday(),next=new Date(now+'T12:00:00Z');next.setUTCDate(next.getUTCDate()+1);
+      const tomorrow=next.toISOString().slice(0,10);
+      if(start!==tomorrow)return fail('У локальному редакторі активація дозволена з наступного дня: '+tomorrow,409);
+      if([m.from_debit,m.from_credit,m.to_debit,m.to_credit].some(x=>['641','643','644'].includes(x)) &&
+        (m.from_debit!==m.to_debit||m.from_credit!==m.to_credit))
+        return fail('Переназначення рахунків ПДВ потребує зміни податкового алгоритму.',409);
+      // Balance- and stock-sensitive stock accounts require an inventory-specific transaction.
+      // Account 23 (production cost) is not blocked merely because it starts with 2.
+      const stockSensitive=code=>/^2[01245678]\d{0,2}$/.test(code);
+      if([['from_debit','to_debit'],['from_credit','to_credit']].some(([f,t])=>
+        m[f]!==m[t] && (stockSensitive(m[f])||stockSensitive(m[t]))))
+        return fail('Зміна рахунку запасів має виконуватися через складську логіку, щоб не порушити FIFO.',409);
+      const codes=[...new Set([m.from_debit,m.from_credit,m.to_debit,m.to_credit])];
+      const known=await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
+      if(known.length!==codes.length||known.some(x=>x.kind==='O'))return fail('У проводці дозволено лише наявні балансові рахунки');
+      // Retry-safe save: do not create duplicate history for an identical repeated request.
+      const previous=(await sql`SELECT id,to_debit,to_credit,description,reason FROM company_posting_versions
+        WHERE company_id=${cid} AND source=${source} AND from_debit=${m.from_debit} AND from_credit=${m.from_credit}
+          AND effective_from=${tomorrow}::date ORDER BY id DESC LIMIT 1`)[0];
+      if(previous && previous.to_debit===m.to_debit && previous.to_credit===m.to_credit &&
+        previous.description===m.description && previous.reason===reason)
+        return json({ok:true,id:previous.id,company_id:cid,company_name:c.name,effective_from:tomorrow,already_saved:true});
+      // Versions remain immutable. If edited again for the same tomorrow, the latest id wins.
+      // Atomic publication + immutable audit record: no orphaned versions if the audit write fails.
+      const inserted=(await sql`WITH published AS (
+          INSERT INTO company_posting_versions
+            (company_id,source,from_debit,from_credit,to_debit,to_credit,description,reason,effective_from,created_by)
+          VALUES (${cid},${source},${m.from_debit},${m.from_credit},${m.to_debit},${m.to_credit},${m.description},${reason},${tomorrow}::date,${me.id})
+          RETURNING id
+        ), audited AS (
+          INSERT INTO audit_log(company_id,user_id,user_name,action,object_type,object_id,old_data,new_data,reason)
+          SELECT ${cid},${me.id},${me.name},'company-posting-version','posting',published.id::text,NULL::jsonb,
+            ${JSON.stringify({source,...m,effective_from:tomorrow})}::jsonb,${reason} FROM published
+          RETURNING id
+        ) SELECT published.id FROM published CROSS JOIN audited`)[0];
+      return json({ok:true,id:inserted.id,company_id:cid,company_name:c.name,effective_from:tomorrow},201);
+    }
     // Service catalog: ONLY the actual persisted superadmin role can manage system rules.
     if (res === 'rulebook') {
       if (id === 'active' && M === 'GET') {
@@ -488,11 +613,16 @@ export default async (req) => {
           let cfg;
           try{cfg=scope==='posting'?validatePosting(body.config):validateReport(body.config,REPORT_CODES[key]);}
           catch(e){return fail(e.message)}
-          if(scope==='posting'&&cfg.mappings.length){
+          if(scope==='posting' && cfg.additions.length && ['doc:inv','doc:ost','doc:mv'].includes(key))
+            return fail('Цей документ не створює бухгалтерські проводки: рахунок-фактура, початкові складські залишки та переміщення обробляються спеціальними модулями.',409);
+          if(scope==='posting'&&(cfg.mappings.length||cfg.additions.length)){
+            if(cfg.mappings.some(m=>[m.from_debit,m.from_credit,m.to_debit,m.to_credit].some(x=>['641','643','644'].includes(x)) &&
+              (m.from_debit!==m.to_debit||m.from_credit!==m.to_credit)))
+              return fail('Податкові рахунки ПДВ не можна переназначати через загальні правила без зміни податкового алгоритму.',409);
             if(/^doc:(rcpt|prod|sale|wo|ost|mv)$/.test(key) && cfg.mappings.some(m=>
               [ ['from_debit','to_debit'],['from_credit','to_credit'] ].some(([f,t])=>m[f]!==m[t]&&[/^2\d{1,2}$/.test(m[f]),/^2\d{1,2}$/.test(m[t])].some(Boolean))))
               return fail('Не дозволено змінювати складський рахунок класу 2 через конструктор — це порушить звірку з партіями. Оберіть коректний вид номенклатури або виправте складський алгоритм.',409);
-            const codes=[...new Set(cfg.mappings.flatMap(x=>[x.from_debit,x.from_credit,x.to_debit,x.to_credit]))];
+            const codes=[...new Set([...cfg.mappings.flatMap(x=>[x.from_debit,x.from_credit,x.to_debit,x.to_credit]),...cfg.additions.flatMap(x=>[x.debit,x.credit])])];
             const acc=await sql`SELECT code FROM accounts WHERE code=ANY(${codes}::text[])`;
             if(acc.length!==codes.length)return fail('Деякі рахунки у правилах відсутні в плані рахунків');
           }
@@ -517,7 +647,7 @@ export default async (req) => {
           if(rule.scope==='posting'){
             const sample=Array.isArray(body.sample)&&body.sample.length ? body.sample : rule.config.mappings.map(m=>({debit_acc:m.from_debit,credit_acc:m.from_credit,amount:100}));
             if(sample.length>100||sample.some(l=>!/^\d{1,4}$/.test(l.debit_acc)||!/^\d{1,4}$/.test(l.credit_acc)||!Number.isFinite(Number(l.amount))||Number(l.amount)<=0))return fail('Невірний контрольний набір проводок');
-            result={before:sample,after:applyPosting(rule.config,sample)};
+            result={before:sample,after:[...applyPosting(rule.config,sample),...calculateAddedPostings(rule.config,{net:100,total:120,vat:20,cost:65,lines_total:sample.reduce((s,l)=>s+Number(l.amount),0)})]};
           }else{
             validateReport(rule.config,REPORT_CODES[rule.rule_key]);
             const cid=Number(body.company_id),date=String(body.date||'');
@@ -544,13 +674,28 @@ export default async (req) => {
         }
         if(rule.status!=='draft'||!rule.validated_at)return fail('Спочатку протестуй чернетку перед активацією',409);
         const eff=String(body.effective_from||'');if(!validISODate(eff))return fail('Вкажи дату початку дії');
-        const latest=(await sql`SELECT to_char(max(effective_from),'YYYY-MM-DD') AS last_day FROM accounting_rule_versions WHERE scope=${rule.scope} AND rule_key=${rule.rule_key} AND status='active'`)[0]?.last_day;
-        if(latest&&eff<=latest)return fail('Нова версія має діяти пізніше за попередню: '+latest,409);
+        const today=kyivToday(),sameDay=eff===today;
+        const existing=(await sql`SELECT to_char(effective_from,'YYYY-MM-DD') AS day
+          FROM accounting_rule_versions WHERE scope=${rule.scope} AND rule_key=${rule.rule_key} AND status='active'
+          ORDER BY effective_from DESC LIMIT 1`)[0]?.day;
+        const sameDate=(await sql`SELECT id FROM accounting_rule_versions WHERE scope=${rule.scope} AND rule_key=${rule.rule_key}
+          AND status='active' AND effective_from=${eff}::date LIMIT 1`).length>0;
+        const schedulingError=activationScheduleError(eff,today,existing,sameDate);
+        if(schedulingError)return fail(schedulingError,409);
+        // For same-day activation, check the CURRENT superadmin password on the server.
+        // A trusted session token is NOT sufficient for an exceptional immediate activation.
+        if(sameDay){
+          const password=typeof body.password==='string'?body.password:'';
+          if(!password||password.length>1024)return fail('Для активації сьогодні потрібен пароль суперадміністратора',403);
+          const auth=(await sql`SELECT salt,hash FROM users WHERE id=${me.id} AND role='superadmin'`)[0];
+          if(!auth)return fail('Підтвердження суперадміністратора недоступне',403);
+          if(!verifySuperadminPassword(password,auth))return fail('Невірний пароль суперадміністратора',403);
+        }
         const updated=(await sql`UPDATE accounting_rule_versions SET status='active',effective_from=${eff}::date,activated_by=${me.id},activated_at=now()
-          WHERE id=${rid} AND status='draft' AND validated_at IS NOT NULL AND ${eff}::date > CURRENT_DATE RETURNING id`)[0];
-        if(!updated)return fail('Опублікувати можна лише з наступного календарного дня. Перевір статус чернетки.',409);
-        await aud({id:null},'rule-activated',rule.scope,rid,null,{key:rule.rule_key,effective_from:eff},rule.note);
-        return json({ok:true,id:rid,effective_from:eff});
+          WHERE id=${rid} AND status='draft' AND validated_at IS NOT NULL AND ${eff}::date >= ${today}::date RETURNING id`)[0];
+        if(!updated)return fail('Чернетка вже активована або дата активації минула.',409);
+        await aud({id:null},'rule-activated',rule.scope,rid,null,{key:rule.rule_key,effective_from:eff,immediate:sameDay},rule.note);
+        return json({ok:true,id:rid,effective_from:eff,immediate:sameDay});
       }
       return fail('Невідомий маршрут конструктора',405);
     }
@@ -609,6 +754,78 @@ export default async (req) => {
       if (T || c.owner_id === me.id || (await sql`SELECT 1 FROM company_members WHERE company_id=${cid} AND user_id=${me.id} AND company_role='admin' LIMIT 1`).length > 0) return json({manager:true,permissions:Object.fromEntries(MODULES.map(k=>[k,{read:true,create:true,update:true,delete:true}]))});
       const m = (await sql`SELECT permissions FROM company_members WHERE company_id=${cid} AND user_id=${me.id}`)[0];
       return json({manager:false,permissions:m?.permissions||{}});
+    }
+    if(res==='account-subconto'){
+      const cid=Number(q.get('company_id')||body.company_id),c=await own(cid,M!=='GET','settings',M==='GET'?'read':'update');
+      if(!c)return fail('Немає доступу до підприємства',403);
+      if(M==='GET')return json(await sql`SELECT account_code,slots FROM account_subconto_settings WHERE company_id=${cid} ORDER BY account_code`);
+      if(M!=='POST')return fail('Метод не підтримується',405);
+      if(!T&&c.owner_id!==me.id&&!(await sql`SELECT 1 FROM company_members WHERE company_id=${cid} AND user_id=${me.id} AND company_role='admin'`).length)
+        return fail('Змінювати субконто може адміністратор підприємства',403);
+      const code=String(body.account_code||'');if(!/^\d{1,4}$/.test(code))return fail('Невірний рахунок');
+      if(!(await sql`SELECT 1 FROM accounts WHERE code=${code}`).length)return fail('Рахунок не існує',404);
+      let slots;try{slots=cleanSlots(body.slots||[])}catch(e){return fail(e.message)}
+      await sql.transaction([sql`INSERT INTO account_subconto_settings(company_id,account_code,slots,updated_by)
+        VALUES (${cid},${code},${JSON.stringify(slots)}::jsonb,${me.id}) ON CONFLICT(company_id,account_code)
+        DO UPDATE SET slots=EXCLUDED.slots,updated_by=EXCLUDED.updated_by,updated_at=now()`,
+        aud(c,'subconto-config','account',code,null,{slots},'Зміна аналітичних розрізів')]);
+      return json({ok:true});
+    }
+    if(res==='posting-baseline'){
+      if(!T)return fail('Доступ лише суперадміністратора',403);
+      const cid=Number(q.get('company_id')||body.company_id),c=await own(cid,M!=='GET','entries',M==='GET'?'read':'update');
+      if(!c)return fail('Підприємство не знайдено',404);
+      const locked=async()=> (await sql`SELECT
+       EXISTS(SELECT 1 FROM entries WHERE company_id=${cid}) OR
+       EXISTS(SELECT 1 FROM docs WHERE company_id=${cid}) OR
+       EXISTS(SELECT 1 FROM stock_moves WHERE company_id=${cid}) OR
+       EXISTS(SELECT 1 FROM payroll_calculations WHERE company_id=${cid} AND posted_at IS NOT NULL) AS locked`)[0].locked;
+      if(M==='GET')return json({locked:await locked(),rows:await sql`SELECT source,from_debit,from_credit,to_debit,to_credit,description FROM company_posting_baseline WHERE company_id=${cid}`});
+      if(M!=='POST')return fail('Метод не підтримується',405);
+      if(await locked())return fail('Підприємство вже має бухгалтерські документи. Застосуйте версійні правила, щоб не змінювати історію.',409);
+      const source=String(body.source||''),m={from_debit:String(body.from_debit||''),from_credit:String(body.from_credit||''),
+       to_debit:String(body.to_debit||''),to_credit:String(body.to_credit||''),description:String(body.description||'').trim()};
+      if(!POSTING_KEYS.includes(source))return fail('Невідома операція');
+      const b=validatePosting({mappings:[m]});
+      if(m.description.length<3)return fail('Вкажіть зміст господарської операції');
+      if([m.from_debit,m.from_credit,m.to_debit,m.to_credit].some(x=>['641','643','644'].includes(x)) &&
+        (m.from_debit!==m.to_debit||m.from_credit!==m.to_credit))
+        return fail('Кореспонденції ПДВ налаштовуються лише разом із податковим алгоритмом.',409);
+      if(/^doc:(rcpt|prod|sale|wo|ost|mv)$/.test(source) &&
+        [ ['from_debit','to_debit'],['from_credit','to_credit'] ].some(([f,t])=>m[f]!==m[t]&&[/^2\d{1,2}$/.test(m[f]),/^2\d{1,2}$/.test(m[t])].some(Boolean)))
+        return fail('Складські рахунки змінюють через вид номенклатури, щоб не порушити FIFO й залишки',409);
+      const codes=[...new Set([m.from_debit,m.from_credit,m.to_debit,m.to_credit])];
+      const known=await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
+      if(known.length!==codes.length||known.some(x=>x.kind==='O'))return fail('Рахунки мають бути балансовими та існувати у плані');
+      const global=await activeRule('posting',source,kyivToday());
+      if(global?.config?.mappings?.some(x=>x.from_debit===m.from_debit&&x.from_credit===m.from_credit))
+        return fail('Для цієї кореспонденції вже є опубліковане глобальне правило. Відредагуйте його через конструктор версій.',409);
+      const before=(await sql`SELECT * FROM company_posting_baseline WHERE company_id=${cid} AND source=${source} AND from_debit=${m.from_debit} AND from_credit=${m.from_credit}`)[0]||null;
+      try{await sql.transaction([sql`INSERT INTO company_posting_baseline(company_id,source,from_debit,from_credit,to_debit,to_credit,description,updated_by)
+        VALUES (${cid},${source},${m.from_debit},${m.from_credit},${m.to_debit},${m.to_credit},${m.description},${me.id})
+        ON CONFLICT(company_id,source,from_debit,from_credit)
+        DO UPDATE SET to_debit=EXCLUDED.to_debit,to_credit=EXCLUDED.to_credit,description=EXCLUDED.description,updated_by=EXCLUDED.updated_by,updated_at=now()`,
+        aud(c,'baseline-edit','posting',source+':'+m.from_debit+'/'+m.from_credit,before,m,'Початкове налаштування без проведень')]);}
+      catch(e){return fail(e.message,409)}
+      return json({ok:true});
+    }
+    if(res==='subconto-turnovers'){
+      const cid=Number(q.get('company_id')),c=await own(cid,false,'reports','read');if(!c)return fail('Немає доступу',403);
+      const code=String(q.get('account')||''),slot=Number(q.get('slot')||1)-1;
+      if(!/^\d{1,4}$/.test(code)||slot<0||slot>2||!Number.isInteger(slot))return fail('Оберіть рахунок і субконто');
+      const from=String(q.get('from')||'1900-01-01'),to=String(q.get('to')||'2999-12-31');
+      if(!validISODate(from)||!validISODate(to)||from>to)return fail('Невірний період');
+      const r=await sql`WITH moves AS (
+        SELECT COALESCE(debit_subconto->>${slot},'') AS val,date,amount AS d,0::numeric AS k FROM entries_a
+          WHERE company_id=${cid} AND debit_acc=${code}
+        UNION ALL
+        SELECT COALESCE(credit_subconto->>${slot},'') AS val,date,0::numeric AS d,amount AS k FROM entries_a
+          WHERE company_id=${cid} AND credit_acc=${code}
+      ) SELECT val,COALESCE(SUM(CASE WHEN date<${from}::date THEN d-k END),0) AS opening,
+        COALESCE(SUM(CASE WHEN date BETWEEN ${from}::date AND ${to}::date THEN d END),0) AS debit,
+        COALESCE(SUM(CASE WHEN date BETWEEN ${from}::date AND ${to}::date THEN k END),0) AS credit
+        FROM moves WHERE date<=${to}::date GROUP BY val ORDER BY val`;
+      return json(r.map(x=>({value:x.val||'Не заповнено',opening:Number(x.opening),debit:Number(x.debit),credit:Number(x.credit),closing:Number(x.opening)+Number(x.debit)-Number(x.credit)})));
     }
     if (res === 'accounts') {
       if (M === 'POST') {
@@ -695,15 +912,17 @@ export default async (req) => {
         {debit_acc:'661',credit_acc:'642',amount:Number(d.military),description:'Утримано військовий збір'},
         {debit_acc:debit,credit_acc:'651',amount:Number(d.esv),description:'Нараховано ЄСВ роботодавця'},
         ...(d.extras||[]).map(x=>({debit_acc:'661',credit_acc:'685',amount:Number(x.amount),description:'Інше утримання: '+String(x.name||'')}))].filter(x=>x.amount>0);
-      const mapped=await mapEntries('payroll:accrual',date,lines);
+      const mapped=await mapEntries('payroll:accrual',date,lines,cid,{staff:String(d.staff_name||''),counterparty:String(d.staff_name||''),total:Number(d.gross||0),net:Number(d.gross||0)});
       lines.splice(0,lines.length,...mapped.lines);
       if(!validLines(lines))return fail('Проводки не пройшли перевірку');
       const known=await sql`SELECT code FROM accounts WHERE code=ANY(${[...new Set(lines.flatMap(x=>[x.debit_acc,x.credit_acc]))]}::text[])`;
       if(known.length!==new Set(lines.flatMap(x=>[x.debit_acc,x.credit_acc])).size)return fail('У плані рахунків відсутні необхідні рахунки');
+      const salaryAnalytic=await fillSubcontoForLines(cid,lines,{staff:String(d.staff_name||''),counterparty:String(d.staff_name||'')});
+      lines.forEach((l,i)=>Object.assign(l,salaryAnalytic[i],{company_posting_version_id:mapped.localVersionIds?.[i]||null}));
       const result=(await sql`WITH claim AS (UPDATE payroll_calculations SET posted_at=now() WHERE id=${pid} AND company_id=${cid} AND posted_at IS NULL RETURNING id),
-        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id)
-        SELECT ${cid},${date}::date,${'ЗП-'+row.year+'-'+String(row.month).padStart(2,'0')+'-'+pid},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount,${mapped.id}
-        FROM claim CROSS JOIN jsonb_to_recordset(${JSON.stringify(lines)}::jsonb) AS l(debit_acc text,credit_acc text,amount numeric,description text) RETURNING id)
+        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id,company_posting_version_id,debit_subconto,credit_subconto)
+        SELECT ${cid},${date}::date,${'ЗП-'+row.year+'-'+String(row.month).padStart(2,'0')+'-'+pid},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount,${mapped.id},l.company_posting_version_id,COALESCE(l.debit_subconto,'[]'::jsonb),COALESCE(l.credit_subconto,'[]'::jsonb)
+        FROM claim CROSS JOIN jsonb_to_recordset(${JSON.stringify(lines)}::jsonb) AS l(debit_acc text,credit_acc text,amount numeric,description text,debit_subconto jsonb,credit_subconto jsonb,company_posting_version_id bigint) RETURNING id)
         SELECT (SELECT count(*) FROM claim)::int AS updated,(SELECT count(*) FROM inserted)::int AS entries`)[0];
       if(!result?.updated)return fail('Розрахунок уже проведено. Повторна проводка заблокована',409);
       await aud(c,'payroll-post','payroll',pid,null,{date,lines},'Проведення зарплати');return json({ok:true,...result});
@@ -726,7 +945,9 @@ export default async (req) => {
       const act=String(body.action||'prepare');
       if(!total)return fail('Нульова сума платежу — інструкція не потрібна');
       if(act==='prepare'){
-        const paymentMapped=await mapEntries('payroll:payment:'+kind,date,positive);
+        const paymentMapped=await mapEntries('payroll:payment:'+kind,date,positive,cid,{staff:String(d.staff_name||''),counterparty:String(d.staff_name||''),total,net:total});
+        const payAnalytic=await fillSubcontoForLines(cid,paymentMapped.lines,{staff:String(d.staff_name||''),counterparty:String(d.staff_name||'')});
+        paymentMapped.lines.forEach((l,i)=>Object.assign(l,payAnalytic[i],{company_posting_version_id:paymentMapped.localVersionIds?.[i]||null}));
         const saved=(await sql`INSERT INTO payroll_payment_instructions(company_id,payroll_id,kind,date,amount,lines,created_by,posting_rule_version_id)
           VALUES (${cid},${pid},${kind},${date},${total},${JSON.stringify(paymentMapped.lines)}::jsonb,${me.id},${paymentMapped.id})
           ON CONFLICT(payroll_id,kind) DO UPDATE SET date=EXCLUDED.date,amount=EXCLUDED.amount,lines=EXCLUDED.lines,posting_rule_version_id=EXCLUDED.posting_rule_version_id
@@ -739,9 +960,9 @@ export default async (req) => {
       if(!payment)return fail('Спочатку сформуйте платіжну інструкцію',409);
       if(payment.status==='confirmed')return fail('Цей платіж уже відображено в обліку',409);
       const posted=(await sql`WITH claim AS (UPDATE payroll_payment_instructions SET status='confirmed',confirmed_at=now(),date=${date}::date WHERE id=${payment.id} AND status='prepared' RETURNING id,lines,posting_rule_version_id),
-        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id)
-          SELECT ${cid},${date}::date,${'ПІ-'+payment.id},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount,claim.posting_rule_version_id
-          FROM claim CROSS JOIN LATERAL jsonb_to_recordset(claim.lines) AS l(debit_acc text,credit_acc text,amount numeric,description text) RETURNING id)
+        inserted AS (INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id,company_posting_version_id,debit_subconto,credit_subconto)
+          SELECT ${cid},${date}::date,${'ПІ-'+payment.id},l.description,${String(d.staff_name||'')},l.debit_acc,l.credit_acc,l.amount,claim.posting_rule_version_id,l.company_posting_version_id,COALESCE(l.debit_subconto,'[]'::jsonb),COALESCE(l.credit_subconto,'[]'::jsonb)
+          FROM claim CROSS JOIN LATERAL jsonb_to_recordset(claim.lines) AS l(debit_acc text,credit_acc text,amount numeric,description text,debit_subconto jsonb,credit_subconto jsonb,company_posting_version_id bigint) RETURNING id)
           SELECT (SELECT count(*) FROM claim)::int AS confirmed,(SELECT count(*) FROM inserted)::int AS entries`)[0];
       if(!posted?.confirmed)return fail('Платіж уже проведено',409);
       await aud(c,'payroll-payment','payroll',pid,null,{kind,date,payment_id:payment.id},'Підтверджено виконання за банківською випискою');
@@ -899,8 +1120,9 @@ export default async (req) => {
         let lines = body.lines || [{ debit_acc: body.debit_acc, credit_acc: body.credit_acc, amount: body.amount }];
         const financialClose=body.doc==='Закриття фінансових результатів';
         if(financialClose&&!validISODate(body.date))return fail('Некоректна дата закриття');
-        const closingRule=financialClose?await mapEntries('financial:close',body.date,lines):{lines,id:null};
+        const closingRule=financialClose?await mapEntries('financial:close',body.date,lines,c.id,{total:lines.reduce((s,l)=>s+Number(l.amount),0)}):{lines,id:null};
         lines=closingRule.lines;
+        lines.forEach((l,i)=>{if(closingRule.localVersionIds?.[i])l.company_posting_version_id=closingRule.localVersionIds[i]});
         if (!validISODate(body.date) || !validLines(lines)) return fail('Перевірте дату (РРРР-ММ-ДД), Дт/Кт та суми: додатні числа з точністю до 2 знаків');
         const codes=[...new Set(lines.flatMap(l=>[l.debit_acc,l.credit_acc]))];
         const known=await sql`SELECT code,kind FROM accounts WHERE code = ANY(${codes}::text[])`;
@@ -908,9 +1130,10 @@ export default async (req) => {
         const kindByCode=new Map(known.map(a=>[a.code,a.kind]));
         if(lines.some(l=> (kindByCode.get(l.debit_acc)==='O') !== (kindByCode.get(l.credit_acc)==='O') && l.debit_acc!=='000' && l.credit_acc!=='000'))
           return fail('Не можна змішувати позабалансовий і балансовий рахунки в одній проводці');
+        const analytic=await fillSubcontoForLines(c.id,lines,{counterparty:String(body.partner||''),document:String(body.doc||'')});
         // усі проводки операції — в одній транзакції: або всі, або жодної
-        await sql.transaction(lines.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id)
-          VALUES (${c.id},${body.date},${body.doc || ''},${body.description || ''},${body.partner || ''},${l.debit_acc},${l.credit_acc},${Number(l.amount)},${closingRule.id})`));
+        await sql.transaction(lines.map((l,i) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,posting_rule_version_id,company_posting_version_id,debit_subconto,credit_subconto)
+          VALUES (${c.id},${body.date},${body.doc || ''},${l.description||body.description || ''},${body.partner || ''},${l.debit_acc},${l.credit_acc},${Number(l.amount)},${closingRule.id},${l.company_posting_version_id||null},${JSON.stringify(analytic[i].debit_subconto)}::jsonb,${JSON.stringify(analytic[i].credit_subconto)}::jsonb)`));
         return json({ ok: true }, 201);
       }
       const c = await access(Number(q.get('company_id')), M === 'DELETE' ? 'delete' : 'read');
@@ -919,9 +1142,9 @@ export default async (req) => {
       // Explicit page/limit is opt-in. Legacy reports continue to receive all rows.
       const pageSize = Math.min(1000,Math.max(1,Number(q.get('limit'))||1000));
       const offset = Math.max(0,Number(q.get('offset'))||0);
-      if (q.has('limit') || q.has('offset')) return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount
+      if (q.has('limit') || q.has('offset')) return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount, company_posting_version_id, debit_subconto, credit_subconto
         FROM entries_a WHERE company_id=${c.id} ORDER BY date DESC, id DESC LIMIT ${pageSize} OFFSET ${offset}`);
-      return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount
+      return json(await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, storno_of, add_of, corr_id, doc_id, debit_acc, credit_acc, amount, company_posting_version_id, debit_subconto, credit_subconto
         FROM entries_a WHERE company_id=${c.id} ORDER BY date DESC, id DESC`);
     }
 
@@ -978,8 +1201,9 @@ export default async (req) => {
         if (!c) return fail('Немає доступу', 403);
         lockCheck(c, body.date);
         const B = await buildDoc(c, body, null);
-        const mapped=await mapEntries('doc:'+B.type,body.date,B.ent);
-        B.ent=mapped.lines;B.rule_version_id=mapped.id;B.rule_descriptions=mapped.descriptions;
+        const mapped=await mapEntries('doc:'+B.type,body.date,B.ent,c.id,{counterparty:String(body.partner||''),document:B.number,warehouse:B.data.wh||'',net:B.data.sum,total:B.data.total,vat:B.data.vat,cost:B.data.cost});
+        B.ent=mapped.lines;B.rule_version_id=mapped.id;B.rule_descriptions=mapped.descriptions;B.rule_local_version_ids=mapped.localVersionIds;
+        B.subcontos=await fillSubcontoForLines(c.id,B.ent,{counterparty:String(body.partner||''),document:B.number,warehouse:B.data.wh||''});
         await assertPostable(B.ent.filter(([,,am])=>am>0));
         const docId = Number((await sql`SELECT nextval(pg_get_serial_sequence('docs','id')) AS id`)[0].id);
         await sql.transaction([
@@ -1070,7 +1294,7 @@ export default async (req) => {
       const docSel = (did) => sql`SELECT id, number, to_char(date,'YYYY-MM-DD') AS date, partner, data, storno, version FROM docs WHERE id=${did} AND company_id=${c.id}`;
       let ent = null, docId = Number(body.doc_id) || null;
       if (body.entry_id) {
-        ent = (await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, debit_acc, credit_acc, amount, storno_of, add_of, active, doc_id FROM entries WHERE id=${Number(body.entry_id)} AND company_id=${c.id}`)[0];
+        ent = (await sql`SELECT id, to_char(date,'YYYY-MM-DD') AS date, doc, description, partner, debit_acc, credit_acc, amount, storno_of, add_of, active, doc_id, company_posting_version_id, debit_subconto, credit_subconto FROM entries WHERE id=${Number(body.entry_id)} AND company_id=${c.id}`)[0];
         if (!ent) return fail('Проводку не знайдено', 404);
         if (kind === 'storno' && ent.doc_id) docId = ent.doc_id;
       }
@@ -1085,6 +1309,7 @@ export default async (req) => {
         yearOk(d.date);
         const CL = cleanCorrect(body.correct);
         if (CL.length) await assertPostable(CL);
+        const correctedAnalytics=CL.length?await fillSubcontoForLines(c.id,CL,{counterparty:d.partner,document:number}):[];
         if ((await sql`SELECT 1 FROM entries_a WHERE add_of IN (SELECT id FROM entries_a WHERE doc_id=${d.id}) LIMIT 1`).length) throw bad('Спершу сторнуйте додаткові записи до цього документа');
         const tot = Number(d.data.total || 0);
         // Сторно надходження / випуску / переміщення забирає ТМЦ зі складу: товар уже міг бути проданий або списаний.
@@ -1099,11 +1324,11 @@ export default async (req) => {
           ...(['rcpt','prod','ost','sale','wo','mv'].includes(d.type)?[inventoryClaim(c)]:[]),
           sql`SELECT 1 / count(*) FROM (SELECT id FROM docs WHERE id=${d.id} AND NOT storno AND version=${d.version} FOR UPDATE) g`,
           ins('storno', d.id, null, tot, -tot, 0),
-          sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,storno_of,doc_id,corr_id)
-            SELECT company_id, ${body.date}::date, ${number}, 'Сторно: ' || COALESCE(description,''), partner, debit_acc, credit_acc, -amount, id, doc_id, ${cid}
+          sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,storno_of,doc_id,corr_id,company_posting_version_id,debit_subconto,credit_subconto)
+            SELECT company_id, ${body.date}::date, ${number}, 'Сторно: ' || COALESCE(description,''), partner, debit_acc, credit_acc, -amount, id, doc_id, ${cid},company_posting_version_id,debit_subconto,credit_subconto
             FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL AND amount > 0`,
-          ...CL.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,corr_id)
-            VALUES (${c.id},${body.date},${number},${'Правильний запис після сторно документа ' + d.number},${d.partner || ''},${l.debit_acc},${l.credit_acc},${l.amount},${cid})`),
+          ...CL.map((l,i) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,corr_id,debit_subconto,credit_subconto)
+            VALUES (${c.id},${body.date},${number},${'Правильний запис після сторно документа ' + d.number},${d.partner || ''},${l.debit_acc},${l.credit_acc},${l.amount},${cid},${JSON.stringify(correctedAnalytics[i].debit_subconto)}::jsonb,${JSON.stringify(correctedAnalytics[i].credit_subconto)}::jsonb)`),
           sql`INSERT INTO stock_moves(company_id,doc_id,date,wh_id,item_id,qty,amount,lot_key)
             SELECT company_id, doc_id, ${body.date}::date, wh_id, item_id, -qty, -amount, lot_key FROM stock_moves WHERE doc_id=${d.id}`,
           sql`UPDATE docs SET storno=true, version=version+1 WHERE id=${d.id}`,
@@ -1121,10 +1346,11 @@ export default async (req) => {
         const merged = { ...base, ...ch, company_id: c.id, type: d.type, number: d.number };
         lockCheck(c, d.date); lockCheck(c, merged.date);
         const B = await buildDoc(c, merged, d.id);
-        const mapped=await mapEntries('doc:'+B.type,merged.date,B.ent);
-        B.ent=mapped.lines;B.rule_version_id=mapped.id;B.rule_descriptions=mapped.descriptions;
+        const mapped=await mapEntries('doc:'+B.type,merged.date,B.ent,c.id,{counterparty:String(merged.partner||''),document:B.number,warehouse:B.data.wh||'',net:B.data.sum,total:B.data.total,vat:B.data.vat,cost:B.data.cost});
+        B.ent=mapped.lines;B.rule_version_id=mapped.id;B.rule_descriptions=mapped.descriptions;B.rule_local_version_ids=mapped.localVersionIds;
+        B.subcontos=await fillSubcontoForLines(c.id,B.ent,{counterparty:String(merged.partner||''),document:B.number,warehouse:B.data.wh||''});
         await assertPostable(B.ent.filter(([,,am])=>am>0));
-        const oldE = await sql`SELECT debit_acc, credit_acc, amount FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL ORDER BY id`;
+        const oldE = await sql`SELECT debit_acc, credit_acc, amount, debit_subconto, credit_subconto FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL ORDER BY id`;
         const newE = B.ent.filter(([a1, k1, am]) => am > 0 && a1 !== k1).map(([a1, k1, am]) => ({ debit_acc: a1, credit_acc: k1, amount: am }));
         if (body.preview) return json({ old: oldE, new: newE });
         if (reason.length < 3) throw bad('Вкажіть причину виправлення');
@@ -1151,13 +1377,14 @@ export default async (req) => {
       if (body.preview) return json(P);
       const CL = kind === 'storno' ? cleanCorrect(body.correct) : [];
       if (CL.length) await assertPostable(CL);
+      const correctedAnalytics=CL.length?await fillSubcontoForLines(c.id,CL,{counterparty:ent.partner,document:number}):[];
       await sql.transaction([
         sql`SELECT 1 / count(*) FROM (SELECT x.id FROM entries x WHERE x.id=${ent.id} AND x.active AND x.amount + COALESCE((SELECT SUM(s.amount) FROM entries s WHERE (s.storno_of=x.id OR s.add_of=x.id) AND s.active),0) = ${P.eff}::numeric FOR UPDATE) g`,
         ins(kind, null, ent.id, P.eff, P.delta, P.result),
-        sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,storno_of,add_of,corr_id)
-          VALUES (${c.id},${body.date},${number},${(kind === 'storno' ? 'Сторно: ' : 'Додатковий запис: ') + (ent.description || '')},${ent.partner || ''},${ent.debit_acc},${ent.credit_acc},${P.delta},${kind === 'storno' ? ent.id : null},${kind === 'add' ? ent.id : null},${cid})`,
-        ...CL.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,corr_id)
-          VALUES (${c.id},${body.date},${number},${'Правильний запис після сторно: ' + (ent.description || '')},${ent.partner || ''},${l.debit_acc},${l.credit_acc},${l.amount},${cid})`),
+        sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,storno_of,add_of,corr_id,company_posting_version_id,debit_subconto,credit_subconto)
+          VALUES (${c.id},${body.date},${number},${(kind === 'storno' ? 'Сторно: ' : 'Додатковий запис: ') + (ent.description || '')},${ent.partner || ''},${ent.debit_acc},${ent.credit_acc},${P.delta},${kind === 'storno' ? ent.id : null},${kind === 'add' ? ent.id : null},${cid},${ent.company_posting_version_id||null},${JSON.stringify(ent.debit_subconto||[])}::jsonb,${JSON.stringify(ent.credit_subconto||[])}::jsonb)`,
+        ...CL.map((l,i) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,corr_id,debit_subconto,credit_subconto)
+          VALUES (${c.id},${body.date},${number},${'Правильний запис після сторно: ' + (ent.description || '')},${ent.partner || ''},${l.debit_acc},${l.credit_acc},${l.amount},${cid},${JSON.stringify(correctedAnalytics[i].debit_subconto)}::jsonb,${JSON.stringify(correctedAnalytics[i].credit_subconto)}::jsonb)`),
         aud(c, kind, 'entry', ent.id, { amount: P.eff }, { amount: P.result, delta: P.delta, correction: number, correct: CL }, reason)]);
       return json({ id: cid, number }, 201);
     }

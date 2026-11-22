@@ -39,7 +39,7 @@ aside a{display:block;padding:6px 10px;border-radius:6px;cursor:pointer}aside a:
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=20261122ux1">
+<link rel="stylesheet" href="theme.css?v=20261122v8local">
 </head><body>
 <header><button class="btn" id="navtg" onclick="toggleNav()" title="Меню">☰</button><span class="logo">Pro<b>Oblik</b></span><span id="co" class="mut" style="flex:1"></span><button class="btn" onclick="logout()">Вийти</button></header>
 <div class="lay"><aside id="nav"></aside><main id="app"></main></div>
@@ -158,7 +158,7 @@ async function saveTpl(){
   }catch(e){$('#msg').textContent=e.message}
 }
 async function save(){
-  try{await api('entries',{method:'POST',body:{company_id:company.id,date:$('#d').value,doc:$('#doc').value,description:$('#ds').value,debit_acc:$('#dt').value,credit_acc:$('#kt').value,amount:$('#amt').value}});go('entries')}
+  try{await api('entries',{method:'POST',body:{company_id:company.id,date:$('#d').value,doc:$('#doc').value,description:$('#ds').value,debit_acc:$('#dt').value,credit_acc:$('#kt').value,amount:$('#amt').value,debit_subconto:window.readSubcontoInputs?.('d')||[],credit_subconto:window.readSubcontoInputs?.('k')||[]}});go('entries')}
   catch(e){$('#msg').textContent=e.message}
 }
 async function del(id){if(confirm('Видалити операцію?')){await api(`entries/${id}?company_id=${company.id}`,{method:'DELETE'});go('entries')}}
@@ -226,7 +226,7 @@ async function reports(){
   $('#res').innerHTML=renderForms(f,t,o0,o1,pc,pp,company,{first,last,prior});
 }
 </script>
-<script src="app2.js?v=20261122catalog5"></script>
+<script src="app2.js?v=20261122v7"></script>
 <script src="app3.js?v=20261121inventory1"></script>
 <script src="app4.js?v=20261120hr3"></script>
 <script src="app5.js?v=20261121inventory1"></script>
@@ -236,7 +236,9 @@ async function reports(){
 <script src="app9.js?v=20261120hr3"></script>
 <script src="closefin.js?v=20261121a"></script>
 <script src="posting-catalog.js?v=20261122ux1"></script>
-<script src="rulebook.js?v=20261122ux1"></script>
+<script src="rulebook.js?v=20261122v8local"></script>
+<script src="posting-baseline-ui.js?v=20261122v8local"></script>
+<script src="subconto-ui.js?v=20261122v7"></script>
 <script src="typical-ops.js?v=20261122catalog5"></script>
 <script src="export.js?v=20261121a"></script>
 <script src="barcode-scanner.js?v=20261120scan2"></script>

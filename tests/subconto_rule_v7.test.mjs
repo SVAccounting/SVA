@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {validatePosting,calculateAddedPostings,applyPosting} from '../netlify/functions/rule-engine.js';
+import {cleanSlots,valuesForSlots} from '../netlify/functions/subconto.js';
+import {readFileSync} from 'node:fs';
+const valid=validatePosting({mappings:[{from_debit:'311',from_credit:'361',to_debit:'311',to_credit:'361',description:'Оплата покупця'}],additions:[
+  {debit:'92',credit:'685',basis:'total',factor:0.025,description:'Додаткова витрата за документом',debit_subconto:['{project}']},
+  {debit:'94',credit:'685',basis:'fixed',factor:25,description:'Фіксоване нарахування'}]});
+assert.equal(valid.additions.length,2);
+const original=[['311','361',1000]];
+assert.deepEqual(applyPosting(valid,original),original);
+const calculated=calculateAddedPostings(valid,{total:1200,net:1000,vat:200});
+assert.equal(calculated.length,2);
+assert.deepEqual(calculated.map(x=>x.amount),[30,25]);
+assert.equal(calculated[0].debit_acc,'92');
+assert.throws(()=>validatePosting({mappings:[],additions:[{debit:'281',credit:'631',basis:'total',factor:1,description:'Небезпечний складський рух'}]}),/складськими/);
+assert.throws(()=>validatePosting({mappings:[],additions:[{debit:'702',credit:'641',basis:'vat',factor:1,description:'Податковий рядок'}]}),/податковими/);
+assert.throws(()=>validatePosting({mappings:[],additions:[{debit:'92',credit:'685',basis:'eval',factor:1,description:'Довільний код'}]}),/джерело суми/);
+assert.equal(calculateAddedPostings({mappings:[],additions:[{debit:'92',credit:'685',basis:'net',factor:0.22,description:'Внесок'}]},{net:100})[0].amount,22);
+const slots=cleanSlots([{kind:'item',label:'Товар'},{kind:'warehouse',label:'Склад'},{kind:'lot',label:'Партія'}]);
+assert.equal(slots.length,3);
+assert.deepEqual(valuesForSlots(slots,[],{item:'Папір',warehouse:'Склад № 1',lot:'0003'}),['Папір','Склад № 1','0003']);
+assert.deepEqual(valuesForSlots(slots,['','Центральний','{lot}'],{item:'Папір',warehouse:'Склад № 1',lot:'0102'}),['Папір','Центральний','0102']);
+assert.throws(()=>cleanSlots([{kind:'item'},{kind:'item'}]),/повторене/);
+assert.throws(()=>cleanSlots(new Array(4).fill({kind:'item'})),/3 субконто/);
+const api=readFileSync(new URL('../netlify/functions/api.js',import.meta.url),'utf8');
+assert.match(api,/if\(res==='posting-baseline'\)/);
+assert.match(api,/if\(res==='account-subconto'\)/);
+assert.match(api,/if\(res==='subconto-turnovers'\)/);
+assert.match(api,/fillSubcontoForLines\(c\.id,B\.ent/);
+assert.match(api,/debit_subconto,credit_subconto/);
+assert.match(api,/if\(await locked\(\)\)/);
+const mig=readFileSync(new URL('../MIGRATE_V7_SUBCONTO_AND_LOGIC.sql',import.meta.url),'utf8');
+assert.match(mig,/CREATE OR REPLACE VIEW entries_a/);
+assert.match(mig,/account_subconto_settings/);
+assert.match(mig,/trg_prooblik_baseline_guard/);
+assert.match(mig,/pg_advisory_xact_lock/);
+console.log('PASS v7: safe formulas, multi-lines, 3 subconto, per-entry storage, baseline locking wiring');

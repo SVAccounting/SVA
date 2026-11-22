@@ -10,6 +10,21 @@ const problem = msg => { throw new Error(msg); };
 export function validatePosting(config) {
   const rows = config?.mappings;
   if (!Array.isArray(rows) || rows.length>80) problem('Очікується не більше 80 правил заміни проводок');
+  const additions=config?.additions??[];
+  if(!Array.isArray(additions)||additions.length>30)problem('Не більше 30 додаткових проводок на документ');
+  for(const [i,r] of additions.entries()){
+    if(!r||Object.keys(r).some(k=>!['debit','credit','basis','factor','description','debit_subconto','credit_subconto'].includes(k)))problem('Невідоме поле додаткової проводки '+(i+1));
+    if(!account(r.debit)||!account(r.credit)||r.debit===r.credit)problem('Некоректні рахунки додаткової проводки '+(i+1));
+    if(!['fixed','net','total','vat','cost','lines_total'].includes(r.basis))problem('Оберіть джерело суми додаткової проводки '+(i+1));
+    if(!Number.isFinite(Number(r.factor))||Number(r.factor)<=0||Number(r.factor)>1e9)problem('Невірний коефіцієнт або сума проводки '+(i+1));
+    if(typeof r.description!=='string'||r.description.trim().length<3||r.description.length>500)problem('Вкажіть зміст додаткової проводки '+(i+1));
+    // Stock and VAT are generated only by their verified document subledgers.
+    if([r.debit,r.credit].some(code=>/^2\d{1,2}$/.test(code)||['641','642','643','644'].includes(code)))
+      problem('Додаткові проводки зі складськими або податковими рахунками не можна додавати без контролю ТМЦ/ПДВ');
+    for(const side of ['debit_subconto','credit_subconto']){
+      if(r[side]!==undefined && (!Array.isArray(r[side])||r[side].length>3||r[side].some(v=>typeof v!=='string'||v.length>150)))problem('Не більше трьох субконто в рядку '+(i+1));
+    }
+  }
   const seen = new Set();
   for (let i=0;i<rows.length;i++) {
     const r=rows[i];
@@ -21,7 +36,8 @@ export function validatePosting(config) {
     if(seen.has(key)) problem('Одна початкова кореспонденція вказана двічі: '+key);
     seen.add(key);
   }
-  return {mappings:rows.map(x=>({...x,...(x.description!==undefined?{description:x.description.trim()}: {})}))};
+  return {mappings:rows.map(x=>({...x,...(x.description!==undefined?{description:x.description.trim()}: {})})),
+    additions:additions.map(x=>({...x,description:x.description.trim(),factor:Number(x.factor)}))};
 }
 
 export function applyPosting(config, lines) {
@@ -34,6 +50,20 @@ export function applyPosting(config, lines) {
     if(arr)return [map.to_debit,map.to_credit,...l.slice(2)];
     return {...l,debit_acc:map.to_debit,credit_acc:map.to_credit,...(map.description?{description:map.description}:{})};
   });
+}
+
+// Arithmetic is declarative: no user-defined JS, SQL or eval in document postings.
+export function calculateAddedPostings(config, context={}) {
+  const {additions}=validatePosting(config);
+  const r2=n=>Math.round((n+Number.EPSILON)*100)/100;
+  return additions.map((a)=>{
+    const base=a.basis==='fixed'?1:Number(context[a.basis]??0);
+    if(!Number.isFinite(base)||base<0)problem('Невідома або від’ємна база розрахунку: '+a.basis);
+    const amount=r2(base*a.factor);
+    if(!Number.isFinite(amount)||amount>9999999999999.99)problem('Некоректна розрахована сума');
+    return {debit_acc:a.debit,credit_acc:a.credit,amount,description:a.description,
+      debit_subconto:a.debit_subconto||[],credit_subconto:a.credit_subconto||[]};
+  }).filter(l=>l.amount>0);
 }
 
 export function validateReport(config, codes=[]) {

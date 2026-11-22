@@ -4,20 +4,23 @@
   const POSTING=(window.POSTING_CATALOG||[]).map(b=>[b.key,b.title]);
   const REPORTS=[['F1A','Форма №1 — Актив'],['F1P','Форма №1 — Пасив'],['F2','Форма №2 — Фінансові результати']];
   const SOURCES={A:'Дебетове сальдо з урахуванням знака',P:'Кредитове сальдо з урахуванням знака',D:'Лише додатне дебетове сальдо',C:'Лише кредитове сальдо',K:'Кредитовий оборот мінус дебетовий',X:'Дебетовий оборот мінус кредитовий',E:'Дебетовий оборот',R:'Незакритий фінансовий результат'};
-  let state={scope:'posting',key:(POSTING[0]||['doc:sale'])[0],versions:[],config:{mappings:[]},draftId:null,dirty:false,previewed:false};
+  let state={scope:'posting',key:(POSTING[0]||['doc:sale'])[0],versions:[],config:{mappings:[],additions:[]},draftId:null,dirty:false,previewed:false,activationDate:null};
   const keys=()=>state.scope==='posting'?POSTING:REPORTS;
   const rowDefs=()=>state.key==='F1A'?F1A:state.key==='F1P'?F1P:F2;
   const label=k=>([...POSTING,...REPORTS].find(x=>x[0]===k)||[])[1]||k;
   const h=(s)=>esc(s??'');
-  const dateTomorrow=()=>{const d=new Date();d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10)};
+  // Calendar dates must follow the company's Ukrainian operating day, not UTC midnight.
+  const localDay=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const v=Object.fromEntries(parts.filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));return v.year+'-'+v.month+'-'+v.day;};
+  const dateTomorrow=()=>{const d=new Date(localDay()+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10)};
   const activeFor=()=>state.versions.filter(v=>v.scope===state.scope&&v.rule_key===state.key&&v.status==='active').sort((a,b)=>(b.effective_from||'').localeCompare(a.effective_from||'')||b.id-a.id)[0];
-  const parseConfig=c=>JSON.parse(JSON.stringify(c|| (state.scope==='posting'?{mappings:[]}:{rows:{}})));
+  const parseConfig=c=>JSON.parse(JSON.stringify(c|| (state.scope==='posting'?{mappings:[],additions:[]}:{rows:{}})));
   const roleCheck=()=>me?.role==='superadmin';
 
   async function refresh(){state.versions=await api('rulebook');}
   function selectConfig(){
     const v=activeFor();state.config=parseConfig(v?.config);
-    state.draftId=null;state.dirty=false;state.previewed=false;state.note='';
+    state.draftId=null;state.dirty=false;state.previewed=false;state.note='';state.activationDate=dateTomorrow();
   }
   window.rbScope=async function(value){state.scope=value;state.key=keys()[0][0];selectConfig();paint()};
   window.rbKey=function(value){state.key=value;selectConfig();paint()};
@@ -38,8 +41,23 @@
   }
   function postingEditor(){
     const items=state.config.mappings||[];
-    return `<div id="rb_mappings" class="rb-edit-list">${items.length?items.map(mapRow).join(''):'<p class="mut">Змін поки немає.</p>'}</div>
-      <button class="btn" onclick="rbAddMap()">+ Додати кореспонденцію</button>`;
+    const extra=state.config.additions||[];
+    const options=[['net','Сума без ПДВ'],['total','Повна сума документа'],['vat','Розрахований ПДВ'],['cost','Собівартість'],['lines_total','Сума базових проводок'],['fixed','Фіксована сума']];
+    const extraRow=(a,i)=>`<div class="rb-extra-card"><div class="rb-extra-title"><b>Проводка №${i+1}</b><button class="btn" onclick="rbExtraRemove(${i})">× Видалити</button></div>
+      <div class="rb-extra-grid"><label>Дебет<input inputmode="numeric" maxlength="4" value="${h(a.debit||'')}" oninput="rbExtraChange(${i},'debit',this.value)"></label>
+      <label>Кредит<input inputmode="numeric" maxlength="4" value="${h(a.credit||'')}" oninput="rbExtraChange(${i},'credit',this.value)"></label>
+      <label>Джерело суми<select onchange="rbExtraChange(${i},'basis',this.value)">${options.map(([v,n])=>`<option value="${v}" ${a.basis===v?'selected':''}>${n}</option>`).join('')}</select></label>
+      <label>Множник / фіксована сума<input type="number" min="0.0001" step="0.0001" value="${h(a.factor??1)}" oninput="rbExtraChange(${i},'factor',this.value)"></label></div>
+      <label>Суть операції<input maxlength="500" value="${h(a.description||'')}" oninput="rbExtraChange(${i},'description',this.value)"></label>
+      <details><summary>Субконто цього рядка</summary><div class="rb-extra-grid">
+        <label>Дебет (значення 1 | 2 | 3)<input value="${h((a.debit_subconto||[]).join(' | '))}" placeholder="{counterparty} | {contract}" oninput="rbExtraChange(${i},'debit_subconto',this.value)"></label>
+        <label>Кредит (значення 1 | 2 | 3)<input value="${h((a.credit_subconto||[]).join(' | '))}" placeholder="{counterparty}" oninput="rbExtraChange(${i},'credit_subconto',this.value)"></label>
+      </div></details></div>`;
+    return `<div id="rb_mappings" class="rb-edit-list">${items.length?items.map(mapRow).join(''):'<p class="mut">Змін кореспонденцій немає.</p>'}</div>
+      <button class="btn" onclick="rbAddMap()">+ Замінити кореспонденцію</button>
+      <div class="rb-extra-section"><div class="rb-extra-head"><h3>Додаткові проводки документа</h3><button class="btn pri" onclick="rbExtraAdd()">+ Додати проводку</button></div>
+      ${extra.map(extraRow).join('')||'<p class="mut">Можна додати до 30 проводок із власними сумами та субконто.</p>'}
+      <p class="mut">Складські та податкові рахунки у додаткових проводках заблоковані: їх обчислюють модулі запасів і ПДВ.</p></div>`;
   }
   function mapRow(m,i){
     return `<div class="rb-editline"><div><strong>Дт ${h(m.from_debit)} · Кт ${h(m.from_credit)}</strong>
@@ -88,6 +106,11 @@
     else if(!noChange)list.push(m);
     window.rbModalClose();rbDirty();repaintDraft();
   };
+  window.rbExtraAdd=()=>{(state.config.additions||(state.config.additions=[])).push({debit:'',credit:'',basis:'net',factor:1,description:'',debit_subconto:[],credit_subconto:[]});rbDirty();repaintDraft()};
+  window.rbExtraRemove=i=>{state.config.additions?.splice(i,1);rbDirty();repaintDraft()};
+  window.rbExtraChange=(i,k,v)=>{const x=state.config.additions?.[i];if(!x)return;
+    x[k]=['debit_subconto','credit_subconto'].includes(k)?(v.trim()?v.split('|').map(t=>t.trim()):[]):k==='factor'?Number(v):v;
+    rbDirty();};
   window.rbAddMap=()=>editModal(-1,{from_debit:'',from_credit:'',to_debit:'',to_credit:'',description:''});
   window.rbEditMap=i=>{if(state.config.mappings?.[i])editModal(i,{})};
   window.rbRemoveMap=i=>{state.config.mappings?.splice(i,1);rbDirty();repaintDraft()};
@@ -103,12 +126,24 @@
   }
   window.rbFilter=value=>{const q=String(value||'').toLowerCase();document.querySelectorAll('.rb-report-row').forEach(e=>e.hidden=!e.dataset.search.includes(q))};
   const history=()=>state.versions.filter(v=>v.scope===state.scope&&v.rule_key===state.key).map(v=>`<tr><td>#${v.id}</td><td>${v.status==='active'?'Опубліковано':'Чернетка'}</td><td>${h(v.effective_from||'—')}</td><td>${h(v.author||'')}</td><td>${h(v.note||'')}</td><td><button class="btn" onclick="rbLoad(${v.id})">Копіювати</button></td></tr>`).join('')||'<tr><td colspan="6" class="mut">Версій поки немає</td></tr>';
-  const TODAY=()=>new Date().toISOString().slice(0,10);
+  const TODAY=()=>localDay();
   const catOf=k=>(window.POSTING_CATALOG||[]).find(b=>b.key===k);
   const GROUP_OF={'doc:pko':'Каса і банк','doc:vko':'Каса і банк','doc:bin':'Каса і банк','doc:bout':'Каса і банк','doc:rcpt':'Склад і реалізація','doc:prod':'Склад і реалізація','doc:ost':'Склад і реалізація','doc:sale':'Склад і реалізація','doc:wo':'Склад і реалізація','doc:mv':'Склад і реалізація','doc:inv':'Документи','doc:act':'Документи','payroll:accrual':'Зарплата','payroll:payment:wage':'Зарплата','payroll:payment:pit':'Зарплата','payroll:payment:military':'Зарплата','payroll:payment:esv':'Зарплата','financial:close':'Закриття періоду'};
   const GROUP_ORDER=['Каса і банк','Склад і реалізація','Документи','Зарплата','Закриття періоду'];
   const currentOf=(scope,key)=>state.versions.filter(v=>v.scope===scope&&v.rule_key===key&&v.status==='active'&&(v.effective_from||'')<=TODAY()).sort((a,b)=>(b.effective_from||'').localeCompare(a.effective_from||'')||b.id-a.id)[0];
-  const changed=(scope,key)=>{const v=currentOf(scope,key);return !!v&&(scope==='posting'?(v.config?.mappings||[]).length>0:Object.keys(v.config?.rows||{}).length>0)};
+  // Published does not mean effective: a new version starts no earlier than tomorrow.
+  // Show scheduled correspondence explicitly while keeping today's postings unchanged.
+  const scheduledFor=(scope,key)=>{const v=state.versions.filter(x=>x.scope===scope&&x.rule_key===key&&x.status==='active'&&(x.effective_from||'')>TODAY())
+    .sort((a,b)=>(a.effective_from||'').localeCompare(b.effective_from||'')||a.id-b.id)[0];return v||null};
+  const pairKey=(d,k)=>d+'|'+k;
+  const scheduledHint=(r,currentMap,nextMap,nextDate)=>{
+    if(!nextMap)return '';
+    const d=nextMap.to_debit||r.dt,k=nextMap.to_credit||r.kt,meaning=nextMap.description||r.txt;
+    const currentD=currentMap?.to_debit||r.dt,currentK=currentMap?.to_credit||r.kt,currentMeaning=currentMap?.description||r.txt;
+    if(d===currentD&&k===currentK&&meaning===currentMeaning)return '';
+    return `<div class="rb-scheduled-hint">З ${h(nextDate)}: Дт ${h(d)} · Кт ${h(k)}${meaning!==currentMeaning?' — '+h(meaning):''}</div>`;
+  };
+  const changed=(scope,key)=>{const v=currentOf(scope,key);return !!v&&(scope==='posting'?((v.config?.mappings||[]).length>0||(v.config?.additions||[]).length>0):Object.keys(v.config?.rows||{}).length>0)};
   const navBtn=(scope,key,title)=>`<button class="rb-i${state.scope===scope&&String(state.key)===String(key)?' on':''}" data-t="${h(title.toLowerCase())}" onclick="rbPick('${scope}','${key}')"><span>${h(title)}</span>${changed(scope,key)?'<i class="rb-dot" title="Є системні зміни"></i>':''}</button>`;
   function rbNav(){
     const grp=(t,items,open)=>`<details class="rb-g"${open?' open':''}><summary>${h(t)} <span class="mut">${items.length}</span></summary>${items.join('')}</details>`;
@@ -121,10 +156,11 @@
   function baseTable(){
     const b=catOf(state.key);if(!b)return '';
     if(!b.rows.length)return '<p class="mut">Бухгалтерські проводки для цієї форми не формуються.</p>';
-    const maps=(currentOf('posting',state.key)?.config?.mappings)||[],by=new Map(maps.map(m=>[m.from_debit+'|'+m.from_credit,m]));
+    const maps=(currentOf('posting',state.key)?.config?.mappings)||[],by=new Map(maps.map(m=>[pairKey(m.from_debit,m.from_credit),m]));
+    const upcoming=scheduledFor('posting',state.key),futureBy=new Map((upcoming?.config?.mappings||[]).map(m=>[pairKey(m.from_debit,m.from_credit),m]));
     const a=c=>`${h(c)} <span class="mut">${h(accName(c))}</span>`;
-    return `<div class="rb-tbl"><table><thead><tr><th>Дебет</th><th>Кредит</th><th>Суть операції</th><th></th></tr></thead><tbody>${b.rows.map(r=>{const m=by.get(r.dt+'|'+r.kt);
-      return `<tr><td>${a(m?.to_debit||r.dt)}</td><td>${a(m?.to_credit||r.kt)}</td><td class="rb-meaning">${h(m?.description||r.txt)}</td><td><button class="btn" onclick="rbAddPair('${r.dt}','${r.kt}')">✎ Змінити</button></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<div class="rb-tbl"><table><thead><tr><th>Дебет</th><th>Кредит</th><th>Суть операції</th><th></th></tr></thead><tbody>${b.rows.map(r=>{const m=by.get(pairKey(r.dt,r.kt));
+      return `<tr><td>${a(m?.to_debit||r.dt)}</td><td>${a(m?.to_credit||r.kt)}</td><td class="rb-meaning">${h(m?.description||r.txt)}${scheduledHint(r,m,futureBy.get(pairKey(r.dt,r.kt)),upcoming?.effective_from)}</td><td><button class="btn" onclick="rbAddPair('${r.dt}','${r.kt}')">✎ Змінити</button></td></tr>`}).join('')}</tbody></table></div>`;
   }
   function tplPane(){
     const t=TPL[Number(state.key)];if(!t)return '<div class="card">Операцію не знайдено</div>';
@@ -134,23 +170,45 @@
       <table><thead><tr><th>Дебет</th><th>Кредит</th><th>Від суми</th></tr></thead><tbody>${t[2].map(([d,k,f])=>`<tr><td>${h(d)} <span class="mut">${h(accName(d))}</span></td><td>${h(k)} <span class="mut">${h(accName(k))}</span></td><td>${mul(f)}</td></tr>`).join('')}</tbody></table>
       <p>${(window.TPL_DB||[]).length?`<button class="btn pri" onclick="tedOpenByName(TPL[${Number(state.key)}][1])">✎ Редагувати в редакторі типових операцій</button>`:`<button class="btn pri" onclick="go('typeditor')">Відкрити редактор типових операцій</button> <span class="mut">Вбудований набір спершу переноситься в редактор.</span>`}</p></div>`;
   }
+  function publishPanel(){
+    const when=state.activationDate||dateTomorrow();
+    const now=when===TODAY();
+    return `<section class="rb-publish-panel" aria-label="Збереження та активація правила">
+      <div class="rb-publish-head"><h3>Зміни правила</h3><span id="rb_status" class="rb-save-status" aria-live="polite"></span></div>
+      <div class="rb-publish-reason"><label for="rb_note">Причина зміни <span class="rb-required">*</span></label>
+        <input id="rb_note" maxlength="500" value="${h(state.note||'')}" placeholder="Наприклад: уточнено субрахунок за Планом рахунків"></div>
+      <div class="rb-publish-bottom">
+        <div class="rb-date-block"><label for="rb_start">Дата початку дії</label>
+          <input id="rb_start" type="date" min="${TODAY()}" value="${h(when)}" onchange="rbDateChanged()">
+          <small id="rb_date_hint">${now?'Сьогодні — потрібно підтвердити паролем':'За замовчуванням — наступний день'}</small></div>
+        <div class="rb-publish-buttons">
+          <button class="btn rb-save-button" id="rb_save" onclick="rbSave()">1. Зберегти</button>
+          <button class="btn rb-preview-button" id="rb_preview" onclick="rbPreview()">2. Перевірити</button>
+          <button class="btn pri rb-activate-button" id="rb_activate" onclick="rbActivate()">3. Активувати${now?' сьогодні':''}</button>
+        </div>
+      </div>
+      <div id="rb_message" aria-live="polite"></div><div id="rb_test"></div>
+    </section>`;
+  }
+  window.rbDateChanged=()=>{
+    const el=document.getElementById('rb_start');if(!el)return;
+    state.activationDate=el.value;
+    const today=state.activationDate===TODAY();
+    const hint=document.getElementById('rb_date_hint');if(hint)hint.textContent=today?'Сьогодні — потрібно підтвердити паролем':'За замовчуванням — наступний день';
+    const btn=document.getElementById('rb_activate');if(btn)btn.textContent='3. Активувати'+(today?' сьогодні':'');
+  };
   function mainPane(){
     const b=catOf(state.key),active=activeFor(),title=b?.title||label(state.key),posting=state.scope==='posting';
-    return `<div class="card rb-panel"><div class="rb-title"><h2>${h(title)}</h2>${active?`<span class="rb-tag">Версія #${active.id}</span>`:''}</div>
+    const scheduled=active&&(active.effective_from||'')>TODAY();
+    return `<div class="card rb-panel"><div class="rb-title"><h2>${h(title)}</h2>${active?`<span class="rb-tag">${scheduled?'Запланована версія':'Чинна версія'} #${active.id}${scheduled?' · з '+h(active.effective_from):''}</span>`:''}</div>
+      ${publishPanel()}
       ${posting?'':`<h3 class="rb-h">Формули звіту</h3>`}
       ${posting?baseTable():reportEditor()}
-      ${posting?`<h3 class="rb-h">Підготовлені зміни</h3>${postingEditor()}`:''}
-      <h3 class="rb-h">Збереження та публікація</h3>
-      <div class="rb-publish"><div><label for="rb_note">Причина зміни</label><input id="rb_note" value="${h(state.note||'')}" placeholder="Коротко зазначте причину"></div>
-      <button class="btn pri" id="rb_save" onclick="rbSave()">Зберегти чернетку</button>
-      <button class="btn" id="rb_preview" onclick="rbPreview()">Перевірити</button>
-      <div><label for="rb_start">Діє з</label><input id="rb_start" type="date" min="${dateTomorrow()}" value="${dateTomorrow()}"></div>
-      <button class="btn" id="rb_activate" onclick="rbActivate()">Активувати</button></div>
-      <p class="mut" id="rb_status"></p><div id="rb_message" aria-live="polite"></div><div id="rb_test"></div></div>
+      ${posting?`<h3 class="rb-h">${scheduled?'Зміни, заплановані з '+h(active.effective_from):'Зміни кореспонденцій'}</h3>${postingEditor()}`:''}</div>
       <details class="card sc rb-hist"><summary><b>Історія версій</b> <span class="mut">(${state.versions.filter(v=>v.scope===state.scope&&v.rule_key===state.key).length})</span></summary><table><thead><tr><th>ID</th><th>Стан</th><th>Початок дії</th><th>Автор</th><th>Причина</th><th>Дія</th></tr></thead><tbody>${history()}</tbody></table></details>`;
   }
   function paint(){
-    $('#app').innerHTML=`<h2 class="rb-page-title">Конструктор бухгалтерської логіки</h2><div class="rb-shell">${rbNav()}<div class="rb-col">${state.scope==='tpl'?tplPane():mainPane()}</div></div>`;
+    $('#app').innerHTML=`<h2 class="rb-page-title">Конструктор бухгалтерської логіки — глобальні правила</h2><div class="rb-shell">${rbNav()}<div class="rb-col">${state.scope==='tpl'?tplPane():mainPane()}</div></div>`;
     updateButtons();rbNames();
   }
   window.rbPick=(scope,key)=>{state.scope=scope;state.key=key;if(scope!=='tpl')selectConfig();paint();window.scrollTo({top:0,behavior:'smooth'})};
@@ -165,7 +223,7 @@
   };
   function rbMessage(msg,err=false){const box=$('#rb_message');if(box)box.innerHTML=`<p class="${err?'err':'mut'}">${h(msg)}</p>`};
   function collect(){
-    if(state.scope==='posting')return {mappings:(state.config.mappings||[]).map(m=>({...m}))};
+    if(state.scope==='posting')return {mappings:(state.config.mappings||[]).map(m=>({...m})),additions:(state.config.additions||[]).map(x=>({...x}))};
     return {rows:Object.fromEntries([...document.querySelectorAll('[data-code]')].map(el=>[el.dataset.code,el.value.trim()]).filter(x=>x[1]))};
   }
   window.rbSave=async()=>{
@@ -190,17 +248,53 @@
         box.innerHTML=`<h4>Контрольне порівняння на ${h(checked.date)} (${h(company.name)})</h4>`+
           (differences.length?`<div class="sc"><table><thead><tr><th>Рядок</th><th>Було, грн</th><th>Стане, грн</th></tr></thead><tbody>${differences.slice(0,60).map(x=>`<tr><td>${h(x.code)}</td><td class="n">${fmt(x.before)}</td><td class="n">${fmt(x.after)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="mut">На даних цього підприємства числових відмінностей не виявлено. Перевірте також випадок із ненульовими сумами.</p>');
       }
-      state.previewed=true;updateButtons();rbMessage('Чернетку перевірено. Активація допускається з наступного дня.');
+      state.previewed=true;updateButtons();rbMessage('Перевірено. Правило готове до активації.');
     }catch(e){state.previewed=false;updateButtons();rbMessage(e.message,true);box.innerHTML=''}
+  };
+  async function publishRule(eff,password){
+    const payload={id:state.draftId,effective_from:eff};
+    if(eff===TODAY())payload.password=password;
+    await api('rulebook/activate',{method:'POST',body:payload});
+    await refresh();selectConfig();paint();rbMessage('Версію активовано з '+eff+'. Раніше проведені записи не змінено.');
+  }
+  function showTodayPassword(eff){
+    let dlg=document.getElementById('rb_today_dialog');
+    if(!dlg){dlg=document.createElement('dialog');dlg.id='rb_today_dialog';dlg.className='rb-edit-dialog rb-auth-dialog';document.body.appendChild(dlg);}
+    // Never retain a password between attempts or render it into the DOM as an attribute.
+    const future=scheduledFor(state.scope,state.key);
+    dlg.innerHTML=`<form method="dialog" onsubmit="rbConfirmToday(event)">
+      <div class="rb-dialog-head"><h3>Активація сьогодні</h3><button type="button" class="btn" onclick="rbTodayClose()" aria-label="Закрити">×</button></div>
+      <p class="rb-auth-info">Нова версія правила застосовуватиметься до наступних формувань з ${h(eff)}. Раніше збережені бухгалтерські записи не зміняться.</p>
+      ${future?`<p class="rb-auth-warning">Увага: з ${h(future.effective_from)} уже заплановано іншу версію #${h(future.id)}. Вона замінить сьогоднішню.</p>`:''}
+      <label for="rb_today_password">Пароль суперадміністратора</label>
+      <input id="rb_today_password" type="password" autocomplete="current-password" maxlength="1024" required placeholder="Введіть ваш пароль">
+      <div id="rb_today_error" role="alert" class="err" aria-live="polite"></div>
+      <div class="rb-dialog-buttons"><button type="button" class="btn" onclick="rbTodayClose()">Скасувати</button>
+        <button class="btn pri rb-activate-button" id="rb_today_submit" type="submit">Підтвердити активацію</button></div></form>`;
+    dlg.dataset.effective=eff;
+    if(typeof dlg.showModal==='function')dlg.showModal();else dlg.setAttribute('open','');
+    dlg.querySelector('#rb_today_password')?.focus();
+  }
+  window.rbTodayClose=()=>{const dlg=document.getElementById('rb_today_dialog');if(!dlg)return;
+    const field=dlg.querySelector('#rb_today_password');if(field)field.value='';
+    if(typeof dlg.close==='function'&&dlg.open)dlg.close();else dlg.removeAttribute('open');};
+  window.rbConfirmToday=async e=>{
+    e?.preventDefault();const dlg=document.getElementById('rb_today_dialog');if(!dlg)return;
+    const input=dlg.querySelector('#rb_today_password'),btn=dlg.querySelector('#rb_today_submit'),error=dlg.querySelector('#rb_today_error');
+    const password=input?.value||'',eff=dlg.dataset.effective;
+    if(input)input.value='';
+    if(!password){error.textContent='Введіть пароль суперадміністратора.';return}
+    btn.disabled=true;
+    try{await publishRule(eff,password);rbTodayClose()}catch(ex){error.textContent=ex.message||'Не вдалося активувати правило.'}
+    finally{btn.disabled=false}
   };
   window.rbActivate=async()=>{
     if(!state.draftId||!state.previewed)return;
-    const eff=$('#rb_start').value;
-    if(!confirm('Активувати правило #'+state.draftId+' з '+eff+' для УСІХ підприємств? Уже проведені записи не зміняться.'))return;
-    try{
-      await api('rulebook/activate',{method:'POST',body:{id:state.draftId,effective_from:eff}});
-      await refresh();selectConfig();paint();rbMessage('Версію активовано з '+eff+'. Старі періоди залишилися без змін.');
-    }catch(e){rbMessage(e.message,true)}
+    const eff=$('#rb_start')?.value;
+    if(!eff || eff<TODAY()){rbMessage('Оберіть сьогодні або майбутню дату.',true);return}
+    if(eff===TODAY()){showTodayPassword(eff);return}
+    if(!confirm('Активувати правило #'+state.draftId+' з '+eff+' для всіх підприємств? Уже проведені записи не зміняться.'))return;
+    try{await publishRule(eff)}catch(e){rbMessage(e.message,true)}
   };
   views.ruleDiagnostics=async()=>{
     if(!roleCheck()){ $('#app').innerHTML='<div class="card err">Доступ лише для суперадміна</div>';return; }
@@ -237,7 +331,7 @@
     await refresh();selectConfig();paint();
   };
   // ---------- Діючі проводки за операціями (перегляд + перехід до редагування) ----------
-  const today0=()=>new Date().toISOString().slice(0,10);
+  const today0=()=>localDay();
   const accName=c=>{try{return nameOf(c)||''}catch{return ''}};
   const acc=c=>`${h(c)} <span class="mut">${h(accName(c))}</span>`;
   window.rbOpen=async(key,dt,kt)=>{
@@ -252,15 +346,17 @@
     const planned=k=>act.filter(v=>v.rule_key===k&&(v.effective_from||'')>t);
     const cat=window.POSTING_CATALOG||[];
     const block=b=>{
-      const v=current(b.key),maps=v?.config?.mappings||[],by=new Map(maps.map(m=>[m.from_debit+'|'+m.from_credit,m]));
-      const rows=b.rows.map(r=>{const m=by.get(r.dt+'|'+r.kt);
-        return `<tr><td>${acc(m?.to_debit||r.dt)}</td><td>${acc(m?.to_credit||r.kt)}</td><td class="rb-meaning">${h(m?.description||r.txt)}</td><td><button class="btn" onclick="rbOpen('${b.key}','${r.dt}','${r.kt}')">✎ Змінити</button></td></tr>`}).join('');
+      const v=current(b.key),maps=v?.config?.mappings||[],by=new Map(maps.map(m=>[pairKey(m.from_debit,m.from_credit),m]));
+      const upcoming=planned(b.key).sort((a,b)=>(a.effective_from||'').localeCompare(b.effective_from||'')||a.id-b.id)[0];
+      const futureBy=new Map((upcoming?.config?.mappings||[]).map(m=>[pairKey(m.from_debit,m.from_credit),m]));
+      const rows=b.rows.map(r=>{const m=by.get(pairKey(r.dt,r.kt));
+        return `<tr><td>${acc(m?.to_debit||r.dt)}</td><td>${acc(m?.to_credit||r.kt)}</td><td class="rb-meaning">${h(m?.description||r.txt)}${scheduledHint(r,m,futureBy.get(pairKey(r.dt,r.kt)),upcoming?.effective_from)}</td><td><button class="btn" onclick="rbOpen('${b.key}','${r.dt}','${r.kt}')">✎ Змінити</button></td></tr>`}).join('');
       return `<div class="card sc rb-logic-block"><div class="rb-title"><h3>${h(b.title)}</h3></div>
         ${b.rows.length?`<div class="rb-tbl"><table><thead><tr><th>Дебет</th><th>Кредит</th><th>Суть операції</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="mut">Проводки не формуються.</p>'}</div>`;
     };
     $('#app').innerHTML=`<div class="rb-logic-list"><h2>Діючі проводки за операціями</h2>${cat.map(block).join('')}</div>`;
   };
-  if(!MENU.some(([k])=>k==='Сервіс суперадміна'))MENU.push(['Сервіс суперадміна',[['postingLogic','Діючі проводки за операціями'],['rulebook','Конструктор бухгалтерської логіки'],['ruleDiagnostics','Діагностика обліку']]]);
+  if(!MENU.some(([k])=>k==='Сервіс суперадміна'))MENU.push(['Сервіс суперадміна',[['postingLogic','Проводки поточного підприємства'],['rulebook','Глобальні правила та звіти'],['ruleDiagnostics','Діагностика обліку']]]);
   if(typeof NOCO!=='undefined')NOCO.push('postingLogic','rulebook');
   if(typeof EXP!=='undefined')EXP.push('postingLogic');
 })();

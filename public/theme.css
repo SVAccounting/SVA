@@ -356,3 +356,72 @@ html,body{max-width:100%;overflow-x:clip}
 @media(max-width:700px){.rb-dialog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rb-editline{align-items:start;flex-direction:column}.rb-edit-actions{align-self:flex-end}.rb-publish>div,.rb-publish>button{flex:1 1 100%!important}}
 
 .rb-page-title{font-size:19px;margin:0 0 14px}
+
+/* Show future accounting correspondence without misrepresenting today's active rule. */
+.rb-scheduled-hint{margin-top:5px;font-size:12px;color:#546678;line-height:1.4;border-left:2px solid #7899b6;padding-left:8px}
+
+/* Rulebook v6: compact, visually grouped publish controls */
+.rb-publish-panel{position:sticky;top:88px;z-index:3;margin:14px 0 18px;padding:14px 16px;border:1px solid #b7d5ee;border-radius:14px;background:var(--card,#fafaf6);box-shadow:0 5px 18px rgba(28,67,105,.11)}
+.rb-publish-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.rb-publish-head h3{font-size:16px;font-weight:700;margin:0;color:var(--tx)}
+.rb-save-status{font-size:12px;font-weight:600;color:#52718d;text-align:right}
+.rb-publish-reason label,.rb-date-block label{display:block;margin-bottom:4px;font-size:12px;font-weight:700;color:var(--tx)}
+.rb-publish-reason input{display:block;width:100%;box-sizing:border-box;height:38px;padding:7px 10px}
+.rb-required{color:#b73835}
+.rb-publish-bottom{display:flex;align-items:end;gap:12px;justify-content:space-between;margin-top:10px}
+.rb-date-block{flex:0 0 185px;min-width:0}
+.rb-date-block input{width:100%;height:38px;box-sizing:border-box}
+.rb-date-block small{display:block;margin-top:4px;color:var(--mut);font-size:11px;line-height:1.25}
+.rb-publish-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center;min-width:0}
+.rb-publish-buttons button{min-height:40px;padding:8px 14px;font-weight:700;white-space:nowrap;border-radius:10px}
+.rb-save-button{border:1px solid #7fa9ca!important;background:#ecf5fd!important;color:#154d78!important}
+.rb-preview-button{border:1px solid #8fa9b7!important;background:#eff3f6!important;color:#274e64!important}
+.rb-activate-button{background:#1269b0!important;color:#fff!important;border:1px solid #1269b0!important;box-shadow:0 2px 7px rgba(12,74,129,.22)}
+.rb-publish-buttons button:disabled{opacity:.56;cursor:not-allowed;box-shadow:none}
+.rb-publish-panel #rb_message:not(:empty){margin-top:9px;font-size:12px}
+.rb-publish-panel #rb_message p{margin:0}
+.rb-publish-panel #rb_test:not(:empty){margin-top:12px;max-height:280px;overflow:auto;border-top:1px solid var(--bd);padding-top:10px}
+.rb-auth-dialog{width:min(460px,calc(100vw - 26px));z-index:10}
+.rb-auth-dialog .rb-auth-info{font-size:13px;line-height:1.45;color:var(--mut);margin:0 0 15px}
+.rb-auth-dialog input[type=password]{width:100%;box-sizing:border-box;height:42px}
+.rb-auth-dialog #rb_today_error:not(:empty){margin-top:10px}
+@media(max-width:1100px){.rb-publish-bottom{align-items:stretch;flex-direction:column}.rb-date-block{flex:none;max-width:260px}.rb-publish-buttons{justify-content:stretch}.rb-publish-buttons button{flex:1 1 155px}}
+@media(max-width:900px){.rb-publish-panel{position:static;box-shadow:0 3px 12px rgba(28,67,105,.07)}}
+@media(max-width:600px){.rb-publish-panel{padding:12px;margin:10px 0}.rb-publish-head{align-items:start;flex-direction:column;gap:5px}.rb-save-status{text-align:left}.rb-date-block{max-width:none}.rb-publish-buttons button{flex:1 1 100%}}
+
+.rb-auth-warning{background:#fff1e3;border:1px solid #efc499;border-radius:10px;padding:9px 11px;color:#67431d;font-size:12px;line-height:1.4}
+/* v7 — grouped multi-line rule editor */
+.rb-extra-section{border-top:1px solid var(--bd,#dfe3e7);padding-top:16px;margin-top:18px}
+.rb-extra-head,.rb-extra-title{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.rb-extra-head h3{margin:0;font-size:16px}
+.rb-extra-card{padding:14px;margin:12px 0;border:1px solid var(--bd,#dfe3e7);border-radius:12px;background:var(--card,#fff)}
+.rb-extra-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+.rb-extra-card label{display:block;font-size:12px;color:var(--mut,#666)}
+.rb-extra-card input,.rb-extra-card select{width:100%;margin-top:4px}
+@media(max-width:620px){.rb-extra-grid{grid-template-columns:minmax(0,1fr)}}
+.pb-baseline-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.pb-baseline-pill{font-size:12px;padding:6px 9px;border-radius:12px;background:#e9f5eb;color:#27603e}
+.pb-baseline-pill.locked{background:#f1f0ed;color:#766c60}
+.pb-main-table{width:100%;border-collapse:collapse}.pb-main-table td{vertical-align:top}
+.pb-main-table .btn{min-width:102px}
+.subconto-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.subconto-slot{border:1px solid var(--bd,#ddd);border-radius:9px;padding:9px}
+.subconto-fieldset{border:1px solid var(--bd,#ddd);border-radius:10px;padding:10px;margin:12px 0}
+@media(max-width:700px){.subconto-slots{grid-template-columns:1fr}}
+
+/* v8: unified local posting editor */
+.pb-v8-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pb-v8-head h2{margin:0 0 5px;font-size:20px}.pb-v8-head p{margin:0;color:var(--mut)}
+.pb-v8-tag{font-size:12px;font-weight:700;background:#e8f1fb;color:#205477;border-radius:99px;padding:8px 12px}
+.pb-row-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.pb-row-actions .btn{font-weight:650;white-space:nowrap;padding:7px 11px}
+.pb-main-table td small{display:block;font-size:11px;color:var(--mut)}
+.pb-future{margin-top:7px;padding:7px 9px;border-left:3px solid #3983ba;background:rgba(57,131,186,.09);border-radius:3px;font-size:12px;line-height:1.4}
+.pb-scope{padding:11px 13px;border:1px solid #adcbd7;border-radius:11px;background:#eff8fb;margin:0 0 12px;color:#234454}
+.pb-scope small{display:block;font-size:12px;margin-top:3px}
+.pb-original{margin:10px 0 14px;font-size:13px;color:var(--mut)}
+.pb-readonly{height:38px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--bd);border-radius:7px;box-sizing:border-box;background:var(--bg)}
+.pb-v8-modal .rb-dialog-grid{margin:13px 0}.pb-v8-modal #pb_err:not(:empty){margin-top:9px}
+.pb-primary-action{font-weight:700;min-height:42px}.pb-feedback:not(:empty){padding:10px 14px;background:rgba(46,130,78,.1);border-left:3px solid #398254;border-radius:5px}
+.pb-history-table td{vertical-align:top}.pb-history-table td small{display:block;color:var(--mut);font-size:11px;margin-top:4px}
+@media(max-width:720px){.pb-row-actions{flex-direction:column;align-items:stretch}.pb-v8-modal .rb-dialog-grid{grid-template-columns:1fr}}
