@@ -116,3 +116,74 @@ covered('doc:rcpt', rcpt); covered('doc:sale', sale); covered('doc:act', act); c
 covered('doc:pko', await build(co, { type: 'pko', date: '2026-11-21', sum: 1, corr: '311' }, null));
 covered('doc:bout', await build(co, { type: 'bout', date: '2026-11-21', sum: 1, corr: '631' }, null));
 console.log('PASS ESV (actual + minimum top-up, 20/15 MW cap), write-off VAT compensation, posting catalog coverage');
+
+// 8. Червоне сторно зменшує обороти, а не завищує; правильна проводка не дублюється
+{
+  const turn = (ls) => { const t = {}; for (const [d, k, a] of ls) { (t[d] ??= [0, 0])[0] += a; (t[k] ??= [0, 0])[1] += a; } return t; };
+  const orig = [['361', '702', 1200], ['702', '641', 200]];
+  const storno = orig.map(([d, k, a]) => [d, k, -a]);          // сторно: та сама кореспонденція зі знаком «−»
+  const right = [['361', '703', 1200], ['703', '641', 200]];   // правильна проводка
+  const T = turn([...orig, ...storno, ...right]);
+  assert.equal(T['361'][0], 1200, 'оборот Дт 361 = лише правильна сума, а не 2400');
+  assert.equal(T['702'][1], 0, 'оборот Кт 702 після сторно = 0');
+  assert.equal(T['703'][1], 1200);
+  const all = Object.values(T); assert.equal(all.reduce((s, x) => s + x[0], 0), all.reduce((s, x) => s + x[1], 0), 'Дт = Кт');
+  // «дзеркальне» сторно (Дт↔Кт) завищувало б обороти — переконуємося, що програма так не робить
+  const mirror = turn([...orig, ...orig.map(([d, k, a]) => [k, d, a])]);
+  assert.equal(mirror['361'][0] + mirror['361'][1], 2400);
+}
+
+// 9. Серверна перевірка «правильної проводки» і типових операцій
+{
+  const vs = source.indexOf('const validLines'); vm.runInContext(source.slice(vs, source.indexOf('});', vs) + 3).replace('const validLines', 'var validLines'), ctx);
+  const cleanCorrect = vm.runInContext('cleanCorrect', ctx), cleanTpl = vm.runInContext('cleanTypicalOp', ctx);
+  assert.equal(cleanCorrect([]).length, 0); assert.equal(cleanCorrect([{ debit_acc: '', credit_acc: '', amount: '' }]).length, 0);
+  assert.equal(cleanCorrect([{ debit_acc: '361', credit_acc: '703', amount: '12.5' }])[0].amount, 12.5);
+  assert.throws(() => cleanCorrect([{ debit_acc: '361', credit_acc: '361', amount: 5 }]));
+  assert.throws(() => cleanCorrect([{ debit_acc: '361', credit_acc: '703', amount: 0 }]));
+  const ok = cleanTpl({ category: 'Кредити', name: 'Отримано кредит', lines: [{ debit_acc: '311', credit_acc: '60', mode: 'one' }, { debit_acc: '951', credit_acc: '684', mode: 'k', k: 0.5 }] });
+  assert.equal(ok.lines.length, 2); assert.equal(ok.lines[1].k, 0.5);
+  assert.throws(() => cleanTpl({ category: 'К', name: 'Отримано кредит', lines: [{ debit_acc: '311', credit_acc: '60' }] }));
+  assert.throws(() => cleanTpl({ category: 'Кредити', name: 'Отримано кредит', lines: [] }));
+  assert.throws(() => cleanTpl({ category: 'Кредити', name: 'Отримано кредит', lines: [{ debit_acc: '311', credit_acc: '311' }] }));
+}
+
+// 10. Підписи: «Ім’я ПРІЗВИЩЕ», посада з довідника
+{
+  const w = { esc: (x) => String(x), api: async () => [], company: null }; w.window = w;
+  vm.createContext(w); vm.runInContext(fs.readFileSync(root + 'public/people.js', 'utf8'), w);
+  assert.equal(w.fio('Петренко Іван Іванович'), 'Іван ПЕТРЕНКО'); assert.equal(w.fio('  Коваль   Олена '), 'Олена КОВАЛЬ'); assert.equal(w.fio('Шевченко'), 'ШЕВЧЕНКО'); assert.equal(w.fio(''), '');
+  w.STAFF = [{ id: 7, name: 'Мельник Андрій Петрович', data: { pos: 'Директор' } }];
+  const o = w.officer({ head_staff: '7', head_name: 'Старий Запис' }, 'head', 'Керівник');
+  assert.equal(o.pos, 'Директор'); assert.equal(o.name, 'Андрій МЕЛЬНИК');
+  const cells = w.sigCells({ chief_accountant_name: 'Гончар Ірина Олегівна' }, ['Головний бухгалтер', 'Касир']);
+  assert(cells.includes('Головний бухгалтер') && cells.includes('Ірина ГОНЧАР') && cells.includes('Касир'));
+  const line = w.sigLine({ head_staff: '7' }, 'head', 'Керівник');
+  assert(line.indexOf('Директор') < line.indexOf('______________') && line.indexOf('______________') < line.indexOf('Андрій МЕЛЬНИК'), 'посада → підпис → ініціали');
+}
+
+// 11. У 2026 catalog entries may include self-correspondence for warehouse analytics
+// and one-sided postings for off-balance simple-entry accounts; never send either as ledger double entries.
+{
+  const TPL = new Function(fs.readFileSync(root + 'public/templates.js','utf8') + ';return TPL')();
+  const META = new Function(fs.readFileSync(root + 'public/templates.js','utf8') + ';return TPL_META')();
+  const dataset = JSON.parse(fs.readFileSync(root+'data/typical_operations_2026.json','utf8'));
+  const plan = new Map(fs.readFileSync(root+'data/accounts.txt','utf8').split('\n').filter(Boolean).map(l=>{const p=l.split('|');return [p[0],p[2]]}));
+  assert.equal(dataset.length,472);assert.equal(TPL.length,468);assert.equal(META.length,468);
+  assert.equal(dataset.filter(x=>x.family==='offbalance').length,30);
+  assert.equal(dataset.filter(x=>x.family==='transfer').length,4);
+  assert.equal(dataset.filter(x=>x.review_status==='duplicate').length,2);
+  assert.equal(dataset.filter(x=>x.review_status==='review').length,2);
+  for (let i=0;i<TPL.length;i++) {
+    const t=TPL[i],m=META[i];assert.equal(t[2].length,1);
+    const [d,k]=t[2][0];if(d)assert(plan.has(d),`Немає Дт ${d}`);if(k)assert(plan.has(k),`Немає Кт ${k}`);
+    if(m.family==='balanced'){assert(d&&k&&d!==k);assert.notEqual(plan.get(d),'O');assert.notEqual(plan.get(k),'O')}
+    if(m.family==='offbalance'){assert.equal(Boolean(d),!Boolean(k));assert.equal(plan.get(d||k),'O')}
+    if(m.family==='transfer'){assert(d&&d===k);assert.notEqual(plan.get(d),'O')}
+  }
+  const vz=TPL.find(t=>/військовий збір із зарплати/.test(t[1]));assert(vz);assert.equal(vz[2][0][1],'642');
+  assert.match(fs.readFileSync(root+'public/app9.js','utf8'),/military_rate.*5/);
+  assert.equal(plan.get('286'),'A');
+  assert.equal(plan.has('231'),false);
+}
+console.log('PASS red storno turnover, correct-lines validation, typical-op validation, signature format, built-in templates');

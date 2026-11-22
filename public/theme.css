@@ -302,3 +302,39 @@ html,body{max-width:100%;overflow-x:clip}
 /* Шапка друку: підприємство, розділ, період (картки з фільтрами у друці приховані) */
 #printhead{display:none}
 @media print{#printhead{display:block;margin:0 0 8px;font-size:10pt;line-height:1.35;color:#000}#printhead small{color:#444}}
+
+/* Підписи у формах звітності: посада — підпис — Ім’я ПРІЗВИЩЕ */
+.financial-signatures{display:grid;gap:14px;margin:18px 0 6px}
+.financial-signatures .sigrow{display:flex;align-items:flex-end;gap:12px}
+.financial-signatures .sigpos{flex:0 0 28%;font-weight:600}
+.financial-signatures .sigl{flex:0 0 26%;border-bottom:1px solid currentColor;overflow:hidden;white-space:nowrap;color:transparent}
+.financial-signatures .signame{flex:1}
+.financial-signatures .sigcap{display:flex;gap:12px;font-size:.78em;color:var(--mut)}
+.financial-signatures .sigcap span:nth-child(1){flex:0 0 28%}.financial-signatures .sigcap span:nth-child(2){flex:0 0 26%;text-align:center}
+
+/* Редактор типових операцій */
+.ted-line{display:grid;grid-template-columns:1.2fr 1.2fr 1.4fr 90px 40px;gap:6px;margin-bottom:6px}
+.ted-op{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)}
+.ted-op:first-of-type{border-top:0}.ted-act{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:800px){.ted-line{grid-template-columns:1fr 1fr}.ted-op{flex-direction:column;align-items:stretch}}
+
+/* Конструктор бухгалтерської логіки: навігація зліва + робоча область */
+.rb-shell{display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;align-items:start}
+.rb-nav{position:sticky;top:8px;max-height:calc(100vh - 24px);overflow:auto;padding:12px}
+.rb-nav input{width:100%;margin-bottom:6px}
+.rb-cap{margin:10px 0 4px;font-size:.74em;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.rb-g{border-top:1px solid var(--bd);padding:4px 0}.rb-g summary{cursor:pointer;font-weight:600;padding:4px 2px}
+.rb-i{display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:6px 8px;cursor:pointer;color:inherit;font:inherit;font-size:.92em}
+.rb-i:hover{background:var(--bg)}.rb-i.on{background:var(--ac);color:#fff}
+.rb-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e0892b;flex:none}.rb-legend{font-size:.8em;margin:8px 0 0}
+.rb-h{display:flex;align-items:center;gap:10px;margin:22px 0 8px;font-size:1.05em}
+.rb-n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#fff;font-size:.85em;flex:none}
+.rb-map-row{display:grid;grid-template-columns:auto auto auto auto;gap:8px 12px;align-items:center;padding:10px;border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;background:var(--card)}
+.rb-pair{display:flex;align-items:center;gap:6px}.rb-pair input{width:72px}.rb-lbl{font-size:.8em;color:var(--mut);min-width:40px}.rb-arrow{font-size:1.3em;color:var(--ac)}
+.rb-nm{grid-column:1/-1;font-size:.88em}
+.rb-steps{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.rb-steps li{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;padding:12px;border:1px solid var(--bd);border-radius:12px}
+.rb-steps li .rb-wide{flex:1 1 260px}.rb-hist summary{cursor:pointer}
+@media(max-width:900px){.rb-shell{grid-template-columns:1fr}.rb-nav{position:static;max-height:320px}.rb-map-row{grid-template-columns:1fr}.rb-arrow{transform:rotate(90deg)}}
+.rb-panel table{width:100%}.rb-panel td,.rb-panel th{white-space:normal;vertical-align:top}
+.rb-panel .rb-tbl{overflow-x:auto}

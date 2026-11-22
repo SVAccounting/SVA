@@ -43,8 +43,9 @@ aside a{display:block;padding:6px 10px;border-radius:6px;cursor:pointer}aside a:
 </head><body>
 <header><button class="btn" id="navtg" onclick="toggleNav()" title="Меню">☰</button><span class="logo">Pro<b>Oblik</b></span><span id="co" class="mut" style="flex:1"></span><button class="btn" onclick="logout()">Вийти</button></header>
 <div class="lay"><aside id="nav"></aside><main id="app"></main></div>
-<script src="templates.js?v=20261120hr3"></script>
+<script src="templates.js?v=20261122catalog5"></script>
 <script src="groups.js?v=20261120hr3"></script>
+<script src="people.js?v=20261122p1"></script>
 <script src="forms.js?v=20261121a"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -104,7 +105,7 @@ const views={
     <div><label>Дата</label><input id="d" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
     <div><label>Документ</label><input id="doc"></div>
     <div><label>Сума, грн</label><input id="amt" type="number" step="0.01" min="0" oninput="prev()"></div></div>
-    <div class="sc" id="pv"></div><p><button class="btn pri" onclick="saveTpl()">Провести</button> <span id="msg" class="err"></span></p></div>`;
+    <div class="sc" id="pv"></div><p><button id="pv_post_btn" class="btn pri" onclick="saveTpl()">Зареєструвати операцію</button> <button class="btn" onclick="go('offbalance')">Позабалансовий журнал</button> <span id="msg" class="err"></span></p></div>`;
     prev();
   },
   async rep(){
@@ -133,16 +134,28 @@ const views={
 async function addCo(){const name=$('#cn').value;try{const c=await api('companies',{method:'POST',body:{name}});pick(c.id,c.name)}catch(e){alert(e.message)}}
 function pick(id,name){company={id,name};localStorage.setItem('company',JSON.stringify(company));go('entries')}
 function prev(){
-  const t=TPL[$('#tp').value],s=Number($('#amt').value)||0;
-  $('#pv').innerHTML=`<table><thead><tr><th>Дт</th><th>Кт</th><th class="n">Сума</th></tr></thead><tbody>${t[2].map(([d,k,f])=>{
-  const n=accounts.find(a=>a.code===d)?.name||'',m=accounts.find(a=>a.code===k)?.name||'';
-  return `<tr data-d="${d}" data-k="${k}"><td>${d} <span class="mut">${esc(n)}</span></td><td>${k} <span class="mut">${esc(m)}</span></td><td class="n"><input class="la" type="number" step="0.01" value="${(s*f).toFixed(2)}" style="width:130px"></td></tr>`}).join('')}</tbody></table>`;
+  const t=TPL[$('#tp').value];if(!t)return;
+  const meta=TPL_META[$('#tp').value]||{},amt=Number($('#amt').value)||0,vat=S().vat?Number(S().rate)/100:0;
+  const factor=v=>v==='vat'?vat:v==='vatincl'?1+vat:Number(v)||1;
+  const transfer=meta.family==='transfer',off=meta.family==='offbalance';
+  const stockTemplate=t[2].some(([d,k])=>[d,k].some(c=>/^2/.test(c)&&c!=='23'&&c!=='285'));
+  const help=transfer?'Аналітичне переміщення: оформіть документ «Переміщення між складами» з різними складами. Журнал подвійних записів не створює Дт=Кт.':off?'Позабалансова операція реєструється за простою системою окремо від бухгалтерських проводок.':'Введіть суму саме цієї проводки. Для податків та ЄСВ використайте попередньо обчислену суму, не базу зарплати.';
+  $('#pv').innerHTML=`<p class="mut">${esc(help)}</p>${stockTemplate&&!off&&!transfer?'<p class="err">Шаблон пов’язаний із запасами: використайте складський документ (для синхронізації бухгалтерії й складських партій).</p>':''}${meta.note?`<p class="mut">${esc(meta.note)}</p>`:''}<table><thead><tr><th>${off?'Рахунок':'Дт'}</th><th>${off?'Напрям':'Кт'}</th><th class="n">Сума</th></tr></thead><tbody>${t[2].map(([d,k,f])=>`<tr data-d="${esc(d)}" data-k="${esc(k)}"><td>${esc(d||k)} <span class="mut">${esc(nameOf(d||k))}</span></td><td>${off?(d?'Прихід':'Списання'):esc(k)+' '+esc(nameOf(k))}</td><td class="n"><input class="la" type="number" min="0.01" step="0.01" value="${(amt*factor(f)).toFixed(2)}" style="width:130px"></td></tr>`).join('')}</tbody></table>`;
+  const b=$('#pv_post_btn');if(b)b.disabled=transfer||stockTemplate;
 }
 async function saveTpl(){
-  const t=TPL[$('#tp').value];
-  const lines=[...document.querySelectorAll('#pv tr[data-d]')].map(r=>({debit_acc:r.dataset.d,credit_acc:r.dataset.k,amount:r.querySelector('.la').value}));
-  try{await api('entries',{method:'POST',body:{company_id:company.id,date:$('#d').value,doc:$('#doc').value,description:t[1],lines}});go('entries')}
-  catch(e){$('#msg').textContent=e.message}
+  const t=TPL[$('#tp').value],meta=TPL_META[$('#tp').value]||{},fam=meta.family||'balanced';
+  if(fam==='transfer'){ $('#msg').textContent='Використайте складський документ переміщення — потрібна аналітика обох складів.';return }
+  if(fam==='balanced'&&t[2].some(([d,k])=>[d,k].some(c=>/^2/.test(c)&&c!=='23'&&c!=='285'))){$('#msg').textContent='Для операцій із запасами застосуйте складський документ — інакше залишки складу і бухгалтерські записи розійдуться.';return;}
+  const lines=[...document.querySelectorAll('#pv tr[data-d]')].map(r=>({debit_acc:r.dataset.d,credit_acc:r.dataset.k,amount:Number(r.querySelector('.la').value)}));
+  try{
+    if(fam==='offbalance'){
+      const l=lines[0];await api('offbalance-entries',{method:'POST',body:{company_id:company.id,date:$('#d').value,doc:$('#doc').value,
+        description:t[1],account_code:l.debit_acc||l.credit_acc,direction:l.debit_acc?'in':'out',amount:l.amount,source_uid:meta.source_uid||null}});
+      go('offbalance');return;
+    }
+    await api('entries',{method:'POST',body:{company_id:company.id,date:$('#d').value,doc:$('#doc').value,description:t[1],lines}});go('entries');
+  }catch(e){$('#msg').textContent=e.message}
 }
 async function save(){
   try{await api('entries',{method:'POST',body:{company_id:company.id,date:$('#d').value,doc:$('#doc').value,description:$('#ds').value,debit_acc:$('#dt').value,credit_acc:$('#kt').value,amount:$('#amt').value}});go('entries')}
@@ -185,7 +198,7 @@ async function auth(m){
 }
 async function boot(){
   if(!token)return login();
-  try{me=await api('me');accounts=await api('accounts')}catch(e){return login()}
+  try{me=await api('me');accounts=await api('accounts');await loadTypicalOps()}catch(e){return login()}
   await go(company?'home':'company');
 }
 const lineRows=n=>Array.from({length:n},()=>`<div class="row" style="grid-template-columns:1fr 1fr 140px;margin-bottom:6px"><select class="ld"><option value="">Дт…</option>${accOpts()}</select><select class="lk"><option value="">Кт…</option>${accOpts()}</select><input class="la2" type="number" step="0.01" min="0" placeholder="Сума"></div>`).join('');
@@ -203,6 +216,7 @@ async function subs(id){
   $('#res').innerHTML=`<div class="card sc"><h3>Відповіді студентів</h3><table><thead><tr><th>Студент</th><th>Час</th><th></th><th>Відповідь</th></tr></thead><tbody>${s.map(x=>`<tr><td>${esc(x.name)}</td><td>${String(x.created_at).slice(0,16).replace('T',' ')}</td><td>${x.correct?'✅':'❌'}</td><td>${x.answer.map(l=>`Дт ${l.debit_acc} Кт ${l.credit_acc} ${l.amount}`).join('; ')}</td></tr>`).join('')||'<tr><td colspan="4" class="mut">Відповідей немає</td></tr>'}</tbody></table></div>`;
 }
 async function reports(){
+  await loadStaff();
   const f=$('#f').value,t=$('#t').value;
   const sh=(d,days,yrs)=>{const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+days);x.setUTCFullYear(x.getUTCFullYear()+yrs);return x.toISOString().slice(0,10)};
   const O=to=>api(`osv?company_id=${company.id}&from=1900-01-01&to=${to}`),P=(a,b)=>api(`pnl?company_id=${company.id}&from=${a}&to=${b}`);
@@ -212,7 +226,7 @@ async function reports(){
   $('#res').innerHTML=renderForms(f,t,o0,o1,pc,pp,company,{first,last,prior});
 }
 </script>
-<script src="app2.js?v=20261121inventory1"></script>
+<script src="app2.js?v=20261122catalog5"></script>
 <script src="app3.js?v=20261121inventory1"></script>
 <script src="app4.js?v=20261120hr3"></script>
 <script src="app5.js?v=20261121inventory1"></script>
@@ -222,7 +236,8 @@ async function reports(){
 <script src="app9.js?v=20261120hr3"></script>
 <script src="closefin.js?v=20261121a"></script>
 <script src="posting-catalog.js?v=20261121pl1"></script>
-<script src="rulebook.js?v=20261121pl1"></script>
+<script src="rulebook.js?v=20261122rb2"></script>
+<script src="typical-ops.js?v=20261122catalog5"></script>
 <script src="export.js?v=20261121a"></script>
 <script src="barcode-scanner.js?v=20261120scan2"></script>
 <script>boot();

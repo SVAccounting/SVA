@@ -12,7 +12,7 @@ const MENU=[['Головне',[['company','🏢 Підприємства'],['mem
 ['Кадри',[['r_staff','Персонал'],['taxnorm','Податкові нормативи'],['payroll','Нарахування зарплати'],['paystatement','Зарплатна відомість']]],
 ['Звіти',[['osv','Оборотно-сальдова відомість'],['chess','Шахматка'],['card','Картка рахунка'],['rep','Форми №1, №2']]],
 ['Навчання',[['tasks','Завдання']]]];
-const HIDE_T=['add','tpl','pko','vko','bin','bout','rcpt','sale','open'];
+const HIDE_T=['add','pko','vko','bin','bout','rcpt','sale','open'];
 function nav(){
   if(!me)return;
   $('#nav').innerHTML=MENU.map(([s,it])=>`<div class="ms">${s}</div>`+it.filter(([k])=>me.role!=='superadmin'||!HIDE_T.includes(k)).map(([k,v])=>`<a class="${k===tab?'on':''}" onclick="go('${k}')">${v}</a>`).join('')).join('');
@@ -38,8 +38,8 @@ const setForm=(s,name)=>`<div class="row"><div><label>Назва підприє�
 <h3>Реквізити для фінансової звітності</h3><div class="row">${[['territory','Територія'],['katottg','КАТОТТГ'],['legal_form','Організаційно-правова форма'],['kopfg','КОПФГ'],['activity','Вид економічної діяльності'],['kved','КВЕД'],['employees','Середня кількість працівників'],['address','Адреса'],['phone','Телефон']].map(([k,t])=>`<div><label>${t}</label><input id="s_${k}" value="${esc(s[k]||'')}"></div>`).join('')}</div>`;
 const directorFields=[['head_staff','Керівник'],['chief_accountant_staff','Головний бухгалтер'],['finance_director_staff','Фінансовий директор'],['hr_head_staff','Керівник відділу кадрів']];
 const staffLeadership=st=>`<h3>Посадові особи (з довідника «Персонал»)</h3><div class="row">${directorFields.map(([k,t])=>`<div><label>${t}</label><select id="s_${k}" data-staff-role="${k}" data-selected="${esc(st[k]||'')}"><option value="">Не призначено</option></select></div>`).join('')}</div>`;
-async function fillStaffLeadership(){if(!company)return;const people=await api(`refs?company_id=${company.id}&kind=staff`);document.querySelectorAll('[data-staff-role]').forEach(el=>{const v=el.dataset.selected;el.innerHTML='<option value="">Не призначено</option>'+people.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join('');el.value=v});}
-const readLeadership=()=>Object.fromEntries(directorFields.flatMap(([key])=>[[key,$('#s_'+key)?.value||''],[key.replace('_staff','_name'),$('#s_'+key)?.selectedOptions?.[0]?.textContent?.replace('Не призначено','')||'']]));
+async function fillStaffLeadership(){if(!company)return;const people=await api(`refs?company_id=${company.id}&kind=staff`);document.querySelectorAll('[data-staff-role]').forEach(el=>{const v=el.dataset.selected;el.innerHTML='<option value="">Не призначено</option>'+people.map(u=>`<option value="${u.id}" data-pos="${esc(u.data?.pos||'')}">${esc(u.name)}</option>`).join('');el.value=v});}
+const readLeadership=()=>Object.fromEntries(directorFields.flatMap(([key])=>[[key,$('#s_'+key)?.value||''],[key.replace('_staff','_name'),$('#s_'+key)?.selectedOptions?.[0]?.textContent?.replace('Не призначено','')||''],[key.replace('_staff','_pos'),$('#s_'+key)?.selectedOptions?.[0]?.dataset?.pos||'']]));
 const readSet=()=>({code:$('#s_code').value,start:$('#s_start').value,tax:$('#s_tax').value,vat:$('#s_vat').value==='1',rate:Number($('#s_rate').value)||0,inv:$('#s_inv').value,inv_scope:$('#s_inv_scope').value,dep:$('#s_dep').value,mnma:Number($('#s_mnma').value)||0,...Object.fromEntries(['territory','katottg','legal_form','kopfg','activity','kved','employees','address','phone'].map(k=>[k,$('#s_'+k)?.value||''])),...readLeadership()});
 views.company=async()=>{
   const L=await api('companies'),T=me.role==='superadmin';
@@ -101,14 +101,17 @@ async function delRef(id){if(confirm('Видалити запис?')){await api(
 // ---------- план рахунків (редагує викладач) ----------
 views.plan=async()=>{
   const T=me.role==='superadmin',KN={A:'Активний',P:'Пасивний',AP:'Активно-пасивний',O:'Позабалансовий'};
-  $('#app').innerHTML=(T?`<div class="card"><h3>Додати або змінити рахунок (діє для всіх)</h3><div class="row"><div><label>Код</label><input id="pc"></div><div><label>Назва</label><input id="pn"></div><div><label>Тип</label><select id="pk">${OPT(Object.entries(KN),'A')}</select></div></div><p><button class="btn pri" onclick="saveAcc()">Зберегти</button> <span id="msg" class="err"></span></p></div>`:'')+
-  `<div class="card sc"><h3>План рахунків</h3><table class="account-table mobile-card-table"><thead><tr><th>Код</th><th>Назва</th><th>Тип</th><th>Дії</th></tr></thead><tbody>${accounts.map(a=>`<tr><td data-label="Код">${a.code}</td><td class="record-title" data-label="Назва">${esc(a.name)}</td><td data-label="Тип">${KN[a.kind]}</td><td class="record-actions" data-label="Дії">${T?`<button class="btn" onclick="editAcc('${a.code}')">✎</button> <button class="btn" onclick="delAcc('${a.code}')">✕</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  const tri=x=>x===true?'Так':x===false?'Ні':'Не визначено';
+  $('#app').innerHTML=(T?`<div class="card"><h3>Додати або змінити рахунок (для всіх підприємств)</h3><div class="row"><div><label>Код</label><input id="pc"></div><div><label>Назва</label><input id="pn"></div><div><label>Тип</label><select id="pk">${OPT(Object.entries(KN),'A')}</select></div></div>
+  <div class="row"><div><label>Аналітичний облік</label><select id="pa"><option value="">Не визначено</option><option value="1">Так</option><option value="0">Ні</option></select></div><div><label>Кількісний облік</label><select id="pq"><option value="">Не визначено</option><option value="1">Так</option><option value="0">Ні</option></select></div></div><label>Розрізи аналітичного обліку</label><input id="pad"><label>Правило кількісного обліку</label><input id="pqp"><p><button class="btn pri" onclick="saveAcc()">Зберегти</button> <span id="msg" class="err"></span></p></div>`:'')+
+  `<div class="card sc"><h3>План рахунків · ${accounts.length} позицій</h3><input id="plan_find" placeholder="Пошук за кодом, назвою або аналітикою" oninput="planSearch(this.value)"><table class="account-table mobile-card-table"><thead><tr><th>Код</th><th>Назва</th><th>Тип</th><th>Аналітика</th><th>Кількість</th><th>Дії</th></tr></thead><tbody>${accounts.map(a=>`<tr class="plan-row" data-search="${esc((a.code+' '+a.name+' '+(a.analytic_dimensions||'')).toLowerCase())}"><td data-label="Код">${esc(a.code)}</td><td class="record-title" data-label="Назва">${esc(a.name)}</td><td data-label="Тип">${KN[a.kind]}</td><td data-label="Аналітика" title="${esc(a.analytic_dimensions||'')}">${tri(a.analytic_enabled)}${a.analytic_dimensions?' · '+esc(a.analytic_dimensions):''}</td><td data-label="Кількість" title="${esc(a.quantity_policy||'')}">${tri(a.quantity_enabled)}</td><td class="record-actions" data-label="Дії">${T?`<button class="btn" onclick="editAcc('${a.code}')">✎</button> <button class="btn" onclick="delAcc('${a.code}')">✕</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
 };
-function editAcc(c){const a=accounts.find(x=>x.code===c);$('#pc').value=a.code;$('#pn').value=a.name;$('#pk').value=a.kind;scrollTo(0,0)}
-async function saveAcc(){try{await api('accounts',{method:'POST',body:{code:$('#pc').value.trim(),name:$('#pn').value,kind:$('#pk').value}});accounts=await api('accounts');views.plan()}catch(e){$('#msg').textContent=e.message}}
+function planSearch(q){const s=q.toLowerCase().trim();document.querySelectorAll('.plan-row').forEach(r=>r.style.display=r.dataset.search.includes(s)?'':'none')}
+function editAcc(c){const a=accounts.find(x=>x.code===c);$('#pc').value=a.code;$('#pn').value=a.name;$('#pk').value=a.kind;$('#pa').value=a.analytic_enabled===null?'':a.analytic_enabled?'1':'0';$('#pq').value=a.quantity_enabled===null?'':a.quantity_enabled?'1':'0';$('#pad').value=a.analytic_dimensions||'';$('#pqp').value=a.quantity_policy||'';scrollTo(0,0)}
+async function saveAcc(){try{const tri=x=>x===''?null:x==='1';await api('accounts',{method:'POST',body:{code:$('#pc').value.trim(),name:$('#pn').value,kind:$('#pk').value,analytic_enabled:tri($('#pa').value),analytic_dimensions:$('#pad').value,quantity_enabled:tri($('#pq').value),quantity_policy:$('#pqp').value}});accounts=await api('accounts');views.plan()}catch(e){$('#msg').textContent=e.message}}
 async function delAcc(c){if(confirm('Видалити рахунок '+c+'?'))try{await api('accounts/'+c,{method:'DELETE'});accounts=await api('accounts');views.plan()}catch(e){alert(e.message)}}
 // ---------- документи: каса, банк, склад ----------
-const COST={'702':['902','281'],'701':['901','26'],'703':['903','231']};
+const COST={'702':['902','281'],'701':['901','26'],'703':['903','23']};
 const DOCS={
 pko:{p:'ПКО',h:'Прибутковий касовий ордер (ПКО)',pk:'customer',c:['361','311','372','703','702','40','685'],post:v=>[['301',v.c,v.s]]},
 vko:{p:'ВКО',h:'Видатковий касовий ордер (ВКО)',pk:'supplier',c:['631','661','372','311','641','685'],post:v=>[[v.c,'301',v.s]]},
@@ -142,9 +145,9 @@ async function storno(id,fix){
   const date=prompt('Дата сторно (РРРР-ММ-ДД)',today);if(!date)return;
   try{await api(`entries/${id}/storno`,{method:'POST',body:{company_id:company.id,date}});go(fix?'add':'entries')}catch(e){alert(e.message)}
 }
-function prev(){
+function legacyPrev(){
   const t=TPL[$('#tp').value],s=Number($('#amt').value)||0,r=S().vat?S().rate/100:0;
-  const L=t[2].map(([d,k,f])=>[d,k,f===0.2?r:f===1.2?1+r:f]).filter(l=>l[2]>0);
+  const L=t[2].map(([d,k,f])=>[d,k,f===0.2||f==='vat'?r:f===1.2||f==='vatincl'?1+r:f]).filter(l=>l[2]>0);
   $('#pv').innerHTML=`<table><thead><tr><th>Дт</th><th>Кт</th><th class="n">Сума</th></tr></thead><tbody>${L.map(([d,k,f])=>`<tr data-d="${d}" data-k="${k}"><td>${d} <span class="mut">${esc(nameOf(d))}</span></td><td>${k} <span class="mut">${esc(nameOf(k))}</span></td><td class="n"><input class="la" type="number" step="0.01" value="${(s*f).toFixed(2)}" style="width:130px"></td></tr>`).join('')}</tbody></table>${!S().vat&&t[1].includes('ПДВ')?'<p class="mut">Підприємство не є платником ПДВ — ПДВ-проводки не формуються.</p>':''}`;
 }
 // ---------- звіти ----------

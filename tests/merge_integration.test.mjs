@@ -44,12 +44,17 @@ assert.equal(evaluateReport(REPORT_DEFAULTS.F1P,custom.rows,[{code:'44',closing:
 const panels={'#app':{innerHTML:''},'#rb_save':{disabled:false},'#rb_preview':{disabled:false},'#rb_activate':{disabled:false},'#rb_status':{textContent:''}};
 const views={};const MENU=[['Склад',[['prod','Випуск готової продукції']]],['Ціноутворення',[['prices','Встановлення цін']]]];
 const sandbox={views,MENU,F1A:[['1000','Тест','A:10']],F1P:[['1420','Прибуток','P:44']],F2:[['2000','Дохід','K:70']],me:{id:1,role:'superadmin'},company:{id:1,name:'Тест'},fmt:n=>String(n),esc:String,api:async()=>[],$:q=>panels[q]||({innerHTML:'',disabled:false}),window:null,console,Date,document:{querySelector:sel=>panels[sel]||null}};sandbox.window=sandbox;
+Object.assign(sandbox,{TPL:[['Кредити','Отримано кредит',[['311','60',1]]]],nameOf:c=>'Рахунок '+c,S:()=>({vat:true,rate:20}),go:async()=>{},accOpts:()=>''});
+sandbox.window=sandbox;
+vm.runInNewContext(file('public/posting-catalog.js'),sandbox,{filename:'posting-catalog.js'});
 vm.runInNewContext(file('public/rulebook.js'),sandbox,{filename:'rulebook.js'});
 assert.ok(views.rulebook && views.ruleDiagnostics);
 assert.equal(MENU.length,3);
 assert.match(MENU[2][0],/Сервіс суперадміна/);
 await views.rulebook();
 assert.match(panels['#app'].innerHTML,/Конструктор бухгалтерської логіки/);
+assert.match(panels['#app'].innerHTML,/Отримано кредит/,'типові операції (кредити) є в конструкторі');
+assert.match(panels['#app'].innerHTML,/Фінансова звітність/);
 await views.ruleDiagnostics();
 assert.match(panels['#app'].innerHTML,/Діагностика бухгалтерської логіки/);
 console.log('PASS inventory compatibility, production document, rulebook server wiring, financial formula, menu mounting');

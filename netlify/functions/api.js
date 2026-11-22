@@ -76,6 +76,50 @@ function calcEsv({ gross, minWage, rate, capMw, fullMain }) {
   const topUp = r2(topUpBase * rate / 100);
   return { esv: r2(actual + topUp), base: r2(actualBase + topUpBase), actual, topUp, topUpBase, cap };
 }
+// Типова операція: рядки проводок із множником від введеної суми.
+// mode: 'one' — вся сума, 'vat' — ПДВ за ставкою підприємства, 'incl' — сума з ПДВ (1 + ставка), 'k' — власний коефіцієнт.
+function cleanTypicalOp(b) {
+  const category=String(b.category||'').trim(),name=String(b.name||'').trim();
+  const family=['balanced','transfer','offbalance'].includes(b.family)?b.family:'balanced';
+  const review_status=['approved','review','duplicate'].includes(b.review_status)?b.review_status:'approved';
+  const is_active=b.is_active!==false;
+  const note=String(b.note||'').trim().slice(0,2000);
+  if(category.length<2||category.length>120)throw bad('Категорія: від 2 до 120 символів');
+  if(name.length<3||name.length>250)throw bad('Назва: від 3 до 250 символів');
+  const lines=Array.isArray(b.lines)?b.lines:[];
+  if(lines.length<1||lines.length>20)throw bad('Вкажіть 1–20 рядків');
+  if(family!=='balanced'&&lines.length!==1)throw bad('Для переміщення/позабалансової операції потрібен один рядок');
+  const out=lines.map(l=>{
+    const mode=['one','vat','incl','k'].includes(l.mode)?l.mode:'one',k=Number(l.k??1);
+    const debit_acc=String(l.debit_acc||'').trim(),credit_acc=String(l.credit_acc||'').trim();
+    if(family==='balanced'&&(!debit_acc||!credit_acc||debit_acc===credit_acc))throw bad('Для балансової операції вкажіть різні Дт і Кт');
+    if(family==='offbalance'&&Boolean(debit_acc)===Boolean(credit_acc))throw bad('Позабалансовий запис повинен мати тільки один рахунок');
+    if(family==='transfer'&&(!debit_acc||debit_acc!==credit_acc))throw bad('Для аналітичного переміщення рахунок Дт і Кт збігається');
+    if(mode==='k'&&(!Number.isFinite(k)||k<=0||k>100))throw bad('Коефіцієнт повинен бути від 0 до 100');
+    if(family!=='balanced'&&mode!=='one')throw bad('Для позабалансового обліку та переміщення потрібна фактична сума');
+    return {debit_acc,credit_acc,mode,k:mode==='k'?k:1};
+  });
+  if(is_active&&review_status!=='approved'&&note.length<15)throw bad('Для активації спірного/дубльованого шаблону потрібне обґрунтування (від 15 символів)');
+  return {category,name,lines,family,is_active,review_status,note,
+    sort:Number.isSafeInteger(Number(b.sort))?Number(b.sort):0};
+}
+async function assertTypicalAccounts(lines,family='balanced') {
+  const codes=[...new Set(lines.flatMap(l=>[l.debit_acc,l.credit_acc]).filter(Boolean))];
+  const found=await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
+  const kinds=new Map(found.map(x=>[x.code,x.kind]));
+  const miss=codes.filter(x=>!kinds.has(x));
+  if(miss.length)throw bad('Рахунків немає в плані: '+miss.join(', '));
+  if(family==='offbalance'&&codes.some(x=>kinds.get(x)!=='O'||x==='000'))throw bad('Оберіть справжній позабалансовий рахунок');
+  if(family!=='offbalance'&&codes.some(x=>kinds.get(x)==='O'))throw bad('Позабалансові рахунки не мають кореспонденції');
+}
+// Правильна проводка, яку вводять у тому ж вікні одразу після сторно (необов'язкова).
+function cleanCorrect(rows) {
+  const L = (Array.isArray(rows) ? rows : []).filter((l) => l && (String(l.debit_acc || '').trim() || String(l.credit_acc || '').trim() || Number(l.amount) > 0))
+    .map((l) => ({ debit_acc: String(l.debit_acc || '').trim(), credit_acc: String(l.credit_acc || '').trim(), amount: r2(Number(l.amount)) }));
+  if (!L.length) return [];
+  if (!validLines(L)) throw bad('Правильна проводка: вкажіть різні Дт і Кт та суму більше нуля (до 2 знаків)');
+  return L;
+}
 // Перед записом у журнал: рахунки мають існувати, пара Дт/Кт не може збігатися чи змішувати балансові та позабалансові рахунки.
 async function assertPostable(lines) {
   const pairs = lines.map((l) => (Array.isArray(l) ? [l[0], l[1]] : [l.debit_acc, l.credit_acc]).map(String));
@@ -84,7 +128,7 @@ async function assertPostable(lines) {
   const found = await sql`SELECT code,kind FROM accounts WHERE code=ANY(${codes}::text[])`;
   const kind = new Map(found.map((x) => [x.code, x.kind]));
   if (codes.some((x) => !kind.has(x))) throw bad('У проводці використано рахунок, відсутній у плані рахунків');
-  if (pairs.some(([d, k]) => (kind.get(d) === 'O') !== (kind.get(k) === 'O'))) throw bad('Не можна змішувати позабалансовий і балансовий рахунки в одній проводці');
+  if(pairs.some(([d,k])=>kind.get(d)==='O'||kind.get(k)==='O'))throw bad('Позабалансові записи ведуться в окремому журналі за простою системою');
 }
 const lockCheck = (c, date) => {
   if (c.closed_until && String(date) <= c.closed_until) throw bad(`Період до ${c.closed_until} закрито: редагування неможливе. Оформіть виправлення поточною датою (сторно або додатковий запис).`);
@@ -336,6 +380,79 @@ export default async (req) => {
     const aud = (c, action, type, oid, oldd, newd, reason) => sql`INSERT INTO audit_log(company_id,user_id,user_name,action,object_type,object_id,old_data,new_data,reason)
       VALUES (${c.id},${me.id},${me.name},${action},${type},${String(oid)},${JSON.stringify(oldd ?? null)}::jsonb,${JSON.stringify(newd ?? null)}::jsonb,${reason || null})`;
     if (res === 'me') return json({ id: me.id, name: me.name, role: T ? 'superadmin' : me.role });
+    if(res==='correspondences-291'){
+      if(M!=='GET')return fail('Тільки читання',405);
+      if(!T)return fail('Лише для суперадміністратора',403);
+      return json(await sql`SELECT source_uid,debit_acc,credit_acc,source_pages,source_entry FROM account_correspondences_291 ORDER BY source_uid`);
+    }
+    if (res === 'typical-ops') {
+      const superRole=T;
+      if(M==='GET') {
+        if(q.get('all')==='1'&&!superRole)return fail('Лише суперадміністратор може бачити архівні шаблони',403);
+        if(q.get('all')==='1')return json(await sql`SELECT * FROM typical_operations ORDER BY category,sort,id`);
+        return json(await sql`SELECT * FROM typical_operations WHERE is_active=TRUE ORDER BY category,sort,id`);
+      }
+      if(!superRole)return fail('Це може робити лише суперадміністратор',403);
+      const none={id:null};
+      if(M==='POST'&&id==='seed') {
+        if((await sql`SELECT 1 FROM typical_operations LIMIT 1`).length)throw bad('Набір уже імпортовано. Для оновлення використайте SQL-міграцію.');
+        const items=(Array.isArray(body.items)?body.items:[]).slice(0,500).map(cleanTypicalOp);
+        if(!items.length)throw bad('Немає шаблонів для імпорту');
+        for(const it of items)await assertTypicalAccounts(it.lines,it.family);
+        await sql.transaction([...items.map((it,n)=>sql`INSERT INTO typical_operations(category,name,lines,sort,family,is_active,review_status,note,updated_by)
+          VALUES (${it.category},${it.name},${JSON.stringify(it.lines)}::jsonb,${n},${it.family},${it.is_active},${it.review_status},${it.note},${me.name})`),
+          aud(none,'seed','typical_operations','all',null,{count:items.length},'Початковий імпорт')]);
+        return json({count:items.length},201);
+      }
+      if(M==='POST') {
+        const it=cleanTypicalOp(body);await assertTypicalAccounts(it.lines,it.family);
+        const oid=Number(body.id)||null;
+        if(oid){
+          const old=(await sql`SELECT * FROM typical_operations WHERE id=${oid}`)[0];
+          if(!old)return fail('Операцію не знайдено',404);
+          await sql.transaction([sql`UPDATE typical_operations SET category=${it.category},name=${it.name},lines=${JSON.stringify(it.lines)}::jsonb,
+            sort=${it.sort},family=${it.family},is_active=${it.is_active},review_status=${it.review_status},note=${it.note},updated_by=${me.name},updated_at=now() WHERE id=${oid}`,
+            aud(none,'update','typical_operation',oid,old,it,null)]);
+          return json({id:oid});
+        }
+        const duplicate=await sql`SELECT id FROM typical_operations WHERE is_active=TRUE AND lower(name)=lower(${it.name}) AND lines=${JSON.stringify(it.lines)}::jsonb LIMIT 1`;
+        if(duplicate.length&&it.is_active)return fail('Точний дублікат уже є в довіднику',409);
+        const r=(await sql`INSERT INTO typical_operations(category,name,lines,sort,family,is_active,review_status,note,updated_by)
+          VALUES (${it.category},${it.name},${JSON.stringify(it.lines)}::jsonb,${it.sort},${it.family},${it.is_active},${it.review_status},${it.note},${me.name}) RETURNING id`)[0];
+        await aud(none,'create','typical_operation',r.id,null,it,null);
+        return json({id:r.id},201);
+      }
+      if(M==='DELETE'){
+        const oid=Number(id);if(!Number.isSafeInteger(oid)||oid<=0)return fail('Неправильний ID');
+        const old=(await sql`SELECT * FROM typical_operations WHERE id=${oid}`)[0];
+        if(!old)return fail('Операцію не знайдено',404);
+        await sql.transaction([sql`UPDATE typical_operations SET is_active=FALSE,updated_by=${me.name},updated_at=now() WHERE id=${oid}`,
+          aud(none,'archive','typical_operation',oid,old,{is_active:false},'Архівування шаблону')]);
+        return json({ok:true});
+      }
+      return fail('Не знайдено',404);
+    }
+    if(res==='offbalance-entries') {
+      const cid=Number(q.get('company_id')||body.company_id);
+      const c=await own(cid,M!=='GET','entries',M==='GET'?'read':'create');
+      if(!c)return fail('Немає доступу до підприємства',403);
+      if(M==='GET')return json(await sql`SELECT id,date,doc,description,account_code,direction,amount,source_uid
+        FROM offbalance_entries WHERE company_id=${cid} ORDER BY date DESC,id DESC LIMIT 1000`);
+      if(M==='POST'){
+        const date=String(body.date||''),code=String(body.account_code||''),direction=String(body.direction||''),amount=Number(body.amount);
+        if(!validISODate(date))return fail('Некоректна дата');
+        lockCheck(c,date);
+        if(!['in','out'].includes(direction)||!Number.isFinite(amount)||amount<=0||amount>9999999999999.99||r2(amount)!==amount)return fail('Некоректна сума/тип позабалансової операції');
+        if(code==='000'||!(await sql`SELECT 1 FROM accounts WHERE code=${code} AND kind='O' LIMIT 1`).length)return fail('Це не позабалансовий рахунок');
+        const source=String(body.source_uid||'').trim()||null;
+        const desc=String(body.description||'').trim().slice(0,500),doc=String(body.doc||'').trim().slice(0,150);
+        const row=(await sql`INSERT INTO offbalance_entries(company_id,date,doc,description,account_code,direction,amount,source_uid,created_by)
+          VALUES(${cid},${date},${doc},${desc},${code},${direction},${amount},${source},${me.id}) RETURNING id`)[0];
+        await aud(c,'create','offbalance_entry',row.id,null,{date,doc,description:desc,account_code:code,direction,amount,source_uid:source},null);
+        return json({id:row.id},201);
+      }
+      return fail('Метод не підтримується',405);
+    }
     // Service catalog: ONLY the actual persisted superadmin role can manage system rules.
     if (res === 'rulebook') {
       if (id === 'active' && M === 'GET') {
@@ -491,8 +608,15 @@ export default async (req) => {
         if (!T) return fail('Лише для суперадміністратора', 403);
         const code = String(body.code || '').trim();
         if (!/^\d{1,4}$/.test(code) || !String(body.name || '').trim() || !['A', 'P', 'AP', 'O'].includes(body.kind)) return fail('Невірні дані рахунку');
-        await sql`INSERT INTO accounts(code,name,kind) VALUES (${code},${body.name.trim()},${body.kind})
-          ON CONFLICT (code) DO UPDATE SET name=EXCLUDED.name, kind=EXCLUDED.kind`;
+        const tri=v=>v===true||v==='1'?true:v===false||v==='0'?false:null;
+        const analytic=tri(body.analytic_enabled),quantity=tri(body.quantity_enabled);
+        const dimensions=String(body.analytic_dimensions||'').trim()||null;
+        const quantityPolicy=String(body.quantity_policy||'').trim()||null;
+        await sql`INSERT INTO accounts(code,name,kind,analytic_enabled,analytic_dimensions,quantity_enabled,quantity_policy)
+          VALUES (${code},${body.name.trim()},${body.kind},${analytic},${dimensions},${quantity},${quantityPolicy})
+          ON CONFLICT (code) DO UPDATE SET name=EXCLUDED.name,kind=EXCLUDED.kind,
+          analytic_enabled=EXCLUDED.analytic_enabled,analytic_dimensions=EXCLUDED.analytic_dimensions,
+          quantity_enabled=EXCLUDED.quantity_enabled,quantity_policy=EXCLUDED.quantity_policy`;
         return json({ ok: true });
       }
       if (M === 'DELETE') {
@@ -501,7 +625,7 @@ export default async (req) => {
         await sql`DELETE FROM accounts WHERE code=${id}`;
         return json({ ok: true });
       }
-      return json(await sql`SELECT code, name, kind FROM accounts ORDER BY code`);
+      return json(await sql`SELECT code,name,kind,analytic_enabled,analytic_dimensions,quantity_enabled,quantity_policy FROM accounts ORDER BY code`);
     }
 
     if (res === 'company-create-permission' && M === 'GET') {
@@ -902,8 +1026,13 @@ export default async (req) => {
         if (!Number.isSafeInteger(corrId) || corrId<=0) return fail('Некоректний номер виправлення');
         const k=(await sql`SELECT id,number,method,to_char(cdate,'YYYY-MM-DD') AS cdate,orig_amount,delta,result_amount,reason,user_name,source_doc_id,source_entry_id FROM corrections WHERE id=${corrId} AND company_id=${c.id}`)[0];
         if(!k) return fail('Виправлення не знайдено',404);
-        const entries=await sql`SELECT debit_acc,credit_acc,amount,description FROM entries WHERE corr_id=${corrId} AND company_id=${c.id} ORDER BY id`;
-        return json({correction:k,entries,company_name:c.name});
+        const entries=await sql`SELECT id,debit_acc,credit_acc,amount,description,storno_of,add_of FROM entries WHERE corr_id=${corrId} AND company_id=${c.id} ORDER BY id`;
+        // Помилкові записи (що саме виправлено) та посилання на первинний документ / регістр обліку
+        const wrong=await sql`SELECT id,to_char(date,'YYYY-MM-DD') AS date,doc,description,debit_acc,credit_acc,amount FROM entries
+          WHERE company_id=${c.id} AND (id IN (SELECT storno_of FROM entries WHERE corr_id=${corrId} AND storno_of IS NOT NULL) OR superseded_by=${corrId}) ORDER BY id`;
+        const sdoc=k.source_doc_id?(await sql`SELECT id,type,number,to_char(date,'YYYY-MM-DD') AS date,partner FROM docs WHERE id=${k.source_doc_id} AND company_id=${c.id}`)[0]:null;
+        const sent=k.source_entry_id?(await sql`SELECT id,to_char(date,'YYYY-MM-DD') AS date,doc,description FROM entries WHERE id=${k.source_entry_id} AND company_id=${c.id}`)[0]:null;
+        return json({correction:k,entries,wrong,source_doc:sdoc,source_entry:sent,company_name:c.name,company_settings:c.settings||{}});
       }
       if (M !== 'POST') {
         const c = await access(Number(q.get('company_id')), 'read');
@@ -947,6 +1076,8 @@ export default async (req) => {
         if (d.storno) throw bad('Документ уже сторновано');
         if (reason.length < 3) throw bad('Вкажіть причину виправлення');
         yearOk(d.date);
+        const CL = cleanCorrect(body.correct);
+        if (CL.length) await assertPostable(CL);
         if ((await sql`SELECT 1 FROM entries_a WHERE add_of IN (SELECT id FROM entries_a WHERE doc_id=${d.id}) LIMIT 1`).length) throw bad('Спершу сторнуйте додаткові записи до цього документа');
         const tot = Number(d.data.total || 0);
         // Сторно надходження / випуску / переміщення забирає ТМЦ зі складу: товар уже міг бути проданий або списаний.
@@ -964,6 +1095,8 @@ export default async (req) => {
           sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,storno_of,doc_id,corr_id)
             SELECT company_id, ${body.date}::date, ${number}, 'Сторно: ' || COALESCE(description,''), partner, debit_acc, credit_acc, -amount, id, doc_id, ${cid}
             FROM entries_a WHERE doc_id=${d.id} AND storno_of IS NULL AND amount > 0`,
+          ...CL.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,corr_id)
+            VALUES (${c.id},${body.date},${number},${'Правильний запис після сторно документа ' + d.number},${d.partner || ''},${l.debit_acc},${l.credit_acc},${l.amount},${cid})`),
           sql`INSERT INTO stock_moves(company_id,doc_id,date,wh_id,item_id,qty,amount,lot_key)
             SELECT company_id, doc_id, ${body.date}::date, wh_id, item_id, -qty, -amount, lot_key FROM stock_moves WHERE doc_id=${d.id}`,
           sql`UPDATE docs SET storno=true, version=version+1 WHERE id=${d.id}`,
@@ -1009,12 +1142,16 @@ export default async (req) => {
       const linked = await sql`SELECT amount FROM entries_a WHERE storno_of=${ent.id} OR add_of=${ent.id}`;
       const P = planCorr(kind, ent, linked, body);
       if (body.preview) return json(P);
+      const CL = kind === 'storno' ? cleanCorrect(body.correct) : [];
+      if (CL.length) await assertPostable(CL);
       await sql.transaction([
         sql`SELECT 1 / count(*) FROM (SELECT x.id FROM entries x WHERE x.id=${ent.id} AND x.active AND x.amount + COALESCE((SELECT SUM(s.amount) FROM entries s WHERE (s.storno_of=x.id OR s.add_of=x.id) AND s.active),0) = ${P.eff}::numeric FOR UPDATE) g`,
         ins(kind, null, ent.id, P.eff, P.delta, P.result),
         sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,storno_of,add_of,corr_id)
           VALUES (${c.id},${body.date},${number},${(kind === 'storno' ? 'Сторно: ' : 'Додатковий запис: ') + (ent.description || '')},${ent.partner || ''},${ent.debit_acc},${ent.credit_acc},${P.delta},${kind === 'storno' ? ent.id : null},${kind === 'add' ? ent.id : null},${cid})`,
-        aud(c, kind, 'entry', ent.id, { amount: P.eff }, { amount: P.result, delta: P.delta, correction: number }, reason)]);
+        ...CL.map((l) => sql`INSERT INTO entries(company_id,date,doc,description,partner,debit_acc,credit_acc,amount,corr_id)
+          VALUES (${c.id},${body.date},${number},${'Правильний запис після сторно: ' + (ent.description || '')},${ent.partner || ''},${l.debit_acc},${l.credit_acc},${l.amount},${cid})`),
+        aud(c, kind, 'entry', ent.id, { amount: P.eff }, { amount: P.result, delta: P.delta, correction: number, correct: CL }, reason)]);
       return json({ id: cid, number }, 201);
     }
     return fail('Не знайдено', 404);

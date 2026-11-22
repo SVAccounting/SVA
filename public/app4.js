@@ -27,7 +27,7 @@ function viewEntry(id){
   mdl(`<h3>Операція №${x.id}</h3><p>${x.date} · ${esc(x.doc)} · ${esc(x.description)}</p>${ln(x.debit_acc,x.credit_acc,x.amount)}<p>Діюча сума: <b>${fmt(effOf(x))}</b></p>${L.map(y=>`<p>${y.storno_of?mtag('storno'):mtag('add')} ${y.date} ${esc(y.doc)}: ${fmt(y.amount)}</p>`).join('')}<p><button class="btn" onclick="mclose()">Закрити</button></p>`);
 }
 // спільні поля діалогів
-const cf=src=>`<div class="row"><div><label>Дата коригування</label><input id="c_d" type="date" value="${today}" oninput="cNat('${src}')"></div></div><div id="c_nat"></div><label>Причина виправлення *</label><input id="c_r"><p id="c_m" class="err"></p><p><button class="btn pri" id="c_ok" onclick="cSubmit()">Підтвердити</button> <button class="btn" onclick="mclose()">Скасувати</button></p>`;
+const cf=src=>`<div class="row"><div><label>Дата коригування</label><input id="c_d" type="date" value="${today}" oninput="cNat('${src}')"></div><div><label>Виконавець</label><input id="c_who" value="${esc(fio(me.name))}" disabled></div></div><div id="c_nat"></div><label>Причина виправлення *</label><input id="c_r"><p id="c_m" class="err"></p><p><button class="btn pri" id="c_ok" onclick="cSubmit()">Підтвердити</button> <button class="btn" onclick="mclose()">Скасувати</button></p>`;
 function cNat(src){$('#c_nat').innerHTML=$('#c_d').value.slice(0,4)>src.slice(0,4)?`<label>Помилка минулого звітного року — її характер (НП(С)БО 6)</label><select id="c_n"><option value="">— оберіть —</option><option value="material">Суттєва</option><option value="immaterial">Несуттєва</option></select><p class="mut">Система не формує проводку на нерозподілений прибуток автоматично: за потреби створіть її окремою операцією після визначення характеру помилки.</p>`:''}
 async function cSubmit(){
   const b=$('#c_ok');b.disabled=true;$('#c_m').textContent='';
@@ -36,11 +36,13 @@ async function cSubmit(){
 }
 function stornoDlg(id){
   const x=EL.find(e=>e.id===id),doc=!!x.doc_id,eff=effOf(x),rows=doc?EL.filter(e=>e.doc_id===x.doc_id&&Number(e.amount)>0&&!e.storno_of):[x];
-  CK=crypto.randomUUID();CKIND='storno';CDATA=doc?{doc_id:x.doc_id}:{entry_id:id};CGET=()=>doc?{}:{amount:$('#c_a').value};
-  mdl(`<h3>${mtag('storno')} ${doc?'документа':'операції'}</h3><p class="mut">Анулює помилкову операцію записами з від’ємною сумою тієї ж кореспонденції. Початковий запис не видаляється.</p><h4>Початкові проводки</h4>${rows.map(r=>ln(r.debit_acc,r.credit_acc,r.amount)).join('')}
-  ${doc?`<h4>Сторнувальні проводки</h4>${rows.map(r=>ln(r.debit_acc,r.credit_acc,-r.amount,'t-red')).join('')}<p class="mut">Документ сторнується повністю разом зі складськими рухами.</p>`:`<label>Сума сторнування (доступно ${fmt(eff)})</label><input id="c_a" type="number" step="0.01" value="${eff}" oninput="stPrev(${id})"><h4>Сторнувальні проводки</h4><div id="c_p"></div>`}${cf(x.date)}`);
-  if(!doc)stPrev(id);cNat(x.date);
+  CK=crypto.randomUUID();CKIND='storno';CDATA=doc?{doc_id:x.doc_id}:{entry_id:id};CGET=()=>({...(doc?{}:{amount:$('#c_a').value}),correct:readLines($('#c_cl')).map(l=>({...l,amount:Number(l.amount)}))});
+  mdl(`<h3>${mtag('storno')} ${doc?'документа':'операції'}</h3><p class="mut">Анулює помилкову операцію записами з від’ємною сумою тієї ж кореспонденції (червоне сторно): обороти по рахунках зменшуються, а не зростають. Початковий запис не видаляється. Нижче можна одразу внести правильну проводку.</p><h4>Початкові проводки</h4>${rows.map(r=>ln(r.debit_acc,r.credit_acc,r.amount)).join('')}
+  ${doc?`<h4>Сторнувальні проводки</h4>${rows.map(r=>ln(r.debit_acc,r.credit_acc,-r.amount,'t-red')).join('')}<p class="mut">Документ сторнується повністю разом зі складськими рухами.</p>`:`<label>Сума сторнування (доступно ${fmt(eff)})</label><input id="c_a" type="number" step="0.01" value="${eff}" oninput="stPrev(${id})"><h4>Сторнувальні проводки</h4><div id="c_p"></div>`}
+  <h4>Правильна проводка <span class="mut">(необов’язково — буде проведена одразу після сторно)</span></h4><div id="c_cl">${lineRows(2)}</div><p><button class="btn" type="button" onclick="cAddLine()">+ рядок</button></p>${cf(x.date)}`);
+  if(!doc){stPrev(id);const r=$('#c_cl .row .la2');if(r)r.value=eff}cNat(x.date);
 }
+const cAddLine=()=>$('#c_cl').insertAdjacentHTML('beforeend',lineRows(1));
 const stPrev=id=>{const x=EL.find(e=>e.id===id);$('#c_p').innerHTML=ln(x.debit_acc,x.credit_acc,-(Number($('#c_a').value)||0),'t-red')};
 function addDlg(id){
   const x=EL.find(e=>e.id===id),eff=effOf(x);CK=crypto.randomUUID();CKIND='add';CDATA={entry_id:id};CGET=()=>({newTotal:$('#c_t').value,increase:$('#c_i').value});
@@ -107,35 +109,48 @@ function trCheck(){
   $('#tr').innerHTML=`<p class="${ok&&mok?'t-grn':'err'}"><b>${ok&&mok?'✅ Правильно.':'❌ Є помилки.'}</b> ${mok?'':'Метод обрано невірно. '}${ok?'':'Проводки не збігаються з очікуваними. '}</p><p>${esc(c.w)}</p><p class="mut">Правильна відповідь: ${c.a.map(l=>`Дт ${l[0]} Кт ${l[1]} ${fmt(l[2])}`).join('; ')}</p><h4>Вплив на рахунки (з урахуванням початкової проводки)</h4><table><thead><tr><th>Рахунок</th><th class="n">Оборот Дт</th><th class="n">Оборот Кт</th></tr></thead><tbody>${Object.entries(T).map(([k,v])=>`<tr><td>${k} ${esc(nameOf(k))}</td><td class="n">${fmt(v[0])}</td><td class="n">${fmt(v[1])}</td></tr>`).join('')}</tbody></table>`;
 }
 
-// Бухгалтерська довідка на підставі фактично проведеного коригування.
+// Бухгалтерська довідка про виправлення помилки. Реквізити первинного документа (ст. 9 Закону № 996-XIV, п. 4.3 Положення № 88):
+// назва, номер і дата (поточний період), підприємство, причина й зміст помилки з посиланням на документи й регістри,
+// кореспонденція зі знаком «мінус» та правильне проведення в грн, посади й підписи (виконавець і головний бухгалтер).
 async function printCorrectionMemo(id){
-  try {
-    const result=await api(`corrections/${id}/memo?company_id=${company.id}`);
+  try{
+    const [result]=await Promise.all([api(`corrections/${id}/memo?company_id=${company.id}`),loadStaff()]);
     const k=result.correction;
     if(!k)throw new Error('Коригування не знайдено. Оновіть журнал.');
-    const escM=v=>esc(String(v??''));
-    const method=MN[k.method]||'Коригування';
-    const src=escM(k.source_doc_id ? 'документа №'+k.source_doc_id : 'проводки №'+k.source_entry_id), companyName=escM(result.company_name), reason=escM(k.reason);
-    const lines=(result.entries||[]).map((e,i)=>`<tr><td>${i+1}</td><td>${escM(e.description)}</td><td>${escM(e.debit_acc)}</td><td>${escM(e.credit_acc)}</td><td>${fmt(e.amount)}</td></tr>`).join('');
-    const html=`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Бухгалтерська довідка ${escM(k.number)}</title><style>
-      @page{size:A4;margin:16mm 15mm}*{box-sizing:border-box}body{font:12pt/1.45 Arial,sans-serif;color:#181818;margin:0}
-      h1{text-align:center;font-size:16pt;margin:14mm 0 3mm}h2{text-align:center;font-size:11pt;font-weight:normal;margin:0 0 9mm}
-      p{margin:3mm 0}table{border-collapse:collapse;width:100%;table-layout:fixed;margin:8mm 0}th,td{border:1px solid #333;padding:3mm 2mm;overflow-wrap:anywhere}th{background:#f1f1f1;text-align:left}
-      .sign{display:flex;justify-content:space-between;gap:12mm;margin-top:18mm}.sign>div{flex:1;border-top:1px solid #222;text-align:center;padding-top:2mm;font-size:10pt}
+    const E=v=>esc(String(v??'')),st=result.company_settings||company.settings||{},acc=c=>`${E(c)} ${E(nameOf(c))}`;
+    const all=result.entries||[],neg=all.filter(e=>Number(e.amount)<0),pos=all.filter(e=>Number(e.amount)>0);
+    const wrong=neg.length?neg:(result.wrong||[]).map(e=>({...e,amount:-Math.abs(Number(e.amount))}));
+    const sum=a=>R2(a.reduce((t,e)=>t+Number(e.amount),0));
+    const rows=(a,red)=>a.length?a.map((e,i)=>`<tr><td>${i+1}</td><td>${acc(e.debit_acc)}</td><td>${acc(e.credit_acc)}</td><td class="n ${red?'red':''}">${fmt(Number(e.amount))}</td></tr>`).join('')+`<tr><td colspan="3"><b>Разом, грн</b></td><td class="n ${red?'red':''}"><b>${fmt(sum(a))}</b></td></tr>`:'<tr><td colspan="4">Записів немає</td></tr>';
+    const sd=result.source_doc,se=result.source_entry,wrongIds=(result.wrong||[]).map(e=>e.id).join(', ');
+    const origAcc=[...new Set((result.wrong||wrong).flatMap(e=>[e.debit_acc,e.credit_acc]))].join(', ');
+    const srcTxt=sd?`${E(DT[sd.type]?.h||sd.type)} № ${E(sd.number)} від ${dfmt(sd.date)}${sd.partner?', контрагент «'+E(sd.partner)+'»':''}`:se?`проводка № ${se.id} від ${dfmt(se.date)}${se.doc?', документ «'+E(se.doc)+'»':''}${se.description?': '+E(se.description):''}`:'—';
+    const regs=`журнал операцій${wrongIds?' (проводки № '+E(wrongIds)+')':''}${origAcc?', картки рахунків і оборотно-сальдова відомість по рахунках '+E(origAcc):''}`;
+    const who=(window.STAFF||[]).find(p=>String(p.name).trim().toLowerCase()===String(k.user_name||'').trim().toLowerCase());
+    const chief=officer(st,'chief_accountant','Головний бухгалтер'),head=officer(st,'head','Керівник');
+    const method=MN[k.method]||'Коригування',dm=dfmt(k.cdate);
+    const sigRow=(role,pos,name)=>`<tr><td><b>${role}</b> ${E(pos)}</td><td class="l"></td><td>${E(name||'____________________')}</td></tr><tr><td></td><td class="cap">(підпис)</td><td class="cap">(Ім’я ПРІЗВИЩЕ)</td></tr>`;
+    const html=`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Бухгалтерська довідка ${E(k.number)}</title><style>
+      @page{size:A4;margin:16mm 15mm}*{box-sizing:border-box}body{font:12pt/1.45 'Times New Roman',serif;color:#181818;margin:0}
+      h1{text-align:center;font-size:16pt;margin:10mm 0 2mm}h2{text-align:center;font-size:12pt;font-weight:normal;margin:0 0 7mm}h3{font-size:12pt;margin:6mm 0 2mm}
+      p{margin:2mm 0}table{border-collapse:collapse;width:100%;margin:3mm 0}th,td{border:1px solid #333;padding:2mm;vertical-align:top}th{background:#f1f1f1;text-align:left}
+      .n{text-align:right;white-space:nowrap}.red{color:#c00000}.sg td{border:0;padding:3mm 2mm 0;vertical-align:bottom}.sg .l{border-bottom:1px solid #222;width:30%}.cap{font-size:9pt;color:#555;text-align:center}
       .muted{color:#555;font-size:10pt}@media screen{body{max-width:190mm;margin:18px auto;padding:12px}}
-    </style></head><body><p><strong>${companyName}</strong></p><h1>БУХГАЛТЕРСЬКА ДОВІДКА</h1>
-      <h2>№ ${escM(k.number)} від ${escM(k.cdate)}</h2>
-      <p><b>Підстава:</b> виправлення запису / документа ${src}.</p>
-      <p><b>Спосіб виправлення:</b> ${escM(method)}.</p>
-      <p><b>Причина:</b> ${reason}</p>
-      <table><thead><tr><th>Показник</th><th>Сума, грн</th></tr></thead><tbody>
-      <tr><td>Сума до виправлення</td><td>${fmt(k.orig_amount)}</td></tr>
-      <tr><td>Коригувальна сума (з урахуванням знака)</td><td>${fmt(k.delta)}</td></tr>
-      <tr><td>Результат після виправлення</td><td>${fmt(k.result_amount)}</td></tr></tbody></table>
-      <h3>Коригувальні бухгалтерські записи</h3>
-      <table><thead><tr><th style="width:8%">№</th><th>Зміст</th><th style="width:12%">Дебет</th><th style="width:12%">Кредит</th><th style="width:20%">Сума, грн</th></tr></thead><tbody>${lines||'<tr><td colspan="5">Виправлення документа здійснено перепроведенням. Деталі перевірте за журналом операцій та історією документа.</td></tr>'}</tbody></table>
-      <p class="muted">Підстава — первинний документ та історія зміни. Сформовано: ${escM(k.user_name)}. Довідка підлягає перевірці та підписанню відповідальними особами.</p>
-      <div class="sign"><div>Виконавець / підпис / ПІБ</div><div>Головний бухгалтер / підпис / ПІБ</div></div>
+    </style></head><body><p><strong>${E(result.company_name)}</strong>${st.code?', код ЄДРПОУ '+E(st.code):''}</p>
+      <h1>БУХГАЛТЕРСЬКА ДОВІДКА № ${E(k.number)}</h1><h2>від ${dm} · про виправлення помилки в обліку (${E(method.toLowerCase())})</h2>
+      <h3>1. Причина та зміст помилки</h3>
+      <p>${E(k.reason)}</p>
+      <p><b>Де допущено помилку:</b> ${srcTxt}.</p>
+      <p><b>Облікові регістри, у яких відображено помилку:</b> ${regs}.</p>
+      <p><b>Дата виявлення помилки та складання довідки:</b> ${dm} (поточний звітний період).</p>
+      <h3>2. Неправильний запис — сторно (зі знаком «мінус»)</h3>
+      <table><thead><tr><th style="width:6%">№</th><th>Дебет</th><th>Кредит</th><th style="width:20%">Сума, грн</th></tr></thead><tbody>${rows(wrong,true)}</tbody></table>
+      <h3>3. Правильне проведення</h3>
+      <table><thead><tr><th style="width:6%">№</th><th>Дебет</th><th>Кредит</th><th style="width:20%">Сума, грн</th></tr></thead><tbody>${rows(pos,false)}</tbody></table>
+      <p class="muted">Сума до виправлення: ${fmt(k.orig_amount)} грн; коригувальна сума: ${fmt(k.delta)} грн; результат: ${fmt(k.result_amount)} грн.</p>
+      <h3>4. Посади та підписи</h3>
+      <table class="sg">${sigRow('Склав:',who?.data?.pos||'Виконавець',fio(k.user_name))}${sigRow('Перевірив:',chief.pos,chief.name)}${sigRow('Затвердив:',head.pos,head.name)}</table>
+      <p class="muted">Довідку складено відповідно до ст. 9 Закону України «Про бухгалтерський облік та фінансову звітність в Україні» № 996-XIV і п. 4.3 Положення про документальне забезпечення записів у бухгалтерському обліку № 88. Виправлення здійснено в поточному періоді, у якому виявлено помилку.</p>
       </body></html>`;
     const w=window.open('','_blank');if(!w)throw new Error('Дозвольте спливаючі вікна для друку довідки');
     w.document.open();w.document.write(html);w.document.close();w.focus();w.print();

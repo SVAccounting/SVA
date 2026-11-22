@@ -219,7 +219,7 @@ function renderForms(f,t,o0,o1,pCur,pPrev,companyData=null,overrides={}){
     <div>Одиниця виміру: <b>${window.FORM_UNIT==='u'?'грн, з копійками':'тис. грн без десяткового знака'}</b></div>
     <div>Складено: ☑ за НП(С)БО &nbsp; ☐ за МСФЗ</div></div>`;
   const hd=(n,k,d)=>`${meta()}<div class="financial-form-heading"><h3>${n}</h3><div>${k} · Код за ДКУД <b>${d}</b></div></div>`;
-  const signatures=`<div class="financial-signatures"><div>Керівник: ${esc(st.head_name||"____________________")} ____________________ <span>(підпис, ім’я та прізвище)</span></div><div>Головний бухгалтер: ${esc(st.chief_accountant_name||"____________________")} ____________________ <span>(підпис, ім’я та прізвище)</span></div></div>`;
+  const signatures=`<div class="financial-signatures">${sigLine(st,'head','Керівник')}${sigLine(st,'chief_accountant','Головний бухгалтер')}</div>`;
   const fmtA=n=>fmt(Math.abs(n));
   const neg=o1.filter(x=>/^(30|31|33|351)/.test(x.code)&&x.closing<-0.005);
   const open=o1.filter(x=>/^[789]/.test(x.code)&&!x.code.startsWith('79')&&Math.abs(x.closing)>0.005);

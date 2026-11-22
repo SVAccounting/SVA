@@ -141,11 +141,11 @@ function showPrint(html){
 function closePrn(){$('#prn').style.display='none';document.body.classList.remove('printing')}
 async function printDoc(id){
   const d=await api('docs/'+id),X=d.data,ref=k=>api(`refs?company_id=${company.id}&kind=${k}`);
-  const [cu,su,bk]=await Promise.all([ref('customer'),ref('supplier'),ref('bank')]);
+  const [cu,su,bk]=await Promise.all([ref('customer'),ref('supplier'),ref('bank'),loadStaff()]);
   const pt=[...cu,...su].find(x=>x.name===d.partner),b=bk[0],cs=company.settings||{},dt=dfmt(d.date),Z=x=>esc(x);
   const my=`<b>${Z(company.name)}</b>${cs.code?', ЄДРПОУ/ІПН '+Z(cs.code):''}${b?`<br>р/р ${Z(b.data.iban)} у ${Z(b.name)}, МФО ${Z(b.data.mfo)}`:''}`;
   const pp=d.partner?`<b>${Z(d.partner)}</b>${pt?.data.code?', ЄДРПОУ/ІПН '+Z(pt.data.code):''}${pt?.data.phone?', тел. '+Z(pt.data.phone):''}`:'—';
-  const sig=(...a)=>`<table style="width:100%;margin-top:28px"><tr>${a.map(x=>`<td>${x}: ______________</td>`).join('')}</tr></table>`;
+  const sig=(...a)=>`<table style="width:100%;margin-top:28px"><tr>${sigCells(cs,a)}</tr></table>`;
   const H=t=>`<h3 style="text-align:center;margin:0 0 14px">${t} № ${Z(d.number)}<br>від ${dt}</h3>`;
   const tb=cost=>`<table class="pt"><thead><tr><th>№</th><th>Найменування</th><th>Од.</th><th>К-сть</th>${cost?'<th>Собівартість, грн</th>':'<th>Ціна без ПДВ</th><th>Сума без ПДВ</th>'}</tr></thead><tbody>${X.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${Z(l.name)}</td><td>${Z(l.unit)}</td><td>${fq(l.qty)}</td>${cost?`<td>${fmt(l.cost??l.sum)}</td>`:`<td>${fmt(l.price)}</td><td>${fmt(l.sum)}</td>`}</tr>`).join('')}</tbody></table>`;
   const tot=`<p style="text-align:right">Разом без ПДВ: ${fmt(X.sum)}<br>ПДВ${X.rate?' '+X.rate+'%':''}: ${fmt(X.vat)}<br><b>Всього з ПДВ: ${fmt(X.total)}</b></p><p>Всього на суму: <b>${sw(X.total)}</b></p>`;

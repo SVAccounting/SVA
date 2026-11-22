@@ -1,0 +1,6659 @@
+[
+  {
+    "source_uid": "K0001",
+    "debit_acc": "10",
+    "credit_acc": "13",
+    "source_pages": "6; 12",
+    "source_entry": "10 (Дт); 13 (Кт)"
+  },
+  {
+    "source_uid": "K0002",
+    "debit_acc": "10",
+    "credit_acc": "15",
+    "source_pages": "6; 16",
+    "source_entry": "10 (Дт); 15 (Кт)"
+  },
+  {
+    "source_uid": "K0003",
+    "debit_acc": "10",
+    "credit_acc": "18",
+    "source_pages": "6; 22",
+    "source_entry": "10 (Дт); 18 (Кт)"
+  },
+  {
+    "source_uid": "K0004",
+    "debit_acc": "10",
+    "credit_acc": "37",
+    "source_pages": "6; 57",
+    "source_entry": "10 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0005",
+    "debit_acc": "10",
+    "credit_acc": "40",
+    "source_pages": "6; 63",
+    "source_entry": "10 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0006",
+    "debit_acc": "10",
+    "credit_acc": "41",
+    "source_pages": "6; 65",
+    "source_entry": "10 (Дт); 41 (Кт)"
+  },
+  {
+    "source_uid": "K0007",
+    "debit_acc": "10",
+    "credit_acc": "42",
+    "source_pages": "6; 67",
+    "source_entry": "10 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0008",
+    "debit_acc": "10",
+    "credit_acc": "46",
+    "source_pages": "6; 73",
+    "source_entry": "10 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0009",
+    "debit_acc": "10",
+    "credit_acc": "47",
+    "source_pages": "6; 76",
+    "source_entry": "10 (Дт); 47 (Кт)"
+  },
+  {
+    "source_uid": "K0010",
+    "debit_acc": "10",
+    "credit_acc": "48",
+    "source_pages": "6; 78",
+    "source_entry": "10 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0011",
+    "debit_acc": "10",
+    "credit_acc": "53",
+    "source_pages": "6; 86",
+    "source_entry": "10 (Дт); 53 (Кт)"
+  },
+  {
+    "source_uid": "K0012",
+    "debit_acc": "10",
+    "credit_acc": "64",
+    "source_pages": "6; 96",
+    "source_entry": "10 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0013",
+    "debit_acc": "10",
+    "credit_acc": "68",
+    "source_pages": "6; 105",
+    "source_entry": "10 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0014",
+    "debit_acc": "10",
+    "credit_acc": "74",
+    "source_pages": "6; 119",
+    "source_entry": "10 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0015",
+    "debit_acc": "11",
+    "credit_acc": "13",
+    "source_pages": "8; 12",
+    "source_entry": "11 (Дт); 13 (Кт)"
+  },
+  {
+    "source_uid": "K0016",
+    "debit_acc": "11",
+    "credit_acc": "15",
+    "source_pages": "8; 16",
+    "source_entry": "11 (Дт); 15 (Кт)"
+  },
+  {
+    "source_uid": "K0017",
+    "debit_acc": "11",
+    "credit_acc": "18",
+    "source_pages": "8; 22",
+    "source_entry": "11 (Дт); 18 (Кт)"
+  },
+  {
+    "source_uid": "K0018",
+    "debit_acc": "11",
+    "credit_acc": "23",
+    "source_pages": "8; 32",
+    "source_entry": "11 (Дт); 23 (Кт)"
+  },
+  {
+    "source_uid": "K0019",
+    "debit_acc": "11",
+    "credit_acc": "37",
+    "source_pages": "8; 57",
+    "source_entry": "11 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0020",
+    "debit_acc": "11",
+    "credit_acc": "40",
+    "source_pages": "8; 63",
+    "source_entry": "11 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0021",
+    "debit_acc": "11",
+    "credit_acc": "41",
+    "source_pages": "8; 65",
+    "source_entry": "11 (Дт); 41 (Кт)"
+  },
+  {
+    "source_uid": "K0022",
+    "debit_acc": "11",
+    "credit_acc": "42",
+    "source_pages": "8; 67",
+    "source_entry": "11 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0023",
+    "debit_acc": "11",
+    "credit_acc": "46",
+    "source_pages": "8; 73",
+    "source_entry": "11 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0024",
+    "debit_acc": "11",
+    "credit_acc": "48",
+    "source_pages": "8; 78",
+    "source_entry": "11 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0025",
+    "debit_acc": "11",
+    "credit_acc": "53",
+    "source_pages": "8; 86",
+    "source_entry": "11 (Дт); 53 (Кт)"
+  },
+  {
+    "source_uid": "K0026",
+    "debit_acc": "11",
+    "credit_acc": "64",
+    "source_pages": "8; 96",
+    "source_entry": "11 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0027",
+    "debit_acc": "11",
+    "credit_acc": "68",
+    "source_pages": "8; 105",
+    "source_entry": "11 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0028",
+    "debit_acc": "11",
+    "credit_acc": "74",
+    "source_pages": "8; 119",
+    "source_entry": "11 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0029",
+    "debit_acc": "12",
+    "credit_acc": "13",
+    "source_pages": "10; 12",
+    "source_entry": "12 (Дт); 13 (Кт)"
+  },
+  {
+    "source_uid": "K0030",
+    "debit_acc": "12",
+    "credit_acc": "14",
+    "source_pages": "10; 13",
+    "source_entry": "12 (Дт); 14 (Кт)"
+  },
+  {
+    "source_uid": "K0031",
+    "debit_acc": "12",
+    "credit_acc": "15",
+    "source_pages": "10; 16",
+    "source_entry": "12 (Дт); 15 (Кт)"
+  },
+  {
+    "source_uid": "K0032",
+    "debit_acc": "12",
+    "credit_acc": "18",
+    "source_pages": "10; 22",
+    "source_entry": "12 (Дт); 18 (Кт)"
+  },
+  {
+    "source_uid": "K0033",
+    "debit_acc": "12",
+    "credit_acc": "37",
+    "source_pages": "10; 57",
+    "source_entry": "12 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0034",
+    "debit_acc": "12",
+    "credit_acc": "40",
+    "source_pages": "10; 63",
+    "source_entry": "12 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0035",
+    "debit_acc": "12",
+    "credit_acc": "41",
+    "source_pages": "10; 65",
+    "source_entry": "12 (Дт); 41 (Кт)"
+  },
+  {
+    "source_uid": "K0036",
+    "debit_acc": "12",
+    "credit_acc": "42",
+    "source_pages": "10; 67",
+    "source_entry": "12 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0037",
+    "debit_acc": "12",
+    "credit_acc": "46",
+    "source_pages": "10; 73",
+    "source_entry": "12 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0038",
+    "debit_acc": "12",
+    "credit_acc": "48",
+    "source_pages": "10; 78",
+    "source_entry": "12 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0039",
+    "debit_acc": "12",
+    "credit_acc": "53",
+    "source_pages": "10; 86",
+    "source_entry": "12 (Дт); 53 (Кт)"
+  },
+  {
+    "source_uid": "K0040",
+    "debit_acc": "12",
+    "credit_acc": "74",
+    "source_pages": "10; 119",
+    "source_entry": "12 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0041",
+    "debit_acc": "13",
+    "credit_acc": "10",
+    "source_pages": "6; 12",
+    "source_entry": "10 (Кт); 13 (Дт)"
+  },
+  {
+    "source_uid": "K0042",
+    "debit_acc": "13",
+    "credit_acc": "11",
+    "source_pages": "8; 12",
+    "source_entry": "11 (Кт); 13 (Дт)"
+  },
+  {
+    "source_uid": "K0043",
+    "debit_acc": "13",
+    "credit_acc": "12",
+    "source_pages": "10; 12",
+    "source_entry": "12 (Кт); 13 (Дт)"
+  },
+  {
+    "source_uid": "K0044",
+    "debit_acc": "13",
+    "credit_acc": "16",
+    "source_pages": "12; 20",
+    "source_entry": "13 (Дт); 16 (Кт)"
+  },
+  {
+    "source_uid": "K0045",
+    "debit_acc": "13",
+    "credit_acc": "41",
+    "source_pages": "12; 65",
+    "source_entry": "13 (Дт); 41 (Кт)"
+  },
+  {
+    "source_uid": "K0046",
+    "debit_acc": "13",
+    "credit_acc": "42",
+    "source_pages": "12; 67",
+    "source_entry": "13 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0047",
+    "debit_acc": "13",
+    "credit_acc": "74",
+    "source_pages": "12; 119",
+    "source_entry": "13 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0048",
+    "debit_acc": "14",
+    "credit_acc": "14",
+    "source_pages": "13",
+    "source_entry": "14 (Дт); 14 (Кт)"
+  },
+  {
+    "source_uid": "K0049",
+    "debit_acc": "14",
+    "credit_acc": "18",
+    "source_pages": "13; 22",
+    "source_entry": "14 (Дт); 18 (Кт)"
+  },
+  {
+    "source_uid": "K0050",
+    "debit_acc": "14",
+    "credit_acc": "19",
+    "source_pages": "13; 24",
+    "source_entry": "14 (Дт); 19 (Кт)"
+  },
+  {
+    "source_uid": "K0051",
+    "debit_acc": "14",
+    "credit_acc": "30",
+    "source_pages": "13; 43",
+    "source_entry": "14 (Дт); 30 (Кт)"
+  },
+  {
+    "source_uid": "K0052",
+    "debit_acc": "14",
+    "credit_acc": "31",
+    "source_pages": "13; 46",
+    "source_entry": "14 (Дт); 31 (Кт)"
+  },
+  {
+    "source_uid": "K0053",
+    "debit_acc": "14",
+    "credit_acc": "35",
+    "source_pages": "13; 52",
+    "source_entry": "14 (Дт); 35 (Кт)"
+  },
+  {
+    "source_uid": "K0054",
+    "debit_acc": "14",
+    "credit_acc": "37",
+    "source_pages": "13; 57",
+    "source_entry": "14 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0055",
+    "debit_acc": "14",
+    "credit_acc": "40",
+    "source_pages": "13; 63",
+    "source_entry": "14 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0056",
+    "debit_acc": "14",
+    "credit_acc": "41",
+    "source_pages": "13; 65",
+    "source_entry": "14 (Дт); 41 (Кт)"
+  },
+  {
+    "source_uid": "K0057",
+    "debit_acc": "14",
+    "credit_acc": "42",
+    "source_pages": "13; 67",
+    "source_entry": "14 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0058",
+    "debit_acc": "14",
+    "credit_acc": "46",
+    "source_pages": "13; 73",
+    "source_entry": "14 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0059",
+    "debit_acc": "14",
+    "credit_acc": "50",
+    "source_pages": "13; 81",
+    "source_entry": "14 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0060",
+    "debit_acc": "14",
+    "credit_acc": "60",
+    "source_pages": "13; 89",
+    "source_entry": "14 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0061",
+    "debit_acc": "14",
+    "credit_acc": "64",
+    "source_pages": "13; 96",
+    "source_entry": "14 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0062",
+    "debit_acc": "14",
+    "credit_acc": "68",
+    "source_pages": "13; 105",
+    "source_entry": "14 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0063",
+    "debit_acc": "14",
+    "credit_acc": "70",
+    "source_pages": "110",
+    "source_entry": "70 (Кт)"
+  },
+  {
+    "source_uid": "K0064",
+    "debit_acc": "14",
+    "credit_acc": "72",
+    "source_pages": "13; 116",
+    "source_entry": "14 (Дт); 72 (Кт)"
+  },
+  {
+    "source_uid": "K0065",
+    "debit_acc": "14",
+    "credit_acc": "73",
+    "source_pages": "13; 117",
+    "source_entry": "14 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0066",
+    "debit_acc": "14",
+    "credit_acc": "74",
+    "source_pages": "13; 119",
+    "source_entry": "14 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0067",
+    "debit_acc": "15",
+    "credit_acc": "13",
+    "source_pages": "12; 16",
+    "source_entry": "13 (Кт); 15 (Дт)"
+  },
+  {
+    "source_uid": "K0068",
+    "debit_acc": "15",
+    "credit_acc": "20",
+    "source_pages": "16; 27",
+    "source_entry": "15 (Дт); 20 (Кт)"
+  },
+  {
+    "source_uid": "K0069",
+    "debit_acc": "15",
+    "credit_acc": "21",
+    "source_pages": "16; 29",
+    "source_entry": "15 (Дт); 21 (Кт)"
+  },
+  {
+    "source_uid": "K0070",
+    "debit_acc": "15",
+    "credit_acc": "22",
+    "source_pages": "16; 30",
+    "source_entry": "15 (Дт); 22 (Кт)"
+  },
+  {
+    "source_uid": "K0071",
+    "debit_acc": "15",
+    "credit_acc": "23",
+    "source_pages": "16; 32",
+    "source_entry": "15 (Дт); 23 (Кт)"
+  },
+  {
+    "source_uid": "K0072",
+    "debit_acc": "15",
+    "credit_acc": "28",
+    "source_pages": "16; 40",
+    "source_entry": "15 (Дт); 28 (Кт)"
+  },
+  {
+    "source_uid": "K0073",
+    "debit_acc": "15",
+    "credit_acc": "30",
+    "source_pages": "16; 43",
+    "source_entry": "15 (Дт); 30 (Кт)"
+  },
+  {
+    "source_uid": "K0074",
+    "debit_acc": "15",
+    "credit_acc": "31",
+    "source_pages": "16; 46",
+    "source_entry": "15 (Дт); 31 (Кт)"
+  },
+  {
+    "source_uid": "K0075",
+    "debit_acc": "15",
+    "credit_acc": "33",
+    "source_pages": "16; 50",
+    "source_entry": "15 (Дт); 33 (Кт)"
+  },
+  {
+    "source_uid": "K0076",
+    "debit_acc": "15",
+    "credit_acc": "37",
+    "source_pages": "16; 57",
+    "source_entry": "15 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0077",
+    "debit_acc": "15",
+    "credit_acc": "39",
+    "source_pages": "16; 60",
+    "source_entry": "15 (Дт); 39 (Кт)"
+  },
+  {
+    "source_uid": "K0078",
+    "debit_acc": "15",
+    "credit_acc": "40",
+    "source_pages": "16; 63",
+    "source_entry": "15 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0079",
+    "debit_acc": "15",
+    "credit_acc": "41",
+    "source_pages": "16; 65",
+    "source_entry": "15 (Дт); 41 (Кт)"
+  },
+  {
+    "source_uid": "K0080",
+    "debit_acc": "15",
+    "credit_acc": "42",
+    "source_pages": "16; 67",
+    "source_entry": "15 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0081",
+    "debit_acc": "15",
+    "credit_acc": "46",
+    "source_pages": "16; 73",
+    "source_entry": "15 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0082",
+    "debit_acc": "15",
+    "credit_acc": "47",
+    "source_pages": "16; 76",
+    "source_entry": "15 (Дт); 47 (Кт)"
+  },
+  {
+    "source_uid": "K0083",
+    "debit_acc": "15",
+    "credit_acc": "48",
+    "source_pages": "16; 78",
+    "source_entry": "15 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0084",
+    "debit_acc": "15",
+    "credit_acc": "50",
+    "source_pages": "16; 81",
+    "source_entry": "15 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0085",
+    "debit_acc": "15",
+    "credit_acc": "53",
+    "source_pages": "16; 86",
+    "source_entry": "15 (Дт); 53 (Кт)"
+  },
+  {
+    "source_uid": "K0086",
+    "debit_acc": "15",
+    "credit_acc": "60",
+    "source_pages": "16; 89",
+    "source_entry": "15 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0087",
+    "debit_acc": "15",
+    "credit_acc": "63",
+    "source_pages": "16; 94",
+    "source_entry": "15 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0088",
+    "debit_acc": "15",
+    "credit_acc": "64",
+    "source_pages": "16; 96",
+    "source_entry": "15 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0089",
+    "debit_acc": "15",
+    "credit_acc": "65",
+    "source_pages": "16; 99",
+    "source_entry": "15 (Дт); 65 (Кт)"
+  },
+  {
+    "source_uid": "K0090",
+    "debit_acc": "15",
+    "credit_acc": "66",
+    "source_pages": "16; 101",
+    "source_entry": "15 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0091",
+    "debit_acc": "15",
+    "credit_acc": "68",
+    "source_pages": "16; 105",
+    "source_entry": "15 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0092",
+    "debit_acc": "15",
+    "credit_acc": "74",
+    "source_pages": "16; 119",
+    "source_entry": "15 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0093",
+    "debit_acc": "15",
+    "credit_acc": "95",
+    "source_pages": "16; 143",
+    "source_entry": "15 (Дт); 95 (Кт)"
+  },
+  {
+    "source_uid": "K0094",
+    "debit_acc": "16",
+    "credit_acc": "13",
+    "source_pages": "12; 20",
+    "source_entry": "13 (Кт); 16 (Дт)"
+  },
+  {
+    "source_uid": "K0095",
+    "debit_acc": "16",
+    "credit_acc": "15",
+    "source_pages": "16; 20",
+    "source_entry": "15 (Кт); 16 (Дт)"
+  },
+  {
+    "source_uid": "K0096",
+    "debit_acc": "16",
+    "credit_acc": "18",
+    "source_pages": "20",
+    "source_entry": "16 (Дт)"
+  },
+  {
+    "source_uid": "K0097",
+    "debit_acc": "16",
+    "credit_acc": "37",
+    "source_pages": "20",
+    "source_entry": "16 (Дт)"
+  },
+  {
+    "source_uid": "K0098",
+    "debit_acc": "16",
+    "credit_acc": "40",
+    "source_pages": "20; 63",
+    "source_entry": "16 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0099",
+    "debit_acc": "16",
+    "credit_acc": "42",
+    "source_pages": "20; 67",
+    "source_entry": "16 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0100",
+    "debit_acc": "16",
+    "credit_acc": "46",
+    "source_pages": "20; 73",
+    "source_entry": "16 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0101",
+    "debit_acc": "16",
+    "credit_acc": "48",
+    "source_pages": "20; 78",
+    "source_entry": "16 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0102",
+    "debit_acc": "16",
+    "credit_acc": "53",
+    "source_pages": "20; 86",
+    "source_entry": "16 (Дт); 53 (Кт)"
+  },
+  {
+    "source_uid": "K0103",
+    "debit_acc": "16",
+    "credit_acc": "71",
+    "source_pages": "20; 114",
+    "source_entry": "16 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0104",
+    "debit_acc": "16",
+    "credit_acc": "74",
+    "source_pages": "20",
+    "source_entry": "16 (Дт)"
+  },
+  {
+    "source_uid": "K0105",
+    "debit_acc": "17",
+    "credit_acc": "54",
+    "source_pages": "21; 87",
+    "source_entry": "17 (Дт); 54 (Кт)"
+  },
+  {
+    "source_uid": "K0106",
+    "debit_acc": "17",
+    "credit_acc": "64",
+    "source_pages": "21; 96",
+    "source_entry": "17 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0107",
+    "debit_acc": "17",
+    "credit_acc": "74",
+    "source_pages": "21",
+    "source_entry": "17 (Дт)"
+  },
+  {
+    "source_uid": "K0108",
+    "debit_acc": "17",
+    "credit_acc": "98",
+    "source_pages": "21; 147",
+    "source_entry": "17 (Дт); 98 (Кт)"
+  },
+  {
+    "source_uid": "K0109",
+    "debit_acc": "18",
+    "credit_acc": "10",
+    "source_pages": "6; 22",
+    "source_entry": "10 (Кт); 18 (Дт)"
+  },
+  {
+    "source_uid": "K0110",
+    "debit_acc": "18",
+    "credit_acc": "11",
+    "source_pages": "8; 22",
+    "source_entry": "11 (Кт); 18 (Дт)"
+  },
+  {
+    "source_uid": "K0111",
+    "debit_acc": "18",
+    "credit_acc": "12",
+    "source_pages": "10; 22",
+    "source_entry": "12 (Кт); 18 (Дт)"
+  },
+  {
+    "source_uid": "K0112",
+    "debit_acc": "18",
+    "credit_acc": "16",
+    "source_pages": "20",
+    "source_entry": "16 (Кт)"
+  },
+  {
+    "source_uid": "K0113",
+    "debit_acc": "18",
+    "credit_acc": "31",
+    "source_pages": "22; 46",
+    "source_entry": "18 (Дт); 31 (Кт)"
+  },
+  {
+    "source_uid": "K0114",
+    "debit_acc": "18",
+    "credit_acc": "33",
+    "source_pages": "22; 50",
+    "source_entry": "18 (Дт); 33 (Кт)"
+  },
+  {
+    "source_uid": "K0115",
+    "debit_acc": "18",
+    "credit_acc": "35",
+    "source_pages": "22; 52",
+    "source_entry": "18 (Дт); 35 (Кт)"
+  },
+  {
+    "source_uid": "K0116",
+    "debit_acc": "18",
+    "credit_acc": "37",
+    "source_pages": "22; 57",
+    "source_entry": "18 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0117",
+    "debit_acc": "18",
+    "credit_acc": "69",
+    "source_pages": "22; 108",
+    "source_entry": "18 (Дт); 69 (Кт)"
+  },
+  {
+    "source_uid": "K0118",
+    "debit_acc": "18",
+    "credit_acc": "70",
+    "source_pages": "22; 110",
+    "source_entry": "18 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0119",
+    "debit_acc": "18",
+    "credit_acc": "73",
+    "source_pages": "22; 117",
+    "source_entry": "18 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0120",
+    "debit_acc": "18",
+    "credit_acc": "74",
+    "source_pages": "22",
+    "source_entry": "18 (Дт)"
+  },
+  {
+    "source_uid": "K0121",
+    "debit_acc": "19",
+    "credit_acc": "14",
+    "source_pages": "13; 24",
+    "source_entry": "14 (Кт); 19 (Дт)"
+  },
+  {
+    "source_uid": "K0122",
+    "debit_acc": "19",
+    "credit_acc": "37",
+    "source_pages": "24; 57",
+    "source_entry": "19 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0123",
+    "debit_acc": "19",
+    "credit_acc": "68",
+    "source_pages": "24; 105",
+    "source_entry": "19 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0124",
+    "debit_acc": "20",
+    "credit_acc": "20",
+    "source_pages": "27",
+    "source_entry": "20 (Дт); 20 (Кт)"
+  },
+  {
+    "source_uid": "K0125",
+    "debit_acc": "20",
+    "credit_acc": "23",
+    "source_pages": "27; 32",
+    "source_entry": "20 (Дт); 23 (Кт)"
+  },
+  {
+    "source_uid": "K0126",
+    "debit_acc": "20",
+    "credit_acc": "24",
+    "source_pages": "27; 35",
+    "source_entry": "20 (Дт); 24 (Кт)"
+  },
+  {
+    "source_uid": "K0127",
+    "debit_acc": "20",
+    "credit_acc": "26",
+    "source_pages": "27; 37",
+    "source_entry": "20 (Дт); 26 (Кт)"
+  },
+  {
+    "source_uid": "K0128",
+    "debit_acc": "20",
+    "credit_acc": "27",
+    "source_pages": "27; 38",
+    "source_entry": "20 (Дт); 27 (Кт)"
+  },
+  {
+    "source_uid": "K0129",
+    "debit_acc": "20",
+    "credit_acc": "28",
+    "source_pages": "27; 40",
+    "source_entry": "20 (Дт); 28 (Кт)"
+  },
+  {
+    "source_uid": "K0130",
+    "debit_acc": "20",
+    "credit_acc": "37",
+    "source_pages": "27; 57",
+    "source_entry": "20 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0131",
+    "debit_acc": "20",
+    "credit_acc": "40",
+    "source_pages": "27; 63",
+    "source_entry": "20 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0132",
+    "debit_acc": "20",
+    "credit_acc": "42",
+    "source_pages": "27; 67",
+    "source_entry": "20 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0133",
+    "debit_acc": "20",
+    "credit_acc": "46",
+    "source_pages": "27; 73",
+    "source_entry": "20 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0134",
+    "debit_acc": "20",
+    "credit_acc": "48",
+    "source_pages": "27; 78",
+    "source_entry": "20 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0135",
+    "debit_acc": "20",
+    "credit_acc": "63",
+    "source_pages": "27; 94",
+    "source_entry": "20 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0136",
+    "debit_acc": "20",
+    "credit_acc": "64",
+    "source_pages": "27; 96",
+    "source_entry": "20 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0137",
+    "debit_acc": "20",
+    "credit_acc": "68",
+    "source_pages": "27; 105",
+    "source_entry": "20 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0138",
+    "debit_acc": "20",
+    "credit_acc": "71",
+    "source_pages": "27; 114",
+    "source_entry": "20 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0139",
+    "debit_acc": "20",
+    "credit_acc": "74",
+    "source_pages": "27",
+    "source_entry": "20 (Дт)"
+  },
+  {
+    "source_uid": "K0140",
+    "debit_acc": "21",
+    "credit_acc": "16",
+    "source_pages": "20",
+    "source_entry": "16 (Кт)"
+  },
+  {
+    "source_uid": "K0141",
+    "debit_acc": "21",
+    "credit_acc": "21",
+    "source_pages": "29",
+    "source_entry": "21 (Дт); 21 (Кт)"
+  },
+  {
+    "source_uid": "K0142",
+    "debit_acc": "21",
+    "credit_acc": "23",
+    "source_pages": "29; 32",
+    "source_entry": "21 (Дт); 23 (Кт)"
+  },
+  {
+    "source_uid": "K0143",
+    "debit_acc": "21",
+    "credit_acc": "37",
+    "source_pages": "29; 57",
+    "source_entry": "21 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0144",
+    "debit_acc": "21",
+    "credit_acc": "40",
+    "source_pages": "29; 63",
+    "source_entry": "21 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0145",
+    "debit_acc": "21",
+    "credit_acc": "42",
+    "source_pages": "29; 67",
+    "source_entry": "21 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0146",
+    "debit_acc": "21",
+    "credit_acc": "46",
+    "source_pages": "29; 73",
+    "source_entry": "21 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0147",
+    "debit_acc": "21",
+    "credit_acc": "48",
+    "source_pages": "29; 78",
+    "source_entry": "21 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0148",
+    "debit_acc": "21",
+    "credit_acc": "63",
+    "source_pages": "29; 94",
+    "source_entry": "21 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0149",
+    "debit_acc": "21",
+    "credit_acc": "64",
+    "source_pages": "29; 96",
+    "source_entry": "21 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0150",
+    "debit_acc": "21",
+    "credit_acc": "68",
+    "source_pages": "29; 105",
+    "source_entry": "21 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0151",
+    "debit_acc": "21",
+    "credit_acc": "71",
+    "source_pages": "29; 114",
+    "source_entry": "21 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0152",
+    "debit_acc": "21",
+    "credit_acc": "74",
+    "source_pages": "29",
+    "source_entry": "21 (Дт)"
+  },
+  {
+    "source_uid": "K0153",
+    "debit_acc": "22",
+    "credit_acc": "23",
+    "source_pages": "30; 32",
+    "source_entry": "22 (Дт); 23 (Кт)"
+  },
+  {
+    "source_uid": "K0154",
+    "debit_acc": "22",
+    "credit_acc": "24",
+    "source_pages": "30; 35",
+    "source_entry": "22 (Дт); 24 (Кт)"
+  },
+  {
+    "source_uid": "K0155",
+    "debit_acc": "22",
+    "credit_acc": "26",
+    "source_pages": "30; 37",
+    "source_entry": "22 (Дт); 26 (Кт)"
+  },
+  {
+    "source_uid": "K0156",
+    "debit_acc": "22",
+    "credit_acc": "37",
+    "source_pages": "30; 57",
+    "source_entry": "22 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0157",
+    "debit_acc": "22",
+    "credit_acc": "40",
+    "source_pages": "30; 63",
+    "source_entry": "22 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0158",
+    "debit_acc": "22",
+    "credit_acc": "42",
+    "source_pages": "30; 67",
+    "source_entry": "22 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0159",
+    "debit_acc": "22",
+    "credit_acc": "46",
+    "source_pages": "30; 73",
+    "source_entry": "22 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0160",
+    "debit_acc": "22",
+    "credit_acc": "48",
+    "source_pages": "30; 78",
+    "source_entry": "22 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0161",
+    "debit_acc": "22",
+    "credit_acc": "63",
+    "source_pages": "30; 94",
+    "source_entry": "22 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0162",
+    "debit_acc": "22",
+    "credit_acc": "64",
+    "source_pages": "30; 96",
+    "source_entry": "22 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0163",
+    "debit_acc": "22",
+    "credit_acc": "68",
+    "source_pages": "30; 105",
+    "source_entry": "22 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0164",
+    "debit_acc": "22",
+    "credit_acc": "71",
+    "source_pages": "30; 114",
+    "source_entry": "22 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0165",
+    "debit_acc": "22",
+    "credit_acc": "74",
+    "source_pages": "30",
+    "source_entry": "22 (Дт)"
+  },
+  {
+    "source_uid": "K0166",
+    "debit_acc": "23",
+    "credit_acc": "13",
+    "source_pages": "12; 32",
+    "source_entry": "13 (Кт); 23 (Дт)"
+  },
+  {
+    "source_uid": "K0167",
+    "debit_acc": "23",
+    "credit_acc": "20",
+    "source_pages": "27; 32",
+    "source_entry": "20 (Кт); 23 (Дт)"
+  },
+  {
+    "source_uid": "K0168",
+    "debit_acc": "23",
+    "credit_acc": "21",
+    "source_pages": "29; 32",
+    "source_entry": "21 (Кт); 23 (Дт)"
+  },
+  {
+    "source_uid": "K0169",
+    "debit_acc": "23",
+    "credit_acc": "22",
+    "source_pages": "30; 32",
+    "source_entry": "22 (Кт); 23 (Дт)"
+  },
+  {
+    "source_uid": "K0170",
+    "debit_acc": "23",
+    "credit_acc": "23",
+    "source_pages": "32",
+    "source_entry": "23 (Дт); 23 (Кт)"
+  },
+  {
+    "source_uid": "K0171",
+    "debit_acc": "23",
+    "credit_acc": "24",
+    "source_pages": "32; 35",
+    "source_entry": "23 (Дт); 24 (Кт)"
+  },
+  {
+    "source_uid": "K0172",
+    "debit_acc": "23",
+    "credit_acc": "25",
+    "source_pages": "32; 36",
+    "source_entry": "23 (Дт); 25 (Кт)"
+  },
+  {
+    "source_uid": "K0173",
+    "debit_acc": "23",
+    "credit_acc": "26",
+    "source_pages": "32; 37",
+    "source_entry": "23 (Дт); 26 (Кт)"
+  },
+  {
+    "source_uid": "K0174",
+    "debit_acc": "23",
+    "credit_acc": "27",
+    "source_pages": "32; 38",
+    "source_entry": "23 (Дт); 27 (Кт)"
+  },
+  {
+    "source_uid": "K0175",
+    "debit_acc": "23",
+    "credit_acc": "28",
+    "source_pages": "32; 40",
+    "source_entry": "23 (Дт); 28 (Кт)"
+  },
+  {
+    "source_uid": "K0176",
+    "debit_acc": "23",
+    "credit_acc": "37",
+    "source_pages": "32; 57",
+    "source_entry": "23 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0177",
+    "debit_acc": "23",
+    "credit_acc": "39",
+    "source_pages": "32; 60",
+    "source_entry": "23 (Дт); 39 (Кт)"
+  },
+  {
+    "source_uid": "K0178",
+    "debit_acc": "23",
+    "credit_acc": "47",
+    "source_pages": "32; 76",
+    "source_entry": "23 (Дт); 47 (Кт)"
+  },
+  {
+    "source_uid": "K0179",
+    "debit_acc": "23",
+    "credit_acc": "63",
+    "source_pages": "32; 94",
+    "source_entry": "23 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0180",
+    "debit_acc": "23",
+    "credit_acc": "64",
+    "source_pages": "32; 96",
+    "source_entry": "23 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0181",
+    "debit_acc": "23",
+    "credit_acc": "65",
+    "source_pages": "32; 99",
+    "source_entry": "23 (Дт); 65 (Кт)"
+  },
+  {
+    "source_uid": "K0182",
+    "debit_acc": "23",
+    "credit_acc": "66",
+    "source_pages": "32; 101",
+    "source_entry": "23 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0183",
+    "debit_acc": "23",
+    "credit_acc": "68",
+    "source_pages": "32; 105",
+    "source_entry": "23 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0184",
+    "debit_acc": "23",
+    "credit_acc": "71",
+    "source_pages": "32; 114",
+    "source_entry": "23 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0185",
+    "debit_acc": "23",
+    "credit_acc": "80",
+    "source_pages": "32; 125",
+    "source_entry": "23 (Дт); 80 (Кт)"
+  },
+  {
+    "source_uid": "K0186",
+    "debit_acc": "23",
+    "credit_acc": "81",
+    "source_pages": "32; 127",
+    "source_entry": "23 (Дт); 81 (Кт)"
+  },
+  {
+    "source_uid": "K0187",
+    "debit_acc": "23",
+    "credit_acc": "82",
+    "source_pages": "32; 128",
+    "source_entry": "23 (Дт); 82 (Кт)"
+  },
+  {
+    "source_uid": "K0188",
+    "debit_acc": "23",
+    "credit_acc": "83",
+    "source_pages": "32; 129",
+    "source_entry": "23 (Дт); 83 (Кт)"
+  },
+  {
+    "source_uid": "K0189",
+    "debit_acc": "23",
+    "credit_acc": "84",
+    "source_pages": "32; 130",
+    "source_entry": "23 (Дт); 84 (Кт)"
+  },
+  {
+    "source_uid": "K0190",
+    "debit_acc": "23",
+    "credit_acc": "91",
+    "source_pages": "32; 134",
+    "source_entry": "23 (Дт); 91 (Кт)"
+  },
+  {
+    "source_uid": "K0191",
+    "debit_acc": "23",
+    "credit_acc": "95",
+    "source_pages": "32; 143",
+    "source_entry": "23 (Дт); 95 (Кт)"
+  },
+  {
+    "source_uid": "K0192",
+    "debit_acc": "24",
+    "credit_acc": "20",
+    "source_pages": "27; 35",
+    "source_entry": "20 (Кт); 24 (Дт)"
+  },
+  {
+    "source_uid": "K0193",
+    "debit_acc": "24",
+    "credit_acc": "23",
+    "source_pages": "32; 35",
+    "source_entry": "23 (Кт); 24 (Дт)"
+  },
+  {
+    "source_uid": "K0194",
+    "debit_acc": "24",
+    "credit_acc": "25",
+    "source_pages": "35; 36",
+    "source_entry": "24 (Дт); 25 (Кт)"
+  },
+  {
+    "source_uid": "K0195",
+    "debit_acc": "24",
+    "credit_acc": "63",
+    "source_pages": "35; 94",
+    "source_entry": "24 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0196",
+    "debit_acc": "24",
+    "credit_acc": "65",
+    "source_pages": "35; 99",
+    "source_entry": "24 (Дт); 65 (Кт)"
+  },
+  {
+    "source_uid": "K0197",
+    "debit_acc": "24",
+    "credit_acc": "66",
+    "source_pages": "35; 101",
+    "source_entry": "24 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0198",
+    "debit_acc": "24",
+    "credit_acc": "68",
+    "source_pages": "35; 105",
+    "source_entry": "24 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0199",
+    "debit_acc": "25",
+    "credit_acc": "23",
+    "source_pages": "32; 36",
+    "source_entry": "23 (Кт); 25 (Дт)"
+  },
+  {
+    "source_uid": "K0200",
+    "debit_acc": "25",
+    "credit_acc": "37",
+    "source_pages": "36; 57",
+    "source_entry": "25 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0201",
+    "debit_acc": "25",
+    "credit_acc": "42",
+    "source_pages": "36; 67",
+    "source_entry": "25 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0202",
+    "debit_acc": "25",
+    "credit_acc": "71",
+    "source_pages": "36; 114",
+    "source_entry": "25 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0203",
+    "debit_acc": "26",
+    "credit_acc": "23",
+    "source_pages": "32; 37",
+    "source_entry": "23 (Кт); 26 (Дт)"
+  },
+  {
+    "source_uid": "K0204",
+    "debit_acc": "26",
+    "credit_acc": "25",
+    "source_pages": "36; 37",
+    "source_entry": "25 (Кт); 26 (Дт)"
+  },
+  {
+    "source_uid": "K0205",
+    "debit_acc": "26",
+    "credit_acc": "37",
+    "source_pages": "37; 57",
+    "source_entry": "26 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0206",
+    "debit_acc": "26",
+    "credit_acc": "42",
+    "source_pages": "37; 67",
+    "source_entry": "26 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0207",
+    "debit_acc": "26",
+    "credit_acc": "71",
+    "source_pages": "37; 114",
+    "source_entry": "26 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0208",
+    "debit_acc": "27",
+    "credit_acc": "23",
+    "source_pages": "32; 38",
+    "source_entry": "23 (Кт); 27 (Дт)"
+  },
+  {
+    "source_uid": "K0209",
+    "debit_acc": "27",
+    "credit_acc": "25",
+    "source_pages": "36; 38",
+    "source_entry": "25 (Кт); 27 (Дт)"
+  },
+  {
+    "source_uid": "K0210",
+    "debit_acc": "27",
+    "credit_acc": "37",
+    "source_pages": "38; 57",
+    "source_entry": "27 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0211",
+    "debit_acc": "27",
+    "credit_acc": "42",
+    "source_pages": "38; 67",
+    "source_entry": "27 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0212",
+    "debit_acc": "27",
+    "credit_acc": "71",
+    "source_pages": "38; 114",
+    "source_entry": "27 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0213",
+    "debit_acc": "28",
+    "credit_acc": "10",
+    "source_pages": "6; 40",
+    "source_entry": "10 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0214",
+    "debit_acc": "28",
+    "credit_acc": "11",
+    "source_pages": "8; 40",
+    "source_entry": "11 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0215",
+    "debit_acc": "28",
+    "credit_acc": "12",
+    "source_pages": "10; 40",
+    "source_entry": "12 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0216",
+    "debit_acc": "28",
+    "credit_acc": "14",
+    "source_pages": "13; 40",
+    "source_entry": "14 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0217",
+    "debit_acc": "28",
+    "credit_acc": "15",
+    "source_pages": "16; 40",
+    "source_entry": "15 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0218",
+    "debit_acc": "28",
+    "credit_acc": "16",
+    "source_pages": "20; 40",
+    "source_entry": "16 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0219",
+    "debit_acc": "28",
+    "credit_acc": "18",
+    "source_pages": "22; 40",
+    "source_entry": "18 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0220",
+    "debit_acc": "28",
+    "credit_acc": "20",
+    "source_pages": "27; 40",
+    "source_entry": "20 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0221",
+    "debit_acc": "28",
+    "credit_acc": "21",
+    "source_pages": "29; 40",
+    "source_entry": "21 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0222",
+    "debit_acc": "28",
+    "credit_acc": "22",
+    "source_pages": "30; 40",
+    "source_entry": "22 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0223",
+    "debit_acc": "28",
+    "credit_acc": "23",
+    "source_pages": "32; 40",
+    "source_entry": "23 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0224",
+    "debit_acc": "28",
+    "credit_acc": "25",
+    "source_pages": "36; 40",
+    "source_entry": "25 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0225",
+    "debit_acc": "28",
+    "credit_acc": "26",
+    "source_pages": "37; 40",
+    "source_entry": "26 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0226",
+    "debit_acc": "28",
+    "credit_acc": "27",
+    "source_pages": "38; 40",
+    "source_entry": "27 (Кт); 28 (Дт)"
+  },
+  {
+    "source_uid": "K0227",
+    "debit_acc": "28",
+    "credit_acc": "28",
+    "source_pages": "40",
+    "source_entry": "28 (Дт); 28 (Кт)"
+  },
+  {
+    "source_uid": "K0228",
+    "debit_acc": "28",
+    "credit_acc": "37",
+    "source_pages": "40; 57",
+    "source_entry": "28 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0229",
+    "debit_acc": "28",
+    "credit_acc": "40",
+    "source_pages": "40; 63",
+    "source_entry": "28 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0230",
+    "debit_acc": "28",
+    "credit_acc": "42",
+    "source_pages": "40; 67",
+    "source_entry": "28 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0231",
+    "debit_acc": "28",
+    "credit_acc": "46",
+    "source_pages": "40; 73",
+    "source_entry": "28 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0232",
+    "debit_acc": "28",
+    "credit_acc": "63",
+    "source_pages": "40; 94",
+    "source_entry": "28 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0233",
+    "debit_acc": "28",
+    "credit_acc": "64",
+    "source_pages": "40; 96",
+    "source_entry": "28 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0234",
+    "debit_acc": "28",
+    "credit_acc": "68",
+    "source_pages": "40; 105",
+    "source_entry": "28 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0235",
+    "debit_acc": "28",
+    "credit_acc": "71",
+    "source_pages": "40; 114",
+    "source_entry": "28 (Дт); 71 (Кт)"
+  },
+  {
+    "source_uid": "K0236",
+    "debit_acc": "28",
+    "credit_acc": "74",
+    "source_pages": "40",
+    "source_entry": "28 (Дт)"
+  },
+  {
+    "source_uid": "K0237",
+    "debit_acc": "30",
+    "credit_acc": "14",
+    "source_pages": "13; 43",
+    "source_entry": "14 (Кт); 30 (Дт)"
+  },
+  {
+    "source_uid": "K0238",
+    "debit_acc": "30",
+    "credit_acc": "15",
+    "source_pages": "16; 43",
+    "source_entry": "15 (Кт); 30 (Дт)"
+  },
+  {
+    "source_uid": "K0239",
+    "debit_acc": "30",
+    "credit_acc": "18",
+    "source_pages": "22; 43",
+    "source_entry": "18 (Кт); 30 (Дт)"
+  },
+  {
+    "source_uid": "K0240",
+    "debit_acc": "30",
+    "credit_acc": "30",
+    "source_pages": "43",
+    "source_entry": "30 (Дт); 30 (Кт)"
+  },
+  {
+    "source_uid": "K0241",
+    "debit_acc": "30",
+    "credit_acc": "31",
+    "source_pages": "43; 46",
+    "source_entry": "30 (Дт); 31 (Кт)"
+  },
+  {
+    "source_uid": "K0242",
+    "debit_acc": "30",
+    "credit_acc": "34",
+    "source_pages": "43; 51",
+    "source_entry": "30 (Дт); 34 (Кт)"
+  },
+  {
+    "source_uid": "K0243",
+    "debit_acc": "30",
+    "credit_acc": "36",
+    "source_pages": "43; 54",
+    "source_entry": "30 (Дт); 36 (Кт)"
+  },
+  {
+    "source_uid": "K0244",
+    "debit_acc": "30",
+    "credit_acc": "37",
+    "source_pages": "43; 57",
+    "source_entry": "30 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0245",
+    "debit_acc": "30",
+    "credit_acc": "40",
+    "source_pages": "43; 63",
+    "source_entry": "30 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0246",
+    "debit_acc": "30",
+    "credit_acc": "42",
+    "source_pages": "43; 67",
+    "source_entry": "30 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0247",
+    "debit_acc": "30",
+    "credit_acc": "45",
+    "source_pages": "43; 72",
+    "source_entry": "30 (Дт); 45 (Кт)"
+  },
+  {
+    "source_uid": "K0248",
+    "debit_acc": "30",
+    "credit_acc": "46",
+    "source_pages": "43; 73",
+    "source_entry": "30 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0249",
+    "debit_acc": "30",
+    "credit_acc": "48",
+    "source_pages": "43; 78",
+    "source_entry": "30 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0250",
+    "debit_acc": "30",
+    "credit_acc": "50",
+    "source_pages": "43; 81",
+    "source_entry": "30 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0251",
+    "debit_acc": "30",
+    "credit_acc": "52",
+    "source_pages": "43; 85",
+    "source_entry": "30 (Дт); 52 (Кт)"
+  },
+  {
+    "source_uid": "K0252",
+    "debit_acc": "30",
+    "credit_acc": "55",
+    "source_pages": "43; 88",
+    "source_entry": "30 (Дт); 55 (Кт)"
+  },
+  {
+    "source_uid": "K0253",
+    "debit_acc": "30",
+    "credit_acc": "60",
+    "source_pages": "43; 89",
+    "source_entry": "30 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0254",
+    "debit_acc": "30",
+    "credit_acc": "63",
+    "source_pages": "43; 94",
+    "source_entry": "30 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0255",
+    "debit_acc": "30",
+    "credit_acc": "66",
+    "source_pages": "43; 101",
+    "source_entry": "30 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0256",
+    "debit_acc": "30",
+    "credit_acc": "68",
+    "source_pages": "43; 105",
+    "source_entry": "30 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0257",
+    "debit_acc": "30",
+    "credit_acc": "69",
+    "source_pages": "43; 108",
+    "source_entry": "30 (Дт); 69 (Кт)"
+  },
+  {
+    "source_uid": "K0258",
+    "debit_acc": "30",
+    "credit_acc": "70",
+    "source_pages": "43; 110",
+    "source_entry": "30 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0259",
+    "debit_acc": "30",
+    "credit_acc": "71",
+    "source_pages": "43",
+    "source_entry": "30 (Дт)"
+  },
+  {
+    "source_uid": "K0260",
+    "debit_acc": "30",
+    "credit_acc": "73",
+    "source_pages": "43; 117",
+    "source_entry": "30 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0261",
+    "debit_acc": "30",
+    "credit_acc": "74",
+    "source_pages": "43",
+    "source_entry": "30 (Дт)"
+  },
+  {
+    "source_uid": "K0262",
+    "debit_acc": "30",
+    "credit_acc": "76",
+    "source_pages": "43; 121",
+    "source_entry": "30 (Дт); 76 (Кт)"
+  },
+  {
+    "source_uid": "K0263",
+    "debit_acc": "31",
+    "credit_acc": "14",
+    "source_pages": "13; 46",
+    "source_entry": "14 (Кт); 31 (Дт)"
+  },
+  {
+    "source_uid": "K0264",
+    "debit_acc": "31",
+    "credit_acc": "15",
+    "source_pages": "16; 46",
+    "source_entry": "15 (Кт); 31 (Дт)"
+  },
+  {
+    "source_uid": "K0265",
+    "debit_acc": "31",
+    "credit_acc": "18",
+    "source_pages": "22; 46",
+    "source_entry": "18 (Кт); 31 (Дт)"
+  },
+  {
+    "source_uid": "K0266",
+    "debit_acc": "31",
+    "credit_acc": "30",
+    "source_pages": "43; 46",
+    "source_entry": "30 (Кт); 31 (Дт)"
+  },
+  {
+    "source_uid": "K0267",
+    "debit_acc": "31",
+    "credit_acc": "31",
+    "source_pages": "46",
+    "source_entry": "31 (Дт); 31 (Кт)"
+  },
+  {
+    "source_uid": "K0268",
+    "debit_acc": "31",
+    "credit_acc": "33",
+    "source_pages": "46; 50",
+    "source_entry": "31 (Дт); 33 (Кт)"
+  },
+  {
+    "source_uid": "K0269",
+    "debit_acc": "31",
+    "credit_acc": "34",
+    "source_pages": "46; 51",
+    "source_entry": "31 (Дт); 34 (Кт)"
+  },
+  {
+    "source_uid": "K0270",
+    "debit_acc": "31",
+    "credit_acc": "35",
+    "source_pages": "46; 52",
+    "source_entry": "31 (Дт); 35 (Кт)"
+  },
+  {
+    "source_uid": "K0271",
+    "debit_acc": "31",
+    "credit_acc": "36",
+    "source_pages": "46; 54",
+    "source_entry": "31 (Дт); 36 (Кт)"
+  },
+  {
+    "source_uid": "K0272",
+    "debit_acc": "31",
+    "credit_acc": "37",
+    "source_pages": "46; 57",
+    "source_entry": "31 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0273",
+    "debit_acc": "31",
+    "credit_acc": "40",
+    "source_pages": "46; 63",
+    "source_entry": "31 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0274",
+    "debit_acc": "31",
+    "credit_acc": "42",
+    "source_pages": "46; 67",
+    "source_entry": "31 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0275",
+    "debit_acc": "31",
+    "credit_acc": "45",
+    "source_pages": "46; 72",
+    "source_entry": "31 (Дт); 45 (Кт)"
+  },
+  {
+    "source_uid": "K0276",
+    "debit_acc": "31",
+    "credit_acc": "46",
+    "source_pages": "46; 73",
+    "source_entry": "31 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0277",
+    "debit_acc": "31",
+    "credit_acc": "48",
+    "source_pages": "46; 78",
+    "source_entry": "31 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0278",
+    "debit_acc": "31",
+    "credit_acc": "50",
+    "source_pages": "46; 81",
+    "source_entry": "31 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0279",
+    "debit_acc": "31",
+    "credit_acc": "52",
+    "source_pages": "46; 85",
+    "source_entry": "31 (Дт); 52 (Кт)"
+  },
+  {
+    "source_uid": "K0280",
+    "debit_acc": "31",
+    "credit_acc": "55",
+    "source_pages": "46; 88",
+    "source_entry": "31 (Дт); 55 (Кт)"
+  },
+  {
+    "source_uid": "K0281",
+    "debit_acc": "31",
+    "credit_acc": "60",
+    "source_pages": "46; 89",
+    "source_entry": "31 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0282",
+    "debit_acc": "31",
+    "credit_acc": "63",
+    "source_pages": "46; 94",
+    "source_entry": "31 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0283",
+    "debit_acc": "31",
+    "credit_acc": "64",
+    "source_pages": "46; 96",
+    "source_entry": "31 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0284",
+    "debit_acc": "31",
+    "credit_acc": "65",
+    "source_pages": "46; 99",
+    "source_entry": "31 (Дт); 65 (Кт)"
+  },
+  {
+    "source_uid": "K0285",
+    "debit_acc": "31",
+    "credit_acc": "66",
+    "source_pages": "46; 101",
+    "source_entry": "31 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0286",
+    "debit_acc": "31",
+    "credit_acc": "68",
+    "source_pages": "46; 105",
+    "source_entry": "31 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0287",
+    "debit_acc": "31",
+    "credit_acc": "69",
+    "source_pages": "46; 108",
+    "source_entry": "31 (Дт); 69 (Кт)"
+  },
+  {
+    "source_uid": "K0288",
+    "debit_acc": "31",
+    "credit_acc": "70",
+    "source_pages": "46; 110",
+    "source_entry": "31 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0289",
+    "debit_acc": "31",
+    "credit_acc": "71",
+    "source_pages": "46",
+    "source_entry": "31 (Дт)"
+  },
+  {
+    "source_uid": "K0290",
+    "debit_acc": "31",
+    "credit_acc": "73",
+    "source_pages": "46; 117",
+    "source_entry": "31 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0291",
+    "debit_acc": "31",
+    "credit_acc": "74",
+    "source_pages": "46",
+    "source_entry": "31 (Дт)"
+  },
+  {
+    "source_uid": "K0292",
+    "debit_acc": "31",
+    "credit_acc": "76",
+    "source_pages": "46; 121",
+    "source_entry": "31 (Дт); 76 (Кт)"
+  },
+  {
+    "source_uid": "K0293",
+    "debit_acc": "33",
+    "credit_acc": "18",
+    "source_pages": "22; 50",
+    "source_entry": "18 (Кт); 33 (Дт)"
+  },
+  {
+    "source_uid": "K0294",
+    "debit_acc": "33",
+    "credit_acc": "30",
+    "source_pages": "43; 50",
+    "source_entry": "30 (Кт); 33 (Дт)"
+  },
+  {
+    "source_uid": "K0295",
+    "debit_acc": "33",
+    "credit_acc": "31",
+    "source_pages": "46; 50",
+    "source_entry": "31 (Кт); 33 (Дт)"
+  },
+  {
+    "source_uid": "K0296",
+    "debit_acc": "33",
+    "credit_acc": "37",
+    "source_pages": "50; 57",
+    "source_entry": "33 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0297",
+    "debit_acc": "33",
+    "credit_acc": "50",
+    "source_pages": "50; 81",
+    "source_entry": "33 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0298",
+    "debit_acc": "33",
+    "credit_acc": "60",
+    "source_pages": "50; 89",
+    "source_entry": "33 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0299",
+    "debit_acc": "33",
+    "credit_acc": "68",
+    "source_pages": "50; 105",
+    "source_entry": "33 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0300",
+    "debit_acc": "33",
+    "credit_acc": "70",
+    "source_pages": "50; 110",
+    "source_entry": "33 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0301",
+    "debit_acc": "33",
+    "credit_acc": "71",
+    "source_pages": "50",
+    "source_entry": "33 (Дт)"
+  },
+  {
+    "source_uid": "K0302",
+    "debit_acc": "34",
+    "credit_acc": "36",
+    "source_pages": "51; 54",
+    "source_entry": "34 (Дт); 36 (Кт)"
+  },
+  {
+    "source_uid": "K0303",
+    "debit_acc": "34",
+    "credit_acc": "37",
+    "source_pages": "51; 57",
+    "source_entry": "34 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0304",
+    "debit_acc": "34",
+    "credit_acc": "70",
+    "source_pages": "51; 110",
+    "source_entry": "34 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0305",
+    "debit_acc": "34",
+    "credit_acc": "71",
+    "source_pages": "51",
+    "source_entry": "34 (Дт)"
+  },
+  {
+    "source_uid": "K0306",
+    "debit_acc": "34",
+    "credit_acc": "73",
+    "source_pages": "51; 117",
+    "source_entry": "34 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0307",
+    "debit_acc": "34",
+    "credit_acc": "74",
+    "source_pages": "51",
+    "source_entry": "34 (Дт)"
+  },
+  {
+    "source_uid": "K0308",
+    "debit_acc": "35",
+    "credit_acc": "14",
+    "source_pages": "13; 52",
+    "source_entry": "14 (Кт); 35 (Дт)"
+  },
+  {
+    "source_uid": "K0309",
+    "debit_acc": "35",
+    "credit_acc": "18",
+    "source_pages": "22; 52",
+    "source_entry": "18 (Кт); 35 (Дт)"
+  },
+  {
+    "source_uid": "K0310",
+    "debit_acc": "35",
+    "credit_acc": "30",
+    "source_pages": "43; 52",
+    "source_entry": "30 (Кт); 35 (Дт)"
+  },
+  {
+    "source_uid": "K0311",
+    "debit_acc": "35",
+    "credit_acc": "31",
+    "source_pages": "46; 52",
+    "source_entry": "31 (Кт); 35 (Дт)"
+  },
+  {
+    "source_uid": "K0312",
+    "debit_acc": "35",
+    "credit_acc": "36",
+    "source_pages": "52; 54",
+    "source_entry": "35 (Дт); 36 (Кт)"
+  },
+  {
+    "source_uid": "K0313",
+    "debit_acc": "35",
+    "credit_acc": "37",
+    "source_pages": "52; 57",
+    "source_entry": "35 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0314",
+    "debit_acc": "35",
+    "credit_acc": "40",
+    "source_pages": "52; 63",
+    "source_entry": "35 (Дт); 40 (Кт)"
+  },
+  {
+    "source_uid": "K0315",
+    "debit_acc": "35",
+    "credit_acc": "41",
+    "source_pages": "52; 65",
+    "source_entry": "35 (Дт); 41 (Кт)"
+  },
+  {
+    "source_uid": "K0316",
+    "debit_acc": "35",
+    "credit_acc": "42",
+    "source_pages": "52; 67",
+    "source_entry": "35 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0317",
+    "debit_acc": "35",
+    "credit_acc": "46",
+    "source_pages": "52; 73",
+    "source_entry": "35 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0318",
+    "debit_acc": "35",
+    "credit_acc": "50",
+    "source_pages": "52; 81",
+    "source_entry": "35 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0319",
+    "debit_acc": "35",
+    "credit_acc": "60",
+    "source_pages": "52; 89",
+    "source_entry": "35 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0320",
+    "debit_acc": "35",
+    "credit_acc": "64",
+    "source_pages": "52; 96",
+    "source_entry": "35 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0321",
+    "debit_acc": "35",
+    "credit_acc": "68",
+    "source_pages": "52; 105",
+    "source_entry": "35 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0322",
+    "debit_acc": "35",
+    "credit_acc": "73",
+    "source_pages": "52; 117",
+    "source_entry": "35 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0323",
+    "debit_acc": "35",
+    "credit_acc": "74",
+    "source_pages": "52",
+    "source_entry": "35 (Дт)"
+  },
+  {
+    "source_uid": "K0324",
+    "debit_acc": "36",
+    "credit_acc": "30",
+    "source_pages": "43; 54",
+    "source_entry": "30 (Кт); 36 (Дт)"
+  },
+  {
+    "source_uid": "K0325",
+    "debit_acc": "36",
+    "credit_acc": "31",
+    "source_pages": "46; 54",
+    "source_entry": "31 (Кт); 36 (Дт)"
+  },
+  {
+    "source_uid": "K0326",
+    "debit_acc": "36",
+    "credit_acc": "37",
+    "source_pages": "54; 57",
+    "source_entry": "36 (Дт); 37 (Кт)"
+  },
+  {
+    "source_uid": "K0327",
+    "debit_acc": "36",
+    "credit_acc": "42",
+    "source_pages": "54; 67",
+    "source_entry": "36 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0328",
+    "debit_acc": "36",
+    "credit_acc": "48",
+    "source_pages": "54; 78",
+    "source_entry": "36 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0329",
+    "debit_acc": "36",
+    "credit_acc": "64",
+    "source_pages": "54; 96",
+    "source_entry": "36 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0330",
+    "debit_acc": "36",
+    "credit_acc": "70",
+    "source_pages": "54; 110",
+    "source_entry": "36 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0331",
+    "debit_acc": "36",
+    "credit_acc": "71",
+    "source_pages": "54",
+    "source_entry": "36 (Дт)"
+  },
+  {
+    "source_uid": "K0332",
+    "debit_acc": "36",
+    "credit_acc": "76",
+    "source_pages": "54; 121",
+    "source_entry": "36 (Дт); 76 (Кт)"
+  },
+  {
+    "source_uid": "K0333",
+    "debit_acc": "37",
+    "credit_acc": "10",
+    "source_pages": "6; 57",
+    "source_entry": "10 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0334",
+    "debit_acc": "37",
+    "credit_acc": "11",
+    "source_pages": "8; 57",
+    "source_entry": "11 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0335",
+    "debit_acc": "37",
+    "credit_acc": "14",
+    "source_pages": "13; 57",
+    "source_entry": "14 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0336",
+    "debit_acc": "37",
+    "credit_acc": "18",
+    "source_pages": "22; 57",
+    "source_entry": "18 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0337",
+    "debit_acc": "37",
+    "credit_acc": "19",
+    "source_pages": "24; 57",
+    "source_entry": "19 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0338",
+    "debit_acc": "37",
+    "credit_acc": "20",
+    "source_pages": "27; 57",
+    "source_entry": "20 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0339",
+    "debit_acc": "37",
+    "credit_acc": "21",
+    "source_pages": "29; 57",
+    "source_entry": "21 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0340",
+    "debit_acc": "37",
+    "credit_acc": "22",
+    "source_pages": "30; 57",
+    "source_entry": "22 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0341",
+    "debit_acc": "37",
+    "credit_acc": "23",
+    "source_pages": "32; 57",
+    "source_entry": "23 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0342",
+    "debit_acc": "37",
+    "credit_acc": "24",
+    "source_pages": "35; 57",
+    "source_entry": "24 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0343",
+    "debit_acc": "37",
+    "credit_acc": "25",
+    "source_pages": "36; 57",
+    "source_entry": "25 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0344",
+    "debit_acc": "37",
+    "credit_acc": "26",
+    "source_pages": "37; 57",
+    "source_entry": "26 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0345",
+    "debit_acc": "37",
+    "credit_acc": "27",
+    "source_pages": "38; 57",
+    "source_entry": "27 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0346",
+    "debit_acc": "37",
+    "credit_acc": "28",
+    "source_pages": "40; 57",
+    "source_entry": "28 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0347",
+    "debit_acc": "37",
+    "credit_acc": "30",
+    "source_pages": "43; 57",
+    "source_entry": "30 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0348",
+    "debit_acc": "37",
+    "credit_acc": "31",
+    "source_pages": "46; 57",
+    "source_entry": "31 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0349",
+    "debit_acc": "37",
+    "credit_acc": "33",
+    "source_pages": "50; 57",
+    "source_entry": "33 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0350",
+    "debit_acc": "37",
+    "credit_acc": "36",
+    "source_pages": "54; 57",
+    "source_entry": "36 (Кт); 37 (Дт)"
+  },
+  {
+    "source_uid": "K0351",
+    "debit_acc": "37",
+    "credit_acc": "39",
+    "source_pages": "57; 60",
+    "source_entry": "37 (Дт); 39 (Кт)"
+  },
+  {
+    "source_uid": "K0352",
+    "debit_acc": "37",
+    "credit_acc": "42",
+    "source_pages": "57; 67",
+    "source_entry": "37 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0353",
+    "debit_acc": "37",
+    "credit_acc": "48",
+    "source_pages": "57; 78",
+    "source_entry": "37 (Дт); 48 (Кт)"
+  },
+  {
+    "source_uid": "K0354",
+    "debit_acc": "37",
+    "credit_acc": "50",
+    "source_pages": "57; 81",
+    "source_entry": "37 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0355",
+    "debit_acc": "37",
+    "credit_acc": "60",
+    "source_pages": "57; 89",
+    "source_entry": "37 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0356",
+    "debit_acc": "37",
+    "credit_acc": "64",
+    "source_pages": "57; 96",
+    "source_entry": "37 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0357",
+    "debit_acc": "37",
+    "credit_acc": "66",
+    "source_pages": "57; 101",
+    "source_entry": "37 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0358",
+    "debit_acc": "37",
+    "credit_acc": "68",
+    "source_pages": "57; 105",
+    "source_entry": "37 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0359",
+    "debit_acc": "37",
+    "credit_acc": "69",
+    "source_pages": "57; 108",
+    "source_entry": "37 (Дт); 69 (Кт)"
+  },
+  {
+    "source_uid": "K0360",
+    "debit_acc": "37",
+    "credit_acc": "70",
+    "source_pages": "57; 110",
+    "source_entry": "37 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0361",
+    "debit_acc": "37",
+    "credit_acc": "71",
+    "source_pages": "57",
+    "source_entry": "37 (Дт)"
+  },
+  {
+    "source_uid": "K0362",
+    "debit_acc": "37",
+    "credit_acc": "73",
+    "source_pages": "57; 117",
+    "source_entry": "37 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0363",
+    "debit_acc": "37",
+    "credit_acc": "74",
+    "source_pages": "57",
+    "source_entry": "37 (Дт)"
+  },
+  {
+    "source_uid": "K0364",
+    "debit_acc": "38",
+    "credit_acc": "36",
+    "source_pages": "54; 60",
+    "source_entry": "36 (Кт); 38 (Дт)"
+  },
+  {
+    "source_uid": "K0365",
+    "debit_acc": "38",
+    "credit_acc": "71",
+    "source_pages": "60",
+    "source_entry": "38 (Дт)"
+  },
+  {
+    "source_uid": "K0366",
+    "debit_acc": "39",
+    "credit_acc": "11",
+    "source_pages": "8; 60",
+    "source_entry": "11 (Кт); 39 (Дт)"
+  },
+  {
+    "source_uid": "K0367",
+    "debit_acc": "39",
+    "credit_acc": "13",
+    "source_pages": "12; 60",
+    "source_entry": "13 (Кт); 39 (Дт)"
+  },
+  {
+    "source_uid": "K0368",
+    "debit_acc": "39",
+    "credit_acc": "20",
+    "source_pages": "27; 60",
+    "source_entry": "20 (Кт); 39 (Дт)"
+  },
+  {
+    "source_uid": "K0369",
+    "debit_acc": "39",
+    "credit_acc": "22",
+    "source_pages": "30; 60",
+    "source_entry": "22 (Кт); 39 (Дт)"
+  },
+  {
+    "source_uid": "K0370",
+    "debit_acc": "39",
+    "credit_acc": "30",
+    "source_pages": "43; 60",
+    "source_entry": "30 (Кт); 39 (Дт)"
+  },
+  {
+    "source_uid": "K0371",
+    "debit_acc": "39",
+    "credit_acc": "31",
+    "source_pages": "46; 60",
+    "source_entry": "31 (Кт); 39 (Дт)"
+  },
+  {
+    "source_uid": "K0372",
+    "debit_acc": "39",
+    "credit_acc": "37",
+    "source_pages": "57; 60",
+    "source_entry": "37 (Кт); 39 (Дт)"
+  },
+  {
+    "source_uid": "K0373",
+    "debit_acc": "39",
+    "credit_acc": "47",
+    "source_pages": "60; 76",
+    "source_entry": "39 (Дт); 47 (Кт)"
+  },
+  {
+    "source_uid": "K0374",
+    "debit_acc": "39",
+    "credit_acc": "63",
+    "source_pages": "94",
+    "source_entry": "63 (Кт)"
+  },
+  {
+    "source_uid": "K0375",
+    "debit_acc": "39",
+    "credit_acc": "64",
+    "source_pages": "60; 96",
+    "source_entry": "39 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0376",
+    "debit_acc": "39",
+    "credit_acc": "65",
+    "source_pages": "60; 99",
+    "source_entry": "39 (Дт); 65 (Кт)"
+  },
+  {
+    "source_uid": "K0377",
+    "debit_acc": "39",
+    "credit_acc": "66",
+    "source_pages": "60; 101",
+    "source_entry": "39 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0378",
+    "debit_acc": "39",
+    "credit_acc": "68",
+    "source_pages": "60; 105",
+    "source_entry": "39 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0379",
+    "debit_acc": "39",
+    "credit_acc": "91",
+    "source_pages": "60; 134",
+    "source_entry": "39 (Дт); 91 (Кт)"
+  },
+  {
+    "source_uid": "K0380",
+    "debit_acc": "40",
+    "credit_acc": "30",
+    "source_pages": "43; 63",
+    "source_entry": "30 (Кт); 40 (Дт)"
+  },
+  {
+    "source_uid": "K0381",
+    "debit_acc": "40",
+    "credit_acc": "31",
+    "source_pages": "46; 63",
+    "source_entry": "31 (Кт); 40 (Дт)"
+  },
+  {
+    "source_uid": "K0382",
+    "debit_acc": "40",
+    "credit_acc": "42",
+    "source_pages": "63; 67",
+    "source_entry": "40 (Дт); 42 (Кт)"
+  },
+  {
+    "source_uid": "K0383",
+    "debit_acc": "40",
+    "credit_acc": "44",
+    "source_pages": "63; 71",
+    "source_entry": "40 (Дт); 44 (Кт)"
+  },
+  {
+    "source_uid": "K0384",
+    "debit_acc": "40",
+    "credit_acc": "45",
+    "source_pages": "63; 72",
+    "source_entry": "40 (Дт); 45 (Кт)"
+  },
+  {
+    "source_uid": "K0385",
+    "debit_acc": "40",
+    "credit_acc": "46",
+    "source_pages": "63; 73",
+    "source_entry": "40 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0386",
+    "debit_acc": "40",
+    "credit_acc": "67",
+    "source_pages": "63; 103",
+    "source_entry": "40 (Дт); 67 (Кт)"
+  },
+  {
+    "source_uid": "K0387",
+    "debit_acc": "41",
+    "credit_acc": "10",
+    "source_pages": "6; 65",
+    "source_entry": "10 (Кт); 41 (Дт)"
+  },
+  {
+    "source_uid": "K0388",
+    "debit_acc": "41",
+    "credit_acc": "11",
+    "source_pages": "8; 65",
+    "source_entry": "11 (Кт); 41 (Дт)"
+  },
+  {
+    "source_uid": "K0389",
+    "debit_acc": "41",
+    "credit_acc": "12",
+    "source_pages": "10; 65",
+    "source_entry": "12 (Кт); 41 (Дт)"
+  },
+  {
+    "source_uid": "K0390",
+    "debit_acc": "41",
+    "credit_acc": "13",
+    "source_pages": "12; 65",
+    "source_entry": "13 (Кт); 41 (Дт)"
+  },
+  {
+    "source_uid": "K0391",
+    "debit_acc": "41",
+    "credit_acc": "14",
+    "source_pages": "13; 65",
+    "source_entry": "14 (Кт); 41 (Дт)"
+  },
+  {
+    "source_uid": "K0392",
+    "debit_acc": "41",
+    "credit_acc": "15",
+    "source_pages": "65",
+    "source_entry": "41 (Дт)"
+  },
+  {
+    "source_uid": "K0393",
+    "debit_acc": "41",
+    "credit_acc": "35",
+    "source_pages": "52; 65",
+    "source_entry": "35 (Кт); 41 (Дт)"
+  },
+  {
+    "source_uid": "K0394",
+    "debit_acc": "41",
+    "credit_acc": "40",
+    "source_pages": "63; 65",
+    "source_entry": "40 (Кт); 41 (Дт)"
+  },
+  {
+    "source_uid": "K0395",
+    "debit_acc": "41",
+    "credit_acc": "44",
+    "source_pages": "65; 71",
+    "source_entry": "41 (Дт); 44 (Кт)"
+  },
+  {
+    "source_uid": "K0396",
+    "debit_acc": "41",
+    "credit_acc": "45",
+    "source_pages": "65; 72",
+    "source_entry": "41 (Дт); 45 (Кт)"
+  },
+  {
+    "source_uid": "K0397",
+    "debit_acc": "42",
+    "credit_acc": "10",
+    "source_pages": "6; 67",
+    "source_entry": "10 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0398",
+    "debit_acc": "42",
+    "credit_acc": "11",
+    "source_pages": "8; 67",
+    "source_entry": "11 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0399",
+    "debit_acc": "42",
+    "credit_acc": "12",
+    "source_pages": "10; 67",
+    "source_entry": "12 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0400",
+    "debit_acc": "42",
+    "credit_acc": "13",
+    "source_pages": "12; 67",
+    "source_entry": "13 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0401",
+    "debit_acc": "42",
+    "credit_acc": "14",
+    "source_pages": "13; 67",
+    "source_entry": "14 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0402",
+    "debit_acc": "42",
+    "credit_acc": "15",
+    "source_pages": "16; 67",
+    "source_entry": "15 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0403",
+    "debit_acc": "42",
+    "credit_acc": "16",
+    "source_pages": "20; 67",
+    "source_entry": "16 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0404",
+    "debit_acc": "42",
+    "credit_acc": "20",
+    "source_pages": "27; 67",
+    "source_entry": "20 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0405",
+    "debit_acc": "42",
+    "credit_acc": "22",
+    "source_pages": "30; 67",
+    "source_entry": "22 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0406",
+    "debit_acc": "42",
+    "credit_acc": "28",
+    "source_pages": "40; 67",
+    "source_entry": "28 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0407",
+    "debit_acc": "42",
+    "credit_acc": "35",
+    "source_pages": "52; 67",
+    "source_entry": "35 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0408",
+    "debit_acc": "42",
+    "credit_acc": "36",
+    "source_pages": "54; 67",
+    "source_entry": "36 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0409",
+    "debit_acc": "42",
+    "credit_acc": "37",
+    "source_pages": "57; 67",
+    "source_entry": "37 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0410",
+    "debit_acc": "42",
+    "credit_acc": "40",
+    "source_pages": "63; 67",
+    "source_entry": "40 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0411",
+    "debit_acc": "42",
+    "credit_acc": "41",
+    "source_pages": "65; 67",
+    "source_entry": "41 (Кт); 42 (Дт)"
+  },
+  {
+    "source_uid": "K0412",
+    "debit_acc": "42",
+    "credit_acc": "43",
+    "source_pages": "67; 70",
+    "source_entry": "42 (Дт); 43 (Кт)"
+  },
+  {
+    "source_uid": "K0413",
+    "debit_acc": "42",
+    "credit_acc": "44",
+    "source_pages": "67; 71",
+    "source_entry": "42 (Дт); 44 (Кт)"
+  },
+  {
+    "source_uid": "K0414",
+    "debit_acc": "42",
+    "credit_acc": "45",
+    "source_pages": "67; 72",
+    "source_entry": "42 (Дт); 45 (Кт)"
+  },
+  {
+    "source_uid": "K0415",
+    "debit_acc": "42",
+    "credit_acc": "46",
+    "source_pages": "67; 73",
+    "source_entry": "42 (Дт); 46 (Кт)"
+  },
+  {
+    "source_uid": "K0416",
+    "debit_acc": "42",
+    "credit_acc": "50",
+    "source_pages": "67; 81",
+    "source_entry": "42 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0417",
+    "debit_acc": "42",
+    "credit_acc": "51",
+    "source_pages": "67; 83",
+    "source_entry": "42 (Дт); 51 (Кт)"
+  },
+  {
+    "source_uid": "K0418",
+    "debit_acc": "42",
+    "credit_acc": "52",
+    "source_pages": "67; 85",
+    "source_entry": "42 (Дт); 52 (Кт)"
+  },
+  {
+    "source_uid": "K0419",
+    "debit_acc": "42",
+    "credit_acc": "53",
+    "source_pages": "67; 86",
+    "source_entry": "42 (Дт); 53 (Кт)"
+  },
+  {
+    "source_uid": "K0420",
+    "debit_acc": "42",
+    "credit_acc": "54",
+    "source_pages": "67; 87",
+    "source_entry": "42 (Дт); 54 (Кт)"
+  },
+  {
+    "source_uid": "K0421",
+    "debit_acc": "42",
+    "credit_acc": "55",
+    "source_pages": "67; 88",
+    "source_entry": "42 (Дт); 55 (Кт)"
+  },
+  {
+    "source_uid": "K0422",
+    "debit_acc": "42",
+    "credit_acc": "60",
+    "source_pages": "67; 89",
+    "source_entry": "42 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0423",
+    "debit_acc": "42",
+    "credit_acc": "62",
+    "source_pages": "67; 92",
+    "source_entry": "42 (Дт); 62 (Кт)"
+  },
+  {
+    "source_uid": "K0424",
+    "debit_acc": "42",
+    "credit_acc": "63",
+    "source_pages": "67; 94",
+    "source_entry": "42 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0425",
+    "debit_acc": "42",
+    "credit_acc": "64",
+    "source_pages": "67; 96",
+    "source_entry": "42 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0426",
+    "debit_acc": "42",
+    "credit_acc": "68",
+    "source_pages": "67; 105",
+    "source_entry": "42 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0427",
+    "debit_acc": "42",
+    "credit_acc": "74",
+    "source_pages": "67",
+    "source_entry": "42 (Дт)"
+  },
+  {
+    "source_uid": "K0428",
+    "debit_acc": "43",
+    "credit_acc": "40",
+    "source_pages": "63; 70",
+    "source_entry": "40 (Кт); 43 (Дт)"
+  },
+  {
+    "source_uid": "K0429",
+    "debit_acc": "43",
+    "credit_acc": "44",
+    "source_pages": "70; 71",
+    "source_entry": "43 (Дт); 44 (Кт)"
+  },
+  {
+    "source_uid": "K0430",
+    "debit_acc": "43",
+    "credit_acc": "67",
+    "source_pages": "70; 103",
+    "source_entry": "43 (Дт); 67 (Кт)"
+  },
+  {
+    "source_uid": "K0431",
+    "debit_acc": "44",
+    "credit_acc": "40",
+    "source_pages": "63; 71",
+    "source_entry": "40 (Кт); 44 (Дт)"
+  },
+  {
+    "source_uid": "K0432",
+    "debit_acc": "44",
+    "credit_acc": "42",
+    "source_pages": "67; 71",
+    "source_entry": "42 (Кт); 44 (Дт)"
+  },
+  {
+    "source_uid": "K0433",
+    "debit_acc": "44",
+    "credit_acc": "43",
+    "source_pages": "70; 71",
+    "source_entry": "43 (Кт); 44 (Дт)"
+  },
+  {
+    "source_uid": "K0434",
+    "debit_acc": "44",
+    "credit_acc": "44",
+    "source_pages": "71",
+    "source_entry": "44 (Дт); 44 (Кт)"
+  },
+  {
+    "source_uid": "K0435",
+    "debit_acc": "44",
+    "credit_acc": "45",
+    "source_pages": "71; 72",
+    "source_entry": "44 (Дт); 45 (Кт)"
+  },
+  {
+    "source_uid": "K0436",
+    "debit_acc": "44",
+    "credit_acc": "67",
+    "source_pages": "71; 103",
+    "source_entry": "44 (Дт); 67 (Кт)"
+  },
+  {
+    "source_uid": "K0437",
+    "debit_acc": "44",
+    "credit_acc": "68",
+    "source_pages": "71; 105",
+    "source_entry": "44 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0438",
+    "debit_acc": "44",
+    "credit_acc": "79",
+    "source_pages": "71; 123",
+    "source_entry": "44 (Дт); 79 (Кт)"
+  },
+  {
+    "source_uid": "K0439",
+    "debit_acc": "45",
+    "credit_acc": "19",
+    "source_pages": "24; 72",
+    "source_entry": "19 (Кт); 45 (Дт)"
+  },
+  {
+    "source_uid": "K0440",
+    "debit_acc": "45",
+    "credit_acc": "30",
+    "source_pages": "43; 72",
+    "source_entry": "30 (Кт); 45 (Дт)"
+  },
+  {
+    "source_uid": "K0441",
+    "debit_acc": "45",
+    "credit_acc": "31",
+    "source_pages": "46; 72",
+    "source_entry": "31 (Кт); 45 (Дт)"
+  },
+  {
+    "source_uid": "K0442",
+    "debit_acc": "45",
+    "credit_acc": "34",
+    "source_pages": "51; 72",
+    "source_entry": "34 (Кт); 45 (Дт)"
+  },
+  {
+    "source_uid": "K0443",
+    "debit_acc": "45",
+    "credit_acc": "42",
+    "source_pages": "67; 72",
+    "source_entry": "42 (Кт); 45 (Дт)"
+  },
+  {
+    "source_uid": "K0444",
+    "debit_acc": "45",
+    "credit_acc": "44",
+    "source_pages": "71; 72",
+    "source_entry": "44 (Кт); 45 (Дт)"
+  },
+  {
+    "source_uid": "K0445",
+    "debit_acc": "45",
+    "credit_acc": "50",
+    "source_pages": "72; 81",
+    "source_entry": "45 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0446",
+    "debit_acc": "45",
+    "credit_acc": "52",
+    "source_pages": "72; 85",
+    "source_entry": "45 (Дт); 52 (Кт)"
+  },
+  {
+    "source_uid": "K0447",
+    "debit_acc": "45",
+    "credit_acc": "60",
+    "source_pages": "72; 89",
+    "source_entry": "45 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0448",
+    "debit_acc": "45",
+    "credit_acc": "62",
+    "source_pages": "72; 92",
+    "source_entry": "45 (Дт); 62 (Кт)"
+  },
+  {
+    "source_uid": "K0449",
+    "debit_acc": "46",
+    "credit_acc": "30",
+    "source_pages": "43; 73",
+    "source_entry": "30 (Кт); 46 (Дт)"
+  },
+  {
+    "source_uid": "K0450",
+    "debit_acc": "46",
+    "credit_acc": "31",
+    "source_pages": "46; 73",
+    "source_entry": "31 (Кт); 46 (Дт)"
+  },
+  {
+    "source_uid": "K0451",
+    "debit_acc": "46",
+    "credit_acc": "40",
+    "source_pages": "63; 73",
+    "source_entry": "40 (Кт); 46 (Дт)"
+  },
+  {
+    "source_uid": "K0452",
+    "debit_acc": "46",
+    "credit_acc": "42",
+    "source_pages": "67; 73",
+    "source_entry": "42 (Кт); 46 (Дт)"
+  },
+  {
+    "source_uid": "K0453",
+    "debit_acc": "46",
+    "credit_acc": "45",
+    "source_pages": "72; 73",
+    "source_entry": "45 (Кт); 46 (Дт)"
+  },
+  {
+    "source_uid": "K0454",
+    "debit_acc": "46",
+    "credit_acc": "74",
+    "source_pages": "73",
+    "source_entry": "46 (Дт)"
+  },
+  {
+    "source_uid": "K0455",
+    "debit_acc": "47",
+    "credit_acc": "20",
+    "source_pages": "27; 76",
+    "source_entry": "20 (Кт); 47 (Дт)"
+  },
+  {
+    "source_uid": "K0456",
+    "debit_acc": "47",
+    "credit_acc": "23",
+    "source_pages": "32; 76",
+    "source_entry": "23 (Кт); 47 (Дт)"
+  },
+  {
+    "source_uid": "K0457",
+    "debit_acc": "47",
+    "credit_acc": "24",
+    "source_pages": "35; 76",
+    "source_entry": "24 (Кт); 47 (Дт)"
+  },
+  {
+    "source_uid": "K0458",
+    "debit_acc": "47",
+    "credit_acc": "25",
+    "source_pages": "36; 76",
+    "source_entry": "25 (Кт); 47 (Дт)"
+  },
+  {
+    "source_uid": "K0459",
+    "debit_acc": "47",
+    "credit_acc": "30",
+    "source_pages": "43; 76",
+    "source_entry": "30 (Кт); 47 (Дт)"
+  },
+  {
+    "source_uid": "K0460",
+    "debit_acc": "47",
+    "credit_acc": "31",
+    "source_pages": "46; 76",
+    "source_entry": "31 (Кт); 47 (Дт)"
+  },
+  {
+    "source_uid": "K0461",
+    "debit_acc": "47",
+    "credit_acc": "63",
+    "source_pages": "76; 94",
+    "source_entry": "47 (Дт); 63 (Кт)"
+  },
+  {
+    "source_uid": "K0462",
+    "debit_acc": "47",
+    "credit_acc": "65",
+    "source_pages": "76; 99",
+    "source_entry": "47 (Дт); 65 (Кт)"
+  },
+  {
+    "source_uid": "K0463",
+    "debit_acc": "47",
+    "credit_acc": "66",
+    "source_pages": "76; 101",
+    "source_entry": "47 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0464",
+    "debit_acc": "47",
+    "credit_acc": "68",
+    "source_pages": "76; 105",
+    "source_entry": "47 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0465",
+    "debit_acc": "47",
+    "credit_acc": "71",
+    "source_pages": "76",
+    "source_entry": "47 (Дт)"
+  },
+  {
+    "source_uid": "K0466",
+    "debit_acc": "48",
+    "credit_acc": "15",
+    "source_pages": "16; 78",
+    "source_entry": "15 (Кт); 48 (Дт)"
+  },
+  {
+    "source_uid": "K0467",
+    "debit_acc": "48",
+    "credit_acc": "30",
+    "source_pages": "43; 78",
+    "source_entry": "30 (Кт); 48 (Дт)"
+  },
+  {
+    "source_uid": "K0468",
+    "debit_acc": "48",
+    "credit_acc": "31",
+    "source_pages": "46; 78",
+    "source_entry": "31 (Кт); 48 (Дт)"
+  },
+  {
+    "source_uid": "K0469",
+    "debit_acc": "48",
+    "credit_acc": "37",
+    "source_pages": "57; 78",
+    "source_entry": "37 (Кт); 48 (Дт)"
+  },
+  {
+    "source_uid": "K0470",
+    "debit_acc": "48",
+    "credit_acc": "42",
+    "source_pages": "67; 78",
+    "source_entry": "42 (Кт); 48 (Дт)"
+  },
+  {
+    "source_uid": "K0471",
+    "debit_acc": "48",
+    "credit_acc": "50",
+    "source_pages": "78; 81",
+    "source_entry": "48 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0472",
+    "debit_acc": "48",
+    "credit_acc": "60",
+    "source_pages": "78; 89",
+    "source_entry": "48 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0473",
+    "debit_acc": "48",
+    "credit_acc": "64",
+    "source_pages": "78; 96",
+    "source_entry": "48 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0474",
+    "debit_acc": "48",
+    "credit_acc": "66",
+    "source_pages": "78; 101",
+    "source_entry": "48 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0475",
+    "debit_acc": "48",
+    "credit_acc": "69",
+    "source_pages": "78; 108",
+    "source_entry": "48 (Дт); 69 (Кт)"
+  },
+  {
+    "source_uid": "K0476",
+    "debit_acc": "48",
+    "credit_acc": "71",
+    "source_pages": "78",
+    "source_entry": "48 (Дт)"
+  },
+  {
+    "source_uid": "K0477",
+    "debit_acc": "48",
+    "credit_acc": "74",
+    "source_pages": "78",
+    "source_entry": "48 (Дт)"
+  },
+  {
+    "source_uid": "K0478",
+    "debit_acc": "49",
+    "credit_acc": "49",
+    "source_pages": "80",
+    "source_entry": "49 (Дт); 49 (Кт)"
+  },
+  {
+    "source_uid": "K0479",
+    "debit_acc": "49",
+    "credit_acc": "70",
+    "source_pages": "80; 110",
+    "source_entry": "49 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0480",
+    "debit_acc": "49",
+    "credit_acc": "71",
+    "source_pages": "80",
+    "source_entry": "49 (Дт)"
+  },
+  {
+    "source_uid": "K0481",
+    "debit_acc": "50",
+    "credit_acc": "15",
+    "source_pages": "16; 81",
+    "source_entry": "15 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0482",
+    "debit_acc": "50",
+    "credit_acc": "30",
+    "source_pages": "43; 81",
+    "source_entry": "30 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0483",
+    "debit_acc": "50",
+    "credit_acc": "31",
+    "source_pages": "46; 81",
+    "source_entry": "31 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0484",
+    "debit_acc": "50",
+    "credit_acc": "33",
+    "source_pages": "50; 81",
+    "source_entry": "33 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0485",
+    "debit_acc": "50",
+    "credit_acc": "34",
+    "source_pages": "51; 81",
+    "source_entry": "34 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0486",
+    "debit_acc": "50",
+    "credit_acc": "36",
+    "source_pages": "54; 81",
+    "source_entry": "36 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0487",
+    "debit_acc": "50",
+    "credit_acc": "37",
+    "source_pages": "57; 81",
+    "source_entry": "37 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0488",
+    "debit_acc": "50",
+    "credit_acc": "40",
+    "source_pages": "63; 81",
+    "source_entry": "40 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0489",
+    "debit_acc": "50",
+    "credit_acc": "42",
+    "source_pages": "67; 81",
+    "source_entry": "42 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0490",
+    "debit_acc": "50",
+    "credit_acc": "46",
+    "source_pages": "73; 81",
+    "source_entry": "46 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0491",
+    "debit_acc": "50",
+    "credit_acc": "48",
+    "source_pages": "78; 81",
+    "source_entry": "48 (Кт); 50 (Дт)"
+  },
+  {
+    "source_uid": "K0492",
+    "debit_acc": "50",
+    "credit_acc": "50",
+    "source_pages": "81",
+    "source_entry": "50 (Дт); 50 (Кт)"
+  },
+  {
+    "source_uid": "K0493",
+    "debit_acc": "50",
+    "credit_acc": "52",
+    "source_pages": "81; 85",
+    "source_entry": "50 (Дт); 52 (Кт)"
+  },
+  {
+    "source_uid": "K0494",
+    "debit_acc": "50",
+    "credit_acc": "55",
+    "source_pages": "81; 88",
+    "source_entry": "50 (Дт); 55 (Кт)"
+  },
+  {
+    "source_uid": "K0495",
+    "debit_acc": "50",
+    "credit_acc": "60",
+    "source_pages": "81; 89",
+    "source_entry": "50 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0496",
+    "debit_acc": "50",
+    "credit_acc": "61",
+    "source_pages": "81; 91",
+    "source_entry": "50 (Дт); 61 (Кт)"
+  },
+  {
+    "source_uid": "K0497",
+    "debit_acc": "50",
+    "credit_acc": "68",
+    "source_pages": "81; 105",
+    "source_entry": "50 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0498",
+    "debit_acc": "50",
+    "credit_acc": "71",
+    "source_pages": "81",
+    "source_entry": "50 (Дт)"
+  },
+  {
+    "source_uid": "K0499",
+    "debit_acc": "50",
+    "credit_acc": "73",
+    "source_pages": "81; 117",
+    "source_entry": "50 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0500",
+    "debit_acc": "50",
+    "credit_acc": "74",
+    "source_pages": "81",
+    "source_entry": "50 (Дт)"
+  },
+  {
+    "source_uid": "K0501",
+    "debit_acc": "51",
+    "credit_acc": "30",
+    "source_pages": "43; 83",
+    "source_entry": "30 (Кт); 51 (Дт)"
+  },
+  {
+    "source_uid": "K0502",
+    "debit_acc": "51",
+    "credit_acc": "31",
+    "source_pages": "46; 83",
+    "source_entry": "31 (Кт); 51 (Дт)"
+  },
+  {
+    "source_uid": "K0503",
+    "debit_acc": "51",
+    "credit_acc": "36",
+    "source_pages": "54; 83",
+    "source_entry": "36 (Кт); 51 (Дт)"
+  },
+  {
+    "source_uid": "K0504",
+    "debit_acc": "51",
+    "credit_acc": "37",
+    "source_pages": "57; 83",
+    "source_entry": "37 (Кт); 51 (Дт)"
+  },
+  {
+    "source_uid": "K0505",
+    "debit_acc": "51",
+    "credit_acc": "42",
+    "source_pages": "67; 83",
+    "source_entry": "42 (Кт); 51 (Дт)"
+  },
+  {
+    "source_uid": "K0506",
+    "debit_acc": "51",
+    "credit_acc": "46",
+    "source_pages": "73; 83",
+    "source_entry": "46 (Кт); 51 (Дт)"
+  },
+  {
+    "source_uid": "K0507",
+    "debit_acc": "51",
+    "credit_acc": "50",
+    "source_pages": "81; 83",
+    "source_entry": "50 (Кт); 51 (Дт)"
+  },
+  {
+    "source_uid": "K0508",
+    "debit_acc": "51",
+    "credit_acc": "60",
+    "source_pages": "83; 89",
+    "source_entry": "51 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0509",
+    "debit_acc": "51",
+    "credit_acc": "61",
+    "source_pages": "83; 91",
+    "source_entry": "51 (Дт); 61 (Кт)"
+  },
+  {
+    "source_uid": "K0510",
+    "debit_acc": "51",
+    "credit_acc": "74",
+    "source_pages": "83",
+    "source_entry": "51 (Дт)"
+  },
+  {
+    "source_uid": "K0511",
+    "debit_acc": "52",
+    "credit_acc": "30",
+    "source_pages": "43; 85",
+    "source_entry": "30 (Кт); 52 (Дт)"
+  },
+  {
+    "source_uid": "K0512",
+    "debit_acc": "52",
+    "credit_acc": "31",
+    "source_pages": "46; 85",
+    "source_entry": "31 (Кт); 52 (Дт)"
+  },
+  {
+    "source_uid": "K0513",
+    "debit_acc": "52",
+    "credit_acc": "42",
+    "source_pages": "67; 85",
+    "source_entry": "42 (Кт); 52 (Дт)"
+  },
+  {
+    "source_uid": "K0514",
+    "debit_acc": "52",
+    "credit_acc": "46",
+    "source_pages": "73; 85",
+    "source_entry": "46 (Кт); 52 (Дт)"
+  },
+  {
+    "source_uid": "K0515",
+    "debit_acc": "52",
+    "credit_acc": "50",
+    "source_pages": "81; 85",
+    "source_entry": "50 (Кт); 52 (Дт)"
+  },
+  {
+    "source_uid": "K0516",
+    "debit_acc": "52",
+    "credit_acc": "52",
+    "source_pages": "85",
+    "source_entry": "52 (Дт); 52 (Кт)"
+  },
+  {
+    "source_uid": "K0517",
+    "debit_acc": "52",
+    "credit_acc": "61",
+    "source_pages": "85; 91",
+    "source_entry": "52 (Дт); 61 (Кт)"
+  },
+  {
+    "source_uid": "K0518",
+    "debit_acc": "52",
+    "credit_acc": "73",
+    "source_pages": "85; 117",
+    "source_entry": "52 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0519",
+    "debit_acc": "52",
+    "credit_acc": "74",
+    "source_pages": "85",
+    "source_entry": "52 (Дт)"
+  },
+  {
+    "source_uid": "K0520",
+    "debit_acc": "53",
+    "credit_acc": "30",
+    "source_pages": "43; 86",
+    "source_entry": "30 (Кт); 53 (Дт)"
+  },
+  {
+    "source_uid": "K0521",
+    "debit_acc": "53",
+    "credit_acc": "31",
+    "source_pages": "46; 86",
+    "source_entry": "31 (Кт); 53 (Дт)"
+  },
+  {
+    "source_uid": "K0522",
+    "debit_acc": "53",
+    "credit_acc": "42",
+    "source_pages": "67; 86",
+    "source_entry": "42 (Кт); 53 (Дт)"
+  },
+  {
+    "source_uid": "K0523",
+    "debit_acc": "53",
+    "credit_acc": "50",
+    "source_pages": "81; 86",
+    "source_entry": "50 (Кт); 53 (Дт)"
+  },
+  {
+    "source_uid": "K0524",
+    "debit_acc": "53",
+    "credit_acc": "60",
+    "source_pages": "86; 89",
+    "source_entry": "53 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0525",
+    "debit_acc": "53",
+    "credit_acc": "61",
+    "source_pages": "86; 91",
+    "source_entry": "53 (Дт); 61 (Кт)"
+  },
+  {
+    "source_uid": "K0526",
+    "debit_acc": "53",
+    "credit_acc": "74",
+    "source_pages": "86",
+    "source_entry": "53 (Дт)"
+  },
+  {
+    "source_uid": "K0527",
+    "debit_acc": "54",
+    "credit_acc": "17",
+    "source_pages": "21; 87",
+    "source_entry": "17 (Кт); 54 (Дт)"
+  },
+  {
+    "source_uid": "K0528",
+    "debit_acc": "54",
+    "credit_acc": "64",
+    "source_pages": "87; 96",
+    "source_entry": "54 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0529",
+    "debit_acc": "54",
+    "credit_acc": "98",
+    "source_pages": "87; 147",
+    "source_entry": "54 (Дт); 98 (Кт)"
+  },
+  {
+    "source_uid": "K0530",
+    "debit_acc": "55",
+    "credit_acc": "30",
+    "source_pages": "43; 88",
+    "source_entry": "30 (Кт); 55 (Дт)"
+  },
+  {
+    "source_uid": "K0531",
+    "debit_acc": "55",
+    "credit_acc": "31",
+    "source_pages": "46; 88",
+    "source_entry": "31 (Кт); 55 (Дт)"
+  },
+  {
+    "source_uid": "K0532",
+    "debit_acc": "55",
+    "credit_acc": "42",
+    "source_pages": "67; 88",
+    "source_entry": "42 (Кт); 55 (Дт)"
+  },
+  {
+    "source_uid": "K0533",
+    "debit_acc": "55",
+    "credit_acc": "61",
+    "source_pages": "88; 91",
+    "source_entry": "55 (Дт); 61 (Кт)"
+  },
+  {
+    "source_uid": "K0534",
+    "debit_acc": "55",
+    "credit_acc": "74",
+    "source_pages": "88",
+    "source_entry": "55 (Дт)"
+  },
+  {
+    "source_uid": "K0535",
+    "debit_acc": "60",
+    "credit_acc": "14",
+    "source_pages": "13; 89",
+    "source_entry": "14 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0536",
+    "debit_acc": "60",
+    "credit_acc": "15",
+    "source_pages": "16; 89",
+    "source_entry": "15 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0537",
+    "debit_acc": "60",
+    "credit_acc": "30",
+    "source_pages": "43; 89",
+    "source_entry": "30 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0538",
+    "debit_acc": "60",
+    "credit_acc": "31",
+    "source_pages": "46; 89",
+    "source_entry": "31 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0539",
+    "debit_acc": "60",
+    "credit_acc": "33",
+    "source_pages": "50; 89",
+    "source_entry": "33 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0540",
+    "debit_acc": "60",
+    "credit_acc": "34",
+    "source_pages": "51; 89",
+    "source_entry": "34 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0541",
+    "debit_acc": "60",
+    "credit_acc": "36",
+    "source_pages": "54; 89",
+    "source_entry": "36 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0542",
+    "debit_acc": "60",
+    "credit_acc": "37",
+    "source_pages": "57; 89",
+    "source_entry": "37 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0543",
+    "debit_acc": "60",
+    "credit_acc": "40",
+    "source_pages": "63; 89",
+    "source_entry": "40 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0544",
+    "debit_acc": "60",
+    "credit_acc": "42",
+    "source_pages": "67; 89",
+    "source_entry": "42 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0545",
+    "debit_acc": "60",
+    "credit_acc": "46",
+    "source_pages": "73; 89",
+    "source_entry": "46 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0546",
+    "debit_acc": "60",
+    "credit_acc": "48",
+    "source_pages": "78; 89",
+    "source_entry": "48 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0547",
+    "debit_acc": "60",
+    "credit_acc": "50",
+    "source_pages": "81; 89",
+    "source_entry": "50 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0548",
+    "debit_acc": "60",
+    "credit_acc": "55",
+    "source_pages": "88; 89",
+    "source_entry": "55 (Кт); 60 (Дт)"
+  },
+  {
+    "source_uid": "K0549",
+    "debit_acc": "60",
+    "credit_acc": "60",
+    "source_pages": "89",
+    "source_entry": "60 (Дт); 60 (Кт)"
+  },
+  {
+    "source_uid": "K0550",
+    "debit_acc": "60",
+    "credit_acc": "68",
+    "source_pages": "89; 105",
+    "source_entry": "60 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0551",
+    "debit_acc": "60",
+    "credit_acc": "71",
+    "source_pages": "89",
+    "source_entry": "60 (Дт)"
+  },
+  {
+    "source_uid": "K0552",
+    "debit_acc": "60",
+    "credit_acc": "73",
+    "source_pages": "89; 117",
+    "source_entry": "60 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0553",
+    "debit_acc": "61",
+    "credit_acc": "30",
+    "source_pages": "43; 91",
+    "source_entry": "30 (Кт); 61 (Дт)"
+  },
+  {
+    "source_uid": "K0554",
+    "debit_acc": "61",
+    "credit_acc": "31",
+    "source_pages": "46; 91",
+    "source_entry": "31 (Кт); 61 (Дт)"
+  },
+  {
+    "source_uid": "K0555",
+    "debit_acc": "61",
+    "credit_acc": "37",
+    "source_pages": "57; 91",
+    "source_entry": "37 (Кт); 61 (Дт)"
+  },
+  {
+    "source_uid": "K0556",
+    "debit_acc": "61",
+    "credit_acc": "50",
+    "source_pages": "81; 91",
+    "source_entry": "50 (Кт); 61 (Дт)"
+  },
+  {
+    "source_uid": "K0557",
+    "debit_acc": "61",
+    "credit_acc": "60",
+    "source_pages": "89; 91",
+    "source_entry": "60 (Кт); 61 (Дт)"
+  },
+  {
+    "source_uid": "K0558",
+    "debit_acc": "61",
+    "credit_acc": "62",
+    "source_pages": "91; 92",
+    "source_entry": "61 (Дт); 62 (Кт)"
+  },
+  {
+    "source_uid": "K0559",
+    "debit_acc": "61",
+    "credit_acc": "64",
+    "source_pages": "91; 96",
+    "source_entry": "61 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0560",
+    "debit_acc": "61",
+    "credit_acc": "71",
+    "source_pages": "91",
+    "source_entry": "61 (Дт)"
+  },
+  {
+    "source_uid": "K0561",
+    "debit_acc": "62",
+    "credit_acc": "30",
+    "source_pages": "43; 92",
+    "source_entry": "30 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0562",
+    "debit_acc": "62",
+    "credit_acc": "31",
+    "source_pages": "46; 92",
+    "source_entry": "31 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0563",
+    "debit_acc": "62",
+    "credit_acc": "36",
+    "source_pages": "54; 92",
+    "source_entry": "36 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0564",
+    "debit_acc": "62",
+    "credit_acc": "37",
+    "source_pages": "57; 92",
+    "source_entry": "37 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0565",
+    "debit_acc": "62",
+    "credit_acc": "42",
+    "source_pages": "67; 92",
+    "source_entry": "42 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0566",
+    "debit_acc": "62",
+    "credit_acc": "46",
+    "source_pages": "73; 92",
+    "source_entry": "46 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0567",
+    "debit_acc": "62",
+    "credit_acc": "50",
+    "source_pages": "81; 92",
+    "source_entry": "50 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0568",
+    "debit_acc": "62",
+    "credit_acc": "60",
+    "source_pages": "89; 92",
+    "source_entry": "60 (Кт); 62 (Дт)"
+  },
+  {
+    "source_uid": "K0569",
+    "debit_acc": "62",
+    "credit_acc": "64",
+    "source_pages": "92; 96",
+    "source_entry": "62 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0570",
+    "debit_acc": "62",
+    "credit_acc": "71",
+    "source_pages": "92",
+    "source_entry": "62 (Дт)"
+  },
+  {
+    "source_uid": "K0571",
+    "debit_acc": "63",
+    "credit_acc": "24",
+    "source_pages": "35; 94",
+    "source_entry": "24 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0572",
+    "debit_acc": "63",
+    "credit_acc": "30",
+    "source_pages": "43; 94",
+    "source_entry": "30 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0573",
+    "debit_acc": "63",
+    "credit_acc": "31",
+    "source_pages": "46; 94",
+    "source_entry": "31 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0574",
+    "debit_acc": "63",
+    "credit_acc": "34",
+    "source_pages": "51; 94",
+    "source_entry": "34 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0575",
+    "debit_acc": "63",
+    "credit_acc": "36",
+    "source_pages": "54; 94",
+    "source_entry": "36 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0576",
+    "debit_acc": "63",
+    "credit_acc": "37",
+    "source_pages": "57; 94",
+    "source_entry": "37 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0577",
+    "debit_acc": "63",
+    "credit_acc": "40",
+    "source_pages": "63; 94",
+    "source_entry": "40 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0578",
+    "debit_acc": "63",
+    "credit_acc": "42",
+    "source_pages": "67; 94",
+    "source_entry": "42 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0579",
+    "debit_acc": "63",
+    "credit_acc": "46",
+    "source_pages": "73; 94",
+    "source_entry": "46 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0580",
+    "debit_acc": "63",
+    "credit_acc": "48",
+    "source_pages": "78; 94",
+    "source_entry": "48 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0581",
+    "debit_acc": "63",
+    "credit_acc": "50",
+    "source_pages": "81; 94",
+    "source_entry": "50 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0582",
+    "debit_acc": "63",
+    "credit_acc": "51",
+    "source_pages": "83; 94",
+    "source_entry": "51 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0583",
+    "debit_acc": "63",
+    "credit_acc": "52",
+    "source_pages": "85; 94",
+    "source_entry": "52 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0584",
+    "debit_acc": "63",
+    "credit_acc": "55",
+    "source_pages": "88; 94",
+    "source_entry": "55 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0585",
+    "debit_acc": "63",
+    "credit_acc": "60",
+    "source_pages": "89; 94",
+    "source_entry": "60 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0586",
+    "debit_acc": "63",
+    "credit_acc": "62",
+    "source_pages": "92; 94",
+    "source_entry": "62 (Кт); 63 (Дт)"
+  },
+  {
+    "source_uid": "K0587",
+    "debit_acc": "63",
+    "credit_acc": "64",
+    "source_pages": "94; 96",
+    "source_entry": "63 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0588",
+    "debit_acc": "63",
+    "credit_acc": "68",
+    "source_pages": "94; 105",
+    "source_entry": "63 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0589",
+    "debit_acc": "63",
+    "credit_acc": "70",
+    "source_pages": "94; 110",
+    "source_entry": "63 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0590",
+    "debit_acc": "63",
+    "credit_acc": "71",
+    "source_pages": "94",
+    "source_entry": "63 (Дт)"
+  },
+  {
+    "source_uid": "K0591",
+    "debit_acc": "63",
+    "credit_acc": "74",
+    "source_pages": "94; 119",
+    "source_entry": "63 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0592",
+    "debit_acc": "64",
+    "credit_acc": "15",
+    "source_pages": "16; 96",
+    "source_entry": "15 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0593",
+    "debit_acc": "64",
+    "credit_acc": "17",
+    "source_pages": "21; 96",
+    "source_entry": "17 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0594",
+    "debit_acc": "64",
+    "credit_acc": "31",
+    "source_pages": "46; 96",
+    "source_entry": "31 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0595",
+    "debit_acc": "64",
+    "credit_acc": "34",
+    "source_pages": "51; 96",
+    "source_entry": "34 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0596",
+    "debit_acc": "64",
+    "credit_acc": "36",
+    "source_pages": "54; 96",
+    "source_entry": "36 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0597",
+    "debit_acc": "64",
+    "credit_acc": "37",
+    "source_pages": "57; 96",
+    "source_entry": "37 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0598",
+    "debit_acc": "64",
+    "credit_acc": "46",
+    "source_pages": "73; 96",
+    "source_entry": "46 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0599",
+    "debit_acc": "64",
+    "credit_acc": "48",
+    "source_pages": "78; 96",
+    "source_entry": "48 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0600",
+    "debit_acc": "64",
+    "credit_acc": "50",
+    "source_pages": "81; 96",
+    "source_entry": "50 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0601",
+    "debit_acc": "64",
+    "credit_acc": "51",
+    "source_pages": "83; 96",
+    "source_entry": "51 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0602",
+    "debit_acc": "64",
+    "credit_acc": "53",
+    "source_pages": "86; 96",
+    "source_entry": "53 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0603",
+    "debit_acc": "64",
+    "credit_acc": "54",
+    "source_pages": "87; 96",
+    "source_entry": "54 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0604",
+    "debit_acc": "64",
+    "credit_acc": "55",
+    "source_pages": "88; 96",
+    "source_entry": "55 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0605",
+    "debit_acc": "64",
+    "credit_acc": "60",
+    "source_pages": "89; 96",
+    "source_entry": "60 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0606",
+    "debit_acc": "64",
+    "credit_acc": "62",
+    "source_pages": "92; 96",
+    "source_entry": "62 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0607",
+    "debit_acc": "64",
+    "credit_acc": "63",
+    "source_pages": "94; 96",
+    "source_entry": "63 (Кт); 64 (Дт)"
+  },
+  {
+    "source_uid": "K0608",
+    "debit_acc": "64",
+    "credit_acc": "64",
+    "source_pages": "96",
+    "source_entry": "64 (Дт); 64 (Кт)"
+  },
+  {
+    "source_uid": "K0609",
+    "debit_acc": "64",
+    "credit_acc": "65",
+    "source_pages": "96; 99",
+    "source_entry": "64 (Дт); 65 (Кт)"
+  },
+  {
+    "source_uid": "K0610",
+    "debit_acc": "64",
+    "credit_acc": "68",
+    "source_pages": "96; 105",
+    "source_entry": "64 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0611",
+    "debit_acc": "64",
+    "credit_acc": "74",
+    "source_pages": "96; 119",
+    "source_entry": "64 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0612",
+    "debit_acc": "64",
+    "credit_acc": "98",
+    "source_pages": "96; 147",
+    "source_entry": "64 (Дт); 98 (Кт)"
+  },
+  {
+    "source_uid": "K0613",
+    "debit_acc": "65",
+    "credit_acc": "30",
+    "source_pages": "43; 99",
+    "source_entry": "30 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0614",
+    "debit_acc": "65",
+    "credit_acc": "31",
+    "source_pages": "46; 99",
+    "source_entry": "31 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0615",
+    "debit_acc": "65",
+    "credit_acc": "36",
+    "source_pages": "54; 99",
+    "source_entry": "36 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0616",
+    "debit_acc": "65",
+    "credit_acc": "37",
+    "source_pages": "57; 99",
+    "source_entry": "37 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0617",
+    "debit_acc": "65",
+    "credit_acc": "50",
+    "source_pages": "81; 99",
+    "source_entry": "50 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0618",
+    "debit_acc": "65",
+    "credit_acc": "51",
+    "source_pages": "83; 99",
+    "source_entry": "51 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0619",
+    "debit_acc": "65",
+    "credit_acc": "55",
+    "source_pages": "88; 99",
+    "source_entry": "55 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0620",
+    "debit_acc": "65",
+    "credit_acc": "60",
+    "source_pages": "89; 99",
+    "source_entry": "60 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0621",
+    "debit_acc": "65",
+    "credit_acc": "62",
+    "source_pages": "92; 99",
+    "source_entry": "62 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0622",
+    "debit_acc": "65",
+    "credit_acc": "64",
+    "source_pages": "96; 99",
+    "source_entry": "64 (Кт); 65 (Дт)"
+  },
+  {
+    "source_uid": "K0623",
+    "debit_acc": "65",
+    "credit_acc": "66",
+    "source_pages": "99; 101",
+    "source_entry": "65 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0624",
+    "debit_acc": "65",
+    "credit_acc": "68",
+    "source_pages": "99; 105",
+    "source_entry": "65 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0625",
+    "debit_acc": "65",
+    "credit_acc": "74",
+    "source_pages": "99; 119",
+    "source_entry": "65 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0626",
+    "debit_acc": "66",
+    "credit_acc": "24",
+    "source_pages": "35; 101",
+    "source_entry": "24 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0627",
+    "debit_acc": "66",
+    "credit_acc": "30",
+    "source_pages": "43; 101",
+    "source_entry": "30 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0628",
+    "debit_acc": "66",
+    "credit_acc": "31",
+    "source_pages": "46; 101",
+    "source_entry": "31 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0629",
+    "debit_acc": "66",
+    "credit_acc": "33",
+    "source_pages": "50; 101",
+    "source_entry": "33 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0630",
+    "debit_acc": "66",
+    "credit_acc": "37",
+    "source_pages": "57; 101",
+    "source_entry": "37 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0631",
+    "debit_acc": "66",
+    "credit_acc": "40",
+    "source_pages": "63; 101",
+    "source_entry": "40 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0632",
+    "debit_acc": "66",
+    "credit_acc": "46",
+    "source_pages": "73; 101",
+    "source_entry": "46 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0633",
+    "debit_acc": "66",
+    "credit_acc": "64",
+    "source_pages": "96; 101",
+    "source_entry": "64 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0634",
+    "debit_acc": "66",
+    "credit_acc": "65",
+    "source_pages": "99; 101",
+    "source_entry": "65 (Кт); 66 (Дт)"
+  },
+  {
+    "source_uid": "K0635",
+    "debit_acc": "66",
+    "credit_acc": "66",
+    "source_pages": "101",
+    "source_entry": "66 (Дт); 66 (Кт)"
+  },
+  {
+    "source_uid": "K0636",
+    "debit_acc": "66",
+    "credit_acc": "68",
+    "source_pages": "101; 105",
+    "source_entry": "66 (Дт); 68 (Кт)"
+  },
+  {
+    "source_uid": "K0637",
+    "debit_acc": "66",
+    "credit_acc": "70",
+    "source_pages": "101; 110",
+    "source_entry": "66 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0638",
+    "debit_acc": "66",
+    "credit_acc": "71",
+    "source_pages": "101",
+    "source_entry": "66 (Дт)"
+  },
+  {
+    "source_uid": "K0639",
+    "debit_acc": "67",
+    "credit_acc": "30",
+    "source_pages": "43; 103",
+    "source_entry": "30 (Кт); 67 (Дт)"
+  },
+  {
+    "source_uid": "K0640",
+    "debit_acc": "67",
+    "credit_acc": "31",
+    "source_pages": "46; 103",
+    "source_entry": "31 (Кт); 67 (Дт)"
+  },
+  {
+    "source_uid": "K0641",
+    "debit_acc": "67",
+    "credit_acc": "37",
+    "source_pages": "57; 103",
+    "source_entry": "37 (Кт); 67 (Дт)"
+  },
+  {
+    "source_uid": "K0642",
+    "debit_acc": "67",
+    "credit_acc": "40",
+    "source_pages": "63; 103",
+    "source_entry": "40 (Кт); 67 (Дт)"
+  },
+  {
+    "source_uid": "K0643",
+    "debit_acc": "67",
+    "credit_acc": "46",
+    "source_pages": "73; 103",
+    "source_entry": "46 (Кт); 67 (Дт)"
+  },
+  {
+    "source_uid": "K0644",
+    "debit_acc": "67",
+    "credit_acc": "64",
+    "source_pages": "96; 103",
+    "source_entry": "64 (Кт); 67 (Дт)"
+  },
+  {
+    "source_uid": "K0645",
+    "debit_acc": "67",
+    "credit_acc": "67",
+    "source_pages": "103",
+    "source_entry": "67 (Дт); 67 (Кт)"
+  },
+  {
+    "source_uid": "K0646",
+    "debit_acc": "67",
+    "credit_acc": "70",
+    "source_pages": "103; 110",
+    "source_entry": "67 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0647",
+    "debit_acc": "67",
+    "credit_acc": "71",
+    "source_pages": "103",
+    "source_entry": "67 (Дт)"
+  },
+  {
+    "source_uid": "K0648",
+    "debit_acc": "67",
+    "credit_acc": "73",
+    "source_pages": "103; 117",
+    "source_entry": "67 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0649",
+    "debit_acc": "67",
+    "credit_acc": "74",
+    "source_pages": "103; 119",
+    "source_entry": "67 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0650",
+    "debit_acc": "68",
+    "credit_acc": "14",
+    "source_pages": "13; 105",
+    "source_entry": "14 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0651",
+    "debit_acc": "68",
+    "credit_acc": "19",
+    "source_pages": "24; 105",
+    "source_entry": "19 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0652",
+    "debit_acc": "68",
+    "credit_acc": "30",
+    "source_pages": "43; 105",
+    "source_entry": "30 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0653",
+    "debit_acc": "68",
+    "credit_acc": "31",
+    "source_pages": "46; 105",
+    "source_entry": "31 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0654",
+    "debit_acc": "68",
+    "credit_acc": "33",
+    "source_pages": "50; 105",
+    "source_entry": "33 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0655",
+    "debit_acc": "68",
+    "credit_acc": "34",
+    "source_pages": "51; 105",
+    "source_entry": "34 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0656",
+    "debit_acc": "68",
+    "credit_acc": "36",
+    "source_pages": "54; 105",
+    "source_entry": "36 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0657",
+    "debit_acc": "68",
+    "credit_acc": "37",
+    "source_pages": "57; 105",
+    "source_entry": "37 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0658",
+    "debit_acc": "68",
+    "credit_acc": "40",
+    "source_pages": "63; 105",
+    "source_entry": "40 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0659",
+    "debit_acc": "68",
+    "credit_acc": "42",
+    "source_pages": "67; 105",
+    "source_entry": "42 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0660",
+    "debit_acc": "68",
+    "credit_acc": "46",
+    "source_pages": "73; 105",
+    "source_entry": "46 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0661",
+    "debit_acc": "68",
+    "credit_acc": "47",
+    "source_pages": "76; 105",
+    "source_entry": "47 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0662",
+    "debit_acc": "68",
+    "credit_acc": "48",
+    "source_pages": "78; 105",
+    "source_entry": "48 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0663",
+    "debit_acc": "68",
+    "credit_acc": "50",
+    "source_pages": "81; 105",
+    "source_entry": "50 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0664",
+    "debit_acc": "68",
+    "credit_acc": "51",
+    "source_pages": "83; 105",
+    "source_entry": "51 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0665",
+    "debit_acc": "68",
+    "credit_acc": "52",
+    "source_pages": "85; 105",
+    "source_entry": "52 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0666",
+    "debit_acc": "68",
+    "credit_acc": "55",
+    "source_pages": "88; 105",
+    "source_entry": "55 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0667",
+    "debit_acc": "68",
+    "credit_acc": "60",
+    "source_pages": "89; 105",
+    "source_entry": "60 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0668",
+    "debit_acc": "68",
+    "credit_acc": "62",
+    "source_pages": "92; 105",
+    "source_entry": "62 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0669",
+    "debit_acc": "68",
+    "credit_acc": "63",
+    "source_pages": "94; 105",
+    "source_entry": "63 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0670",
+    "debit_acc": "68",
+    "credit_acc": "64",
+    "source_pages": "96; 105",
+    "source_entry": "64 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0671",
+    "debit_acc": "68",
+    "credit_acc": "65",
+    "source_pages": "99; 105",
+    "source_entry": "65 (Кт); 68 (Дт)"
+  },
+  {
+    "source_uid": "K0672",
+    "debit_acc": "68",
+    "credit_acc": "70",
+    "source_pages": "105; 110",
+    "source_entry": "68 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0673",
+    "debit_acc": "68",
+    "credit_acc": "71",
+    "source_pages": "105",
+    "source_entry": "68 (Дт)"
+  },
+  {
+    "source_uid": "K0674",
+    "debit_acc": "68",
+    "credit_acc": "73",
+    "source_pages": "105; 117",
+    "source_entry": "68 (Дт); 73 (Кт)"
+  },
+  {
+    "source_uid": "K0675",
+    "debit_acc": "68",
+    "credit_acc": "74",
+    "source_pages": "105; 119",
+    "source_entry": "68 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0676",
+    "debit_acc": "69",
+    "credit_acc": "30",
+    "source_pages": "43; 108",
+    "source_entry": "30 (Кт); 69 (Дт)"
+  },
+  {
+    "source_uid": "K0677",
+    "debit_acc": "69",
+    "credit_acc": "31",
+    "source_pages": "46; 108",
+    "source_entry": "31 (Кт); 69 (Дт)"
+  },
+  {
+    "source_uid": "K0678",
+    "debit_acc": "69",
+    "credit_acc": "70",
+    "source_pages": "108; 110",
+    "source_entry": "69 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0679",
+    "debit_acc": "69",
+    "credit_acc": "74",
+    "source_pages": "108; 119",
+    "source_entry": "69 (Дт); 74 (Кт)"
+  },
+  {
+    "source_uid": "K0680",
+    "debit_acc": "70",
+    "credit_acc": "30",
+    "source_pages": "43; 110",
+    "source_entry": "30 (Кт); 70 (Дт)"
+  },
+  {
+    "source_uid": "K0681",
+    "debit_acc": "70",
+    "credit_acc": "36",
+    "source_pages": "54; 110",
+    "source_entry": "36 (Кт); 70 (Дт)"
+  },
+  {
+    "source_uid": "K0682",
+    "debit_acc": "70",
+    "credit_acc": "49",
+    "source_pages": "80; 110",
+    "source_entry": "49 (Кт); 70 (Дт)"
+  },
+  {
+    "source_uid": "K0683",
+    "debit_acc": "70",
+    "credit_acc": "63",
+    "source_pages": "94; 110",
+    "source_entry": "63 (Кт); 70 (Дт)"
+  },
+  {
+    "source_uid": "K0684",
+    "debit_acc": "70",
+    "credit_acc": "64",
+    "source_pages": "96; 110",
+    "source_entry": "64 (Кт); 70 (Дт)"
+  },
+  {
+    "source_uid": "K0685",
+    "debit_acc": "70",
+    "credit_acc": "65",
+    "source_pages": "99; 110",
+    "source_entry": "65 (Кт); 70 (Дт)"
+  },
+  {
+    "source_uid": "K0686",
+    "debit_acc": "70",
+    "credit_acc": "68",
+    "source_pages": "105; 110",
+    "source_entry": "68 (Кт); 70 (Дт)"
+  },
+  {
+    "source_uid": "K0687",
+    "debit_acc": "70",
+    "credit_acc": "70",
+    "source_pages": "110",
+    "source_entry": "70 (Дт); 70 (Кт)"
+  },
+  {
+    "source_uid": "K0688",
+    "debit_acc": "70",
+    "credit_acc": "76",
+    "source_pages": "110; 121",
+    "source_entry": "70 (Дт); 76 (Кт)"
+  },
+  {
+    "source_uid": "K0689",
+    "debit_acc": "70",
+    "credit_acc": "79",
+    "source_pages": "110; 123",
+    "source_entry": "70 (Дт); 79 (Кт)"
+  },
+  {
+    "source_uid": "K0690",
+    "debit_acc": "70",
+    "credit_acc": "97",
+    "source_pages": "110",
+    "source_entry": "70 (Дт)"
+  },
+  {
+    "source_uid": "K0691",
+    "debit_acc": "71",
+    "credit_acc": "30",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0692",
+    "debit_acc": "71",
+    "credit_acc": "31",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0693",
+    "debit_acc": "71",
+    "credit_acc": "33",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0694",
+    "debit_acc": "71",
+    "credit_acc": "34",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0695",
+    "debit_acc": "71",
+    "credit_acc": "36",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0696",
+    "debit_acc": "71",
+    "credit_acc": "37",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0697",
+    "debit_acc": "71",
+    "credit_acc": "38",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0698",
+    "debit_acc": "71",
+    "credit_acc": "47",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0699",
+    "debit_acc": "71",
+    "credit_acc": "48",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0700",
+    "debit_acc": "71",
+    "credit_acc": "49",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0701",
+    "debit_acc": "71",
+    "credit_acc": "50",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0702",
+    "debit_acc": "71",
+    "credit_acc": "60",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0703",
+    "debit_acc": "71",
+    "credit_acc": "61",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0704",
+    "debit_acc": "71",
+    "credit_acc": "62",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0705",
+    "debit_acc": "71",
+    "credit_acc": "63",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0706",
+    "debit_acc": "71",
+    "credit_acc": "64",
+    "source_pages": "96; 114",
+    "source_entry": "64 (Кт); 71 (Дт)"
+  },
+  {
+    "source_uid": "K0707",
+    "debit_acc": "71",
+    "credit_acc": "66",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0708",
+    "debit_acc": "71",
+    "credit_acc": "67",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0709",
+    "debit_acc": "71",
+    "credit_acc": "68",
+    "source_pages": "114",
+    "source_entry": "71 (Дт)"
+  },
+  {
+    "source_uid": "K0710",
+    "debit_acc": "71",
+    "credit_acc": "79",
+    "source_pages": "114; 123",
+    "source_entry": "71 (Дт); 79 (Кт)"
+  },
+  {
+    "source_uid": "K0711",
+    "debit_acc": "72",
+    "credit_acc": "79",
+    "source_pages": "116; 123",
+    "source_entry": "72 (Дт); 79 (Кт)"
+  },
+  {
+    "source_uid": "K0712",
+    "debit_acc": "73",
+    "credit_acc": "79",
+    "source_pages": "117; 123",
+    "source_entry": "73 (Дт); 79 (Кт)"
+  },
+  {
+    "source_uid": "K0713",
+    "debit_acc": "74",
+    "credit_acc": "16",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0714",
+    "debit_acc": "74",
+    "credit_acc": "17",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0715",
+    "debit_acc": "74",
+    "credit_acc": "18",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0716",
+    "debit_acc": "74",
+    "credit_acc": "20",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0717",
+    "debit_acc": "74",
+    "credit_acc": "21",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0718",
+    "debit_acc": "74",
+    "credit_acc": "22",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0719",
+    "debit_acc": "74",
+    "credit_acc": "28",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0720",
+    "debit_acc": "74",
+    "credit_acc": "30",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0721",
+    "debit_acc": "74",
+    "credit_acc": "31",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0722",
+    "debit_acc": "74",
+    "credit_acc": "34",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0723",
+    "debit_acc": "74",
+    "credit_acc": "35",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0724",
+    "debit_acc": "74",
+    "credit_acc": "37",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0725",
+    "debit_acc": "74",
+    "credit_acc": "42",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0726",
+    "debit_acc": "74",
+    "credit_acc": "46",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0727",
+    "debit_acc": "74",
+    "credit_acc": "48",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0728",
+    "debit_acc": "74",
+    "credit_acc": "50",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0729",
+    "debit_acc": "74",
+    "credit_acc": "51",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0730",
+    "debit_acc": "74",
+    "credit_acc": "52",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0731",
+    "debit_acc": "74",
+    "credit_acc": "53",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0732",
+    "debit_acc": "74",
+    "credit_acc": "55",
+    "source_pages": "119",
+    "source_entry": "74 (Дт)"
+  },
+  {
+    "source_uid": "K0733",
+    "debit_acc": "74",
+    "credit_acc": "64",
+    "source_pages": "96; 119",
+    "source_entry": "64 (Кт); 74 (Дт)"
+  },
+  {
+    "source_uid": "K0734",
+    "debit_acc": "74",
+    "credit_acc": "79",
+    "source_pages": "119; 123",
+    "source_entry": "74 (Дт); 79 (Кт)"
+  },
+  {
+    "source_uid": "K0735",
+    "debit_acc": "76",
+    "credit_acc": "30",
+    "source_pages": "43; 121",
+    "source_entry": "30 (Кт); 76 (Дт)"
+  },
+  {
+    "source_uid": "K0736",
+    "debit_acc": "76",
+    "credit_acc": "31",
+    "source_pages": "46; 121",
+    "source_entry": "31 (Кт); 76 (Дт)"
+  },
+  {
+    "source_uid": "K0737",
+    "debit_acc": "76",
+    "credit_acc": "36",
+    "source_pages": "54; 121",
+    "source_entry": "36 (Кт); 76 (Дт)"
+  },
+  {
+    "source_uid": "K0738",
+    "debit_acc": "76",
+    "credit_acc": "70",
+    "source_pages": "110; 121",
+    "source_entry": "70 (Кт); 76 (Дт)"
+  },
+  {
+    "source_uid": "K0739",
+    "debit_acc": "79",
+    "credit_acc": "23",
+    "source_pages": "32; 123",
+    "source_entry": "23 (Кт); 79 (Дт)"
+  },
+  {
+    "source_uid": "K0740",
+    "debit_acc": "79",
+    "credit_acc": "26",
+    "source_pages": "37; 123",
+    "source_entry": "26 (Кт); 79 (Дт)"
+  },
+  {
+    "source_uid": "K0741",
+    "debit_acc": "79",
+    "credit_acc": "44",
+    "source_pages": "71; 123",
+    "source_entry": "44 (Кт); 79 (Дт)"
+  },
+  {
+    "source_uid": "K0742",
+    "debit_acc": "79",
+    "credit_acc": "70",
+    "source_pages": "110; 123",
+    "source_entry": "70 (Кт); 79 (Дт)"
+  },
+  {
+    "source_uid": "K0743",
+    "debit_acc": "79",
+    "credit_acc": "90",
+    "source_pages": "123; 133",
+    "source_entry": "79 (Дт); 90 (Кт)"
+  },
+  {
+    "source_uid": "K0744",
+    "debit_acc": "79",
+    "credit_acc": "92",
+    "source_pages": "123; 135",
+    "source_entry": "79 (Дт); 92 (Кт)"
+  },
+  {
+    "source_uid": "K0745",
+    "debit_acc": "79",
+    "credit_acc": "93",
+    "source_pages": "123; 137",
+    "source_entry": "79 (Дт); 93 (Кт)"
+  },
+  {
+    "source_uid": "K0746",
+    "debit_acc": "79",
+    "credit_acc": "94",
+    "source_pages": "123; 140",
+    "source_entry": "79 (Дт); 94 (Кт)"
+  },
+  {
+    "source_uid": "K0747",
+    "debit_acc": "79",
+    "credit_acc": "95",
+    "source_pages": "123; 143",
+    "source_entry": "79 (Дт); 95 (Кт)"
+  },
+  {
+    "source_uid": "K0748",
+    "debit_acc": "79",
+    "credit_acc": "96",
+    "source_pages": "123; 144",
+    "source_entry": "79 (Дт); 96 (Кт)"
+  },
+  {
+    "source_uid": "K0749",
+    "debit_acc": "79",
+    "credit_acc": "97",
+    "source_pages": "123; 146",
+    "source_entry": "79 (Дт); 97 (Кт)"
+  },
+  {
+    "source_uid": "K0750",
+    "debit_acc": "79",
+    "credit_acc": "98",
+    "source_pages": "123; 147",
+    "source_entry": "79 (Дт); 98 (Кт)"
+  },
+  {
+    "source_uid": "K0751",
+    "debit_acc": "80",
+    "credit_acc": "20",
+    "source_pages": "27; 125",
+    "source_entry": "20 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0752",
+    "debit_acc": "80",
+    "credit_acc": "21",
+    "source_pages": "29; 125",
+    "source_entry": "21 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0753",
+    "debit_acc": "80",
+    "credit_acc": "22",
+    "source_pages": "30; 125",
+    "source_entry": "22 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0754",
+    "debit_acc": "80",
+    "credit_acc": "23",
+    "source_pages": "32; 125",
+    "source_entry": "23 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0755",
+    "debit_acc": "80",
+    "credit_acc": "24",
+    "source_pages": "35; 125",
+    "source_entry": "24 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0756",
+    "debit_acc": "80",
+    "credit_acc": "25",
+    "source_pages": "36; 125",
+    "source_entry": "25 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0757",
+    "debit_acc": "80",
+    "credit_acc": "26",
+    "source_pages": "37; 125",
+    "source_entry": "26 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0758",
+    "debit_acc": "80",
+    "credit_acc": "27",
+    "source_pages": "38; 125",
+    "source_entry": "27 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0759",
+    "debit_acc": "80",
+    "credit_acc": "28",
+    "source_pages": "40; 125",
+    "source_entry": "28 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0760",
+    "debit_acc": "80",
+    "credit_acc": "37",
+    "source_pages": "57; 125",
+    "source_entry": "37 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0761",
+    "debit_acc": "80",
+    "credit_acc": "63",
+    "source_pages": "94; 125",
+    "source_entry": "63 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0762",
+    "debit_acc": "80",
+    "credit_acc": "68",
+    "source_pages": "105; 125",
+    "source_entry": "68 (Кт); 80 (Дт)"
+  },
+  {
+    "source_uid": "K0763",
+    "debit_acc": "81",
+    "credit_acc": "47",
+    "source_pages": "76; 127",
+    "source_entry": "47 (Кт); 81 (Дт)"
+  },
+  {
+    "source_uid": "K0764",
+    "debit_acc": "81",
+    "credit_acc": "66",
+    "source_pages": "101; 127",
+    "source_entry": "66 (Кт); 81 (Дт)"
+  },
+  {
+    "source_uid": "K0765",
+    "debit_acc": "82",
+    "credit_acc": "47",
+    "source_pages": "76; 128",
+    "source_entry": "47 (Кт); 82 (Дт)"
+  },
+  {
+    "source_uid": "K0766",
+    "debit_acc": "82",
+    "credit_acc": "65",
+    "source_pages": "99; 128",
+    "source_entry": "65 (Кт); 82 (Дт)"
+  },
+  {
+    "source_uid": "K0767",
+    "debit_acc": "83",
+    "credit_acc": "13",
+    "source_pages": "12; 129",
+    "source_entry": "13 (Кт); 83 (Дт)"
+  },
+  {
+    "source_uid": "K0768",
+    "debit_acc": "84",
+    "credit_acc": "20",
+    "source_pages": "27; 130",
+    "source_entry": "20 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0769",
+    "debit_acc": "84",
+    "credit_acc": "21",
+    "source_pages": "29; 130",
+    "source_entry": "21 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0770",
+    "debit_acc": "84",
+    "credit_acc": "22",
+    "source_pages": "30; 130",
+    "source_entry": "22 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0771",
+    "debit_acc": "84",
+    "credit_acc": "23",
+    "source_pages": "32; 130",
+    "source_entry": "23 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0772",
+    "debit_acc": "84",
+    "credit_acc": "24",
+    "source_pages": "35; 130",
+    "source_entry": "24 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0773",
+    "debit_acc": "84",
+    "credit_acc": "25",
+    "source_pages": "36; 130",
+    "source_entry": "25 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0774",
+    "debit_acc": "84",
+    "credit_acc": "26",
+    "source_pages": "37; 130",
+    "source_entry": "26 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0775",
+    "debit_acc": "84",
+    "credit_acc": "27",
+    "source_pages": "38; 130",
+    "source_entry": "27 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0776",
+    "debit_acc": "84",
+    "credit_acc": "28",
+    "source_pages": "40; 130",
+    "source_entry": "28 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0777",
+    "debit_acc": "84",
+    "credit_acc": "30",
+    "source_pages": "43; 130",
+    "source_entry": "30 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0778",
+    "debit_acc": "84",
+    "credit_acc": "31",
+    "source_pages": "46; 130",
+    "source_entry": "31 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0779",
+    "debit_acc": "84",
+    "credit_acc": "33",
+    "source_pages": "50; 130",
+    "source_entry": "33 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0780",
+    "debit_acc": "84",
+    "credit_acc": "34",
+    "source_pages": "51; 130",
+    "source_entry": "34 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0781",
+    "debit_acc": "84",
+    "credit_acc": "36",
+    "source_pages": "54; 130",
+    "source_entry": "36 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0782",
+    "debit_acc": "84",
+    "credit_acc": "37",
+    "source_pages": "57; 130",
+    "source_entry": "37 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0783",
+    "debit_acc": "84",
+    "credit_acc": "38",
+    "source_pages": "60; 130",
+    "source_entry": "38 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0784",
+    "debit_acc": "84",
+    "credit_acc": "39",
+    "source_pages": "60; 130",
+    "source_entry": "39 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0785",
+    "debit_acc": "84",
+    "credit_acc": "47",
+    "source_pages": "76; 130",
+    "source_entry": "47 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0786",
+    "debit_acc": "84",
+    "credit_acc": "50",
+    "source_pages": "81; 130",
+    "source_entry": "50 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0787",
+    "debit_acc": "84",
+    "credit_acc": "51",
+    "source_pages": "83; 130",
+    "source_entry": "51 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0788",
+    "debit_acc": "84",
+    "credit_acc": "60",
+    "source_pages": "89; 130",
+    "source_entry": "60 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0789",
+    "debit_acc": "84",
+    "credit_acc": "62",
+    "source_pages": "92; 130",
+    "source_entry": "62 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0790",
+    "debit_acc": "84",
+    "credit_acc": "63",
+    "source_pages": "94; 130",
+    "source_entry": "63 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0791",
+    "debit_acc": "84",
+    "credit_acc": "64",
+    "source_pages": "96; 130",
+    "source_entry": "64 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0792",
+    "debit_acc": "84",
+    "credit_acc": "65",
+    "source_pages": "99; 130",
+    "source_entry": "65 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0793",
+    "debit_acc": "84",
+    "credit_acc": "68",
+    "source_pages": "105; 130",
+    "source_entry": "68 (Кт); 84 (Дт)"
+  },
+  {
+    "source_uid": "K0794",
+    "debit_acc": "90",
+    "credit_acc": "21",
+    "source_pages": "29; 133",
+    "source_entry": "21 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0795",
+    "debit_acc": "90",
+    "credit_acc": "23",
+    "source_pages": "32; 133",
+    "source_entry": "23 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0796",
+    "debit_acc": "90",
+    "credit_acc": "26",
+    "source_pages": "37; 133",
+    "source_entry": "26 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0797",
+    "debit_acc": "90",
+    "credit_acc": "27",
+    "source_pages": "38; 133",
+    "source_entry": "27 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0798",
+    "debit_acc": "90",
+    "credit_acc": "28",
+    "source_pages": "40; 133",
+    "source_entry": "28 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0799",
+    "debit_acc": "90",
+    "credit_acc": "30",
+    "source_pages": "43; 133",
+    "source_entry": "30 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0800",
+    "debit_acc": "90",
+    "credit_acc": "31",
+    "source_pages": "46; 133",
+    "source_entry": "31 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0801",
+    "debit_acc": "90",
+    "credit_acc": "36",
+    "source_pages": "54; 133",
+    "source_entry": "36 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0802",
+    "debit_acc": "90",
+    "credit_acc": "47",
+    "source_pages": "76; 133",
+    "source_entry": "47 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0803",
+    "debit_acc": "90",
+    "credit_acc": "63",
+    "source_pages": "94; 133",
+    "source_entry": "63 (Кт); 90 (Дт)"
+  },
+  {
+    "source_uid": "K0804",
+    "debit_acc": "90",
+    "credit_acc": "91",
+    "source_pages": "133; 134",
+    "source_entry": "90 (Дт); 91 (Кт)"
+  },
+  {
+    "source_uid": "K0805",
+    "debit_acc": "91",
+    "credit_acc": "13",
+    "source_pages": "12; 134",
+    "source_entry": "13 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0806",
+    "debit_acc": "91",
+    "credit_acc": "20",
+    "source_pages": "27; 134",
+    "source_entry": "20 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0807",
+    "debit_acc": "91",
+    "credit_acc": "22",
+    "source_pages": "30; 134",
+    "source_entry": "22 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0808",
+    "debit_acc": "91",
+    "credit_acc": "23",
+    "source_pages": "32; 134",
+    "source_entry": "23 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0809",
+    "debit_acc": "91",
+    "credit_acc": "30",
+    "source_pages": "43; 134",
+    "source_entry": "30 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0810",
+    "debit_acc": "91",
+    "credit_acc": "31",
+    "source_pages": "46; 134",
+    "source_entry": "31 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0811",
+    "debit_acc": "91",
+    "credit_acc": "37",
+    "source_pages": "57; 134",
+    "source_entry": "37 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0812",
+    "debit_acc": "91",
+    "credit_acc": "39",
+    "source_pages": "60; 134",
+    "source_entry": "39 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0813",
+    "debit_acc": "91",
+    "credit_acc": "47",
+    "source_pages": "76; 134",
+    "source_entry": "47 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0814",
+    "debit_acc": "91",
+    "credit_acc": "50",
+    "source_pages": "81; 134",
+    "source_entry": "50 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0815",
+    "debit_acc": "91",
+    "credit_acc": "60",
+    "source_pages": "89; 134",
+    "source_entry": "60 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0816",
+    "debit_acc": "91",
+    "credit_acc": "63",
+    "source_pages": "94; 134",
+    "source_entry": "63 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0817",
+    "debit_acc": "91",
+    "credit_acc": "64",
+    "source_pages": "96; 134",
+    "source_entry": "64 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0818",
+    "debit_acc": "91",
+    "credit_acc": "65",
+    "source_pages": "99; 134",
+    "source_entry": "65 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0819",
+    "debit_acc": "91",
+    "credit_acc": "66",
+    "source_pages": "101; 134",
+    "source_entry": "66 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0820",
+    "debit_acc": "91",
+    "credit_acc": "68",
+    "source_pages": "105; 134",
+    "source_entry": "68 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0821",
+    "debit_acc": "91",
+    "credit_acc": "80",
+    "source_pages": "125; 134",
+    "source_entry": "80 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0822",
+    "debit_acc": "91",
+    "credit_acc": "81",
+    "source_pages": "127; 134",
+    "source_entry": "81 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0823",
+    "debit_acc": "91",
+    "credit_acc": "82",
+    "source_pages": "128; 134",
+    "source_entry": "82 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0824",
+    "debit_acc": "91",
+    "credit_acc": "83",
+    "source_pages": "129; 134",
+    "source_entry": "83 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0825",
+    "debit_acc": "91",
+    "credit_acc": "84",
+    "source_pages": "130; 134",
+    "source_entry": "84 (Кт); 91 (Дт)"
+  },
+  {
+    "source_uid": "K0826",
+    "debit_acc": "92",
+    "credit_acc": "13",
+    "source_pages": "12; 135",
+    "source_entry": "13 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0827",
+    "debit_acc": "92",
+    "credit_acc": "20",
+    "source_pages": "27; 135",
+    "source_entry": "20 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0828",
+    "debit_acc": "92",
+    "credit_acc": "22",
+    "source_pages": "30; 135",
+    "source_entry": "22 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0829",
+    "debit_acc": "92",
+    "credit_acc": "23",
+    "source_pages": "32; 135",
+    "source_entry": "23 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0830",
+    "debit_acc": "92",
+    "credit_acc": "26",
+    "source_pages": "37; 135",
+    "source_entry": "26 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0831",
+    "debit_acc": "92",
+    "credit_acc": "27",
+    "source_pages": "38; 135",
+    "source_entry": "27 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0832",
+    "debit_acc": "92",
+    "credit_acc": "28",
+    "source_pages": "40; 135",
+    "source_entry": "28 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0833",
+    "debit_acc": "92",
+    "credit_acc": "30",
+    "source_pages": "43; 135",
+    "source_entry": "30 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0834",
+    "debit_acc": "92",
+    "credit_acc": "31",
+    "source_pages": "46; 135",
+    "source_entry": "31 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0835",
+    "debit_acc": "92",
+    "credit_acc": "33",
+    "source_pages": "50; 135",
+    "source_entry": "33 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0836",
+    "debit_acc": "92",
+    "credit_acc": "37",
+    "source_pages": "57; 135",
+    "source_entry": "37 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0837",
+    "debit_acc": "92",
+    "credit_acc": "39",
+    "source_pages": "60; 135",
+    "source_entry": "39 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0838",
+    "debit_acc": "92",
+    "credit_acc": "47",
+    "source_pages": "76; 135",
+    "source_entry": "47 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0839",
+    "debit_acc": "92",
+    "credit_acc": "50",
+    "source_pages": "81; 135",
+    "source_entry": "50 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0840",
+    "debit_acc": "92",
+    "credit_acc": "60",
+    "source_pages": "89; 135",
+    "source_entry": "60 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0841",
+    "debit_acc": "92",
+    "credit_acc": "63",
+    "source_pages": "94; 135",
+    "source_entry": "63 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0842",
+    "debit_acc": "92",
+    "credit_acc": "64",
+    "source_pages": "96; 135",
+    "source_entry": "64 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0843",
+    "debit_acc": "92",
+    "credit_acc": "65",
+    "source_pages": "99; 135",
+    "source_entry": "65 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0844",
+    "debit_acc": "92",
+    "credit_acc": "66",
+    "source_pages": "101; 135",
+    "source_entry": "66 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0845",
+    "debit_acc": "92",
+    "credit_acc": "68",
+    "source_pages": "105; 135",
+    "source_entry": "68 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0846",
+    "debit_acc": "92",
+    "credit_acc": "80",
+    "source_pages": "125; 135",
+    "source_entry": "80 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0847",
+    "debit_acc": "92",
+    "credit_acc": "81",
+    "source_pages": "127; 135",
+    "source_entry": "81 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0848",
+    "debit_acc": "92",
+    "credit_acc": "82",
+    "source_pages": "128; 135",
+    "source_entry": "82 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0849",
+    "debit_acc": "92",
+    "credit_acc": "83",
+    "source_pages": "129; 135",
+    "source_entry": "83 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0850",
+    "debit_acc": "92",
+    "credit_acc": "84",
+    "source_pages": "130; 135",
+    "source_entry": "84 (Кт); 92 (Дт)"
+  },
+  {
+    "source_uid": "K0851",
+    "debit_acc": "93",
+    "credit_acc": "13",
+    "source_pages": "12; 137",
+    "source_entry": "13 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0852",
+    "debit_acc": "93",
+    "credit_acc": "20",
+    "source_pages": "27; 137",
+    "source_entry": "20 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0853",
+    "debit_acc": "93",
+    "credit_acc": "22",
+    "source_pages": "30; 137",
+    "source_entry": "22 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0854",
+    "debit_acc": "93",
+    "credit_acc": "23",
+    "source_pages": "32; 137",
+    "source_entry": "23 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0855",
+    "debit_acc": "93",
+    "credit_acc": "25",
+    "source_pages": "36; 137",
+    "source_entry": "25 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0856",
+    "debit_acc": "93",
+    "credit_acc": "26",
+    "source_pages": "37; 137",
+    "source_entry": "26 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0857",
+    "debit_acc": "93",
+    "credit_acc": "27",
+    "source_pages": "38; 137",
+    "source_entry": "27 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0858",
+    "debit_acc": "93",
+    "credit_acc": "28",
+    "source_pages": "40; 137",
+    "source_entry": "28 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0859",
+    "debit_acc": "93",
+    "credit_acc": "30",
+    "source_pages": "43; 137",
+    "source_entry": "30 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0860",
+    "debit_acc": "93",
+    "credit_acc": "31",
+    "source_pages": "46; 137",
+    "source_entry": "31 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0861",
+    "debit_acc": "93",
+    "credit_acc": "33",
+    "source_pages": "50; 137",
+    "source_entry": "33 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0862",
+    "debit_acc": "93",
+    "credit_acc": "36",
+    "source_pages": "54; 137",
+    "source_entry": "36 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0863",
+    "debit_acc": "93",
+    "credit_acc": "37",
+    "source_pages": "57; 137",
+    "source_entry": "37 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0864",
+    "debit_acc": "93",
+    "credit_acc": "38",
+    "source_pages": "60; 137",
+    "source_entry": "38 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0865",
+    "debit_acc": "93",
+    "credit_acc": "39",
+    "source_pages": "60; 137",
+    "source_entry": "39 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0866",
+    "debit_acc": "93",
+    "credit_acc": "47",
+    "source_pages": "76; 137",
+    "source_entry": "47 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0867",
+    "debit_acc": "93",
+    "credit_acc": "50",
+    "source_pages": "81; 137",
+    "source_entry": "50 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0868",
+    "debit_acc": "93",
+    "credit_acc": "60",
+    "source_pages": "89; 137",
+    "source_entry": "60 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0869",
+    "debit_acc": "93",
+    "credit_acc": "63",
+    "source_pages": "94; 137",
+    "source_entry": "63 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0870",
+    "debit_acc": "93",
+    "credit_acc": "64",
+    "source_pages": "96; 137",
+    "source_entry": "64 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0871",
+    "debit_acc": "93",
+    "credit_acc": "65",
+    "source_pages": "99; 137",
+    "source_entry": "65 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0872",
+    "debit_acc": "93",
+    "credit_acc": "66",
+    "source_pages": "101; 137",
+    "source_entry": "66 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0873",
+    "debit_acc": "93",
+    "credit_acc": "68",
+    "source_pages": "105; 137",
+    "source_entry": "68 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0874",
+    "debit_acc": "93",
+    "credit_acc": "80",
+    "source_pages": "125; 137",
+    "source_entry": "80 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0875",
+    "debit_acc": "93",
+    "credit_acc": "81",
+    "source_pages": "127; 137",
+    "source_entry": "81 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0876",
+    "debit_acc": "93",
+    "credit_acc": "82",
+    "source_pages": "128; 137",
+    "source_entry": "82 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0877",
+    "debit_acc": "93",
+    "credit_acc": "83",
+    "source_pages": "129; 137",
+    "source_entry": "83 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0878",
+    "debit_acc": "93",
+    "credit_acc": "84",
+    "source_pages": "130; 137",
+    "source_entry": "84 (Кт); 93 (Дт)"
+  },
+  {
+    "source_uid": "K0879",
+    "debit_acc": "94",
+    "credit_acc": "10",
+    "source_pages": "6; 140",
+    "source_entry": "10 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0880",
+    "debit_acc": "94",
+    "credit_acc": "11",
+    "source_pages": "8; 140",
+    "source_entry": "11 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0881",
+    "debit_acc": "94",
+    "credit_acc": "12",
+    "source_pages": "10; 140",
+    "source_entry": "12 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0882",
+    "debit_acc": "94",
+    "credit_acc": "13",
+    "source_pages": "12; 140",
+    "source_entry": "13 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0883",
+    "debit_acc": "94",
+    "credit_acc": "16",
+    "source_pages": "20; 140",
+    "source_entry": "16 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0884",
+    "debit_acc": "94",
+    "credit_acc": "20",
+    "source_pages": "27; 140",
+    "source_entry": "20 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0885",
+    "debit_acc": "94",
+    "credit_acc": "21",
+    "source_pages": "29; 140",
+    "source_entry": "21 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0886",
+    "debit_acc": "94",
+    "credit_acc": "22",
+    "source_pages": "30; 140",
+    "source_entry": "22 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0887",
+    "debit_acc": "94",
+    "credit_acc": "23",
+    "source_pages": "32; 140",
+    "source_entry": "23 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0888",
+    "debit_acc": "94",
+    "credit_acc": "24",
+    "source_pages": "35; 140",
+    "source_entry": "24 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0889",
+    "debit_acc": "94",
+    "credit_acc": "25",
+    "source_pages": "36; 140",
+    "source_entry": "25 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0890",
+    "debit_acc": "94",
+    "credit_acc": "26",
+    "source_pages": "37; 140",
+    "source_entry": "26 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0891",
+    "debit_acc": "94",
+    "credit_acc": "27",
+    "source_pages": "38; 140",
+    "source_entry": "27 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0892",
+    "debit_acc": "94",
+    "credit_acc": "28",
+    "source_pages": "40; 140",
+    "source_entry": "28 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0893",
+    "debit_acc": "94",
+    "credit_acc": "30",
+    "source_pages": "43; 140",
+    "source_entry": "30 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0894",
+    "debit_acc": "94",
+    "credit_acc": "31",
+    "source_pages": "46; 140",
+    "source_entry": "31 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0895",
+    "debit_acc": "94",
+    "credit_acc": "33",
+    "source_pages": "50; 140",
+    "source_entry": "33 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0896",
+    "debit_acc": "94",
+    "credit_acc": "34",
+    "source_pages": "51; 140",
+    "source_entry": "34 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0897",
+    "debit_acc": "94",
+    "credit_acc": "36",
+    "source_pages": "54; 140",
+    "source_entry": "36 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0898",
+    "debit_acc": "94",
+    "credit_acc": "37",
+    "source_pages": "57; 140",
+    "source_entry": "37 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0899",
+    "debit_acc": "94",
+    "credit_acc": "38",
+    "source_pages": "60; 140",
+    "source_entry": "38 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0900",
+    "debit_acc": "94",
+    "credit_acc": "39",
+    "source_pages": "60; 140",
+    "source_entry": "39 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0901",
+    "debit_acc": "94",
+    "credit_acc": "47",
+    "source_pages": "76; 140",
+    "source_entry": "47 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0902",
+    "debit_acc": "94",
+    "credit_acc": "49",
+    "source_pages": "80; 140",
+    "source_entry": "49 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0903",
+    "debit_acc": "94",
+    "credit_acc": "50",
+    "source_pages": "81; 140",
+    "source_entry": "50 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0904",
+    "debit_acc": "94",
+    "credit_acc": "51",
+    "source_pages": "83; 140",
+    "source_entry": "51 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0905",
+    "debit_acc": "94",
+    "credit_acc": "60",
+    "source_pages": "89; 140",
+    "source_entry": "60 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0906",
+    "debit_acc": "94",
+    "credit_acc": "62",
+    "source_pages": "92; 140",
+    "source_entry": "62 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0907",
+    "debit_acc": "94",
+    "credit_acc": "63",
+    "source_pages": "94; 140",
+    "source_entry": "63 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0908",
+    "debit_acc": "94",
+    "credit_acc": "64",
+    "source_pages": "96; 140",
+    "source_entry": "64 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0909",
+    "debit_acc": "94",
+    "credit_acc": "65",
+    "source_pages": "99; 140",
+    "source_entry": "65 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0910",
+    "debit_acc": "94",
+    "credit_acc": "66",
+    "source_pages": "101; 140",
+    "source_entry": "66 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0911",
+    "debit_acc": "94",
+    "credit_acc": "68",
+    "source_pages": "105; 140",
+    "source_entry": "68 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0912",
+    "debit_acc": "94",
+    "credit_acc": "80",
+    "source_pages": "125; 140",
+    "source_entry": "80 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0913",
+    "debit_acc": "94",
+    "credit_acc": "81",
+    "source_pages": "127; 140",
+    "source_entry": "81 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0914",
+    "debit_acc": "94",
+    "credit_acc": "82",
+    "source_pages": "128; 140",
+    "source_entry": "82 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0915",
+    "debit_acc": "94",
+    "credit_acc": "83",
+    "source_pages": "129; 140",
+    "source_entry": "83 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0916",
+    "debit_acc": "94",
+    "credit_acc": "84",
+    "source_pages": "130; 140",
+    "source_entry": "84 (Кт); 94 (Дт)"
+  },
+  {
+    "source_uid": "K0917",
+    "debit_acc": "95",
+    "credit_acc": "30",
+    "source_pages": "43; 143",
+    "source_entry": "30 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0918",
+    "debit_acc": "95",
+    "credit_acc": "31",
+    "source_pages": "46; 143",
+    "source_entry": "31 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0919",
+    "debit_acc": "95",
+    "credit_acc": "50",
+    "source_pages": "81; 143",
+    "source_entry": "50 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0920",
+    "debit_acc": "95",
+    "credit_acc": "51",
+    "source_pages": "83; 143",
+    "source_entry": "51 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0921",
+    "debit_acc": "95",
+    "credit_acc": "52",
+    "source_pages": "85; 143",
+    "source_entry": "52 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0922",
+    "debit_acc": "95",
+    "credit_acc": "53",
+    "source_pages": "86; 143",
+    "source_entry": "53 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0923",
+    "debit_acc": "95",
+    "credit_acc": "60",
+    "source_pages": "89; 143",
+    "source_entry": "60 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0924",
+    "debit_acc": "95",
+    "credit_acc": "64",
+    "source_pages": "96; 143",
+    "source_entry": "64 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0925",
+    "debit_acc": "95",
+    "credit_acc": "68",
+    "source_pages": "105; 143",
+    "source_entry": "68 (Кт); 95 (Дт)"
+  },
+  {
+    "source_uid": "K0926",
+    "debit_acc": "96",
+    "credit_acc": "14",
+    "source_pages": "13; 144",
+    "source_entry": "14 (Кт); 96 (Дт)"
+  },
+  {
+    "source_uid": "K0927",
+    "debit_acc": "97",
+    "credit_acc": "10",
+    "source_pages": "6; 146",
+    "source_entry": "10 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0928",
+    "debit_acc": "97",
+    "credit_acc": "11",
+    "source_pages": "8; 146",
+    "source_entry": "11 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0929",
+    "debit_acc": "97",
+    "credit_acc": "12",
+    "source_pages": "10; 146",
+    "source_entry": "12 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0930",
+    "debit_acc": "97",
+    "credit_acc": "14",
+    "source_pages": "13; 146",
+    "source_entry": "14 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0931",
+    "debit_acc": "97",
+    "credit_acc": "15",
+    "source_pages": "16; 146",
+    "source_entry": "15 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0932",
+    "debit_acc": "97",
+    "credit_acc": "16",
+    "source_pages": "20; 146",
+    "source_entry": "16 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0933",
+    "debit_acc": "97",
+    "credit_acc": "18",
+    "source_pages": "22; 146",
+    "source_entry": "18 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0934",
+    "debit_acc": "97",
+    "credit_acc": "19",
+    "source_pages": "24; 146",
+    "source_entry": "19 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0935",
+    "debit_acc": "97",
+    "credit_acc": "23",
+    "source_pages": "32; 146",
+    "source_entry": "23 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0936",
+    "debit_acc": "97",
+    "credit_acc": "30",
+    "source_pages": "43; 146",
+    "source_entry": "30 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0937",
+    "debit_acc": "97",
+    "credit_acc": "31",
+    "source_pages": "46; 146",
+    "source_entry": "31 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0938",
+    "debit_acc": "97",
+    "credit_acc": "34",
+    "source_pages": "51; 146",
+    "source_entry": "34 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0939",
+    "debit_acc": "97",
+    "credit_acc": "35",
+    "source_pages": "52; 146",
+    "source_entry": "35 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0940",
+    "debit_acc": "97",
+    "credit_acc": "42",
+    "source_pages": "67; 146",
+    "source_entry": "42 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0941",
+    "debit_acc": "97",
+    "credit_acc": "46",
+    "source_pages": "73; 146",
+    "source_entry": "46 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0942",
+    "debit_acc": "97",
+    "credit_acc": "64",
+    "source_pages": "96; 146",
+    "source_entry": "64 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0943",
+    "debit_acc": "97",
+    "credit_acc": "65",
+    "source_pages": "99; 146",
+    "source_entry": "65 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0944",
+    "debit_acc": "97",
+    "credit_acc": "66",
+    "source_pages": "101; 146",
+    "source_entry": "66 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0945",
+    "debit_acc": "97",
+    "credit_acc": "68",
+    "source_pages": "105; 146",
+    "source_entry": "68 (Кт); 97 (Дт)"
+  },
+  {
+    "source_uid": "K0946",
+    "debit_acc": "97",
+    "credit_acc": "70",
+    "source_pages": "110",
+    "source_entry": "70 (Кт)"
+  },
+  {
+    "source_uid": "K0947",
+    "debit_acc": "98",
+    "credit_acc": "17",
+    "source_pages": "21; 147",
+    "source_entry": "17 (Кт); 98 (Дт)"
+  },
+  {
+    "source_uid": "K0948",
+    "debit_acc": "98",
+    "credit_acc": "48",
+    "source_pages": "78; 147",
+    "source_entry": "48 (Кт); 98 (Дт)"
+  },
+  {
+    "source_uid": "K0949",
+    "debit_acc": "98",
+    "credit_acc": "54",
+    "source_pages": "87; 147",
+    "source_entry": "54 (Кт); 98 (Дт)"
+  },
+  {
+    "source_uid": "K0950",
+    "debit_acc": "98",
+    "credit_acc": "64",
+    "source_pages": "96; 147",
+    "source_entry": "64 (Кт); 98 (Дт)"
+  },
+  {
+    "source_uid": "K0951",
+    "debit_acc": "98",
+    "credit_acc": "79",
+    "source_pages": "123; 147",
+    "source_entry": "79 (Кт); 98 (Дт)"
+  }
+]
